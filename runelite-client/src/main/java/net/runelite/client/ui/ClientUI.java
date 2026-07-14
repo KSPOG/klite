@@ -135,8 +135,15 @@ public class ClientUI
 	private static final String CONFIG_CLIENT_BOUNDS = "clientBounds";
 	private static final String CONFIG_CLIENT_MAXIMIZED = "clientMaximized";
 	private static final String CONFIG_CLIENT_SIDEBAR_CLOSED = "clientSidebarClosed";
-	public static final BufferedImage ICON_128 = ImageUtil.loadImageResource(ClientUI.class, "runelite_128.png");
-	public static final BufferedImage ICON_16 = ImageUtil.loadImageResource(ClientUI.class, "runelite_16.png");
+	private static final BufferedImage KLITE_ICON = ImageUtil.loadImageResource(ClientUI.class, "klite_icon.png");
+	public static final BufferedImage ICON_128 = createIcon(128);
+	public static final BufferedImage ICON_16 = createIcon(16);
+
+	private static BufferedImage createIcon(int size)
+	{
+		BufferedImage scaled = ImageUtil.resizeImage(KLITE_ICON, size, size, true);
+		return ImageUtil.resizeCanvas(scaled, size, size);
+	}
 
 	@Getter
 	private TrayIcon trayIcon;

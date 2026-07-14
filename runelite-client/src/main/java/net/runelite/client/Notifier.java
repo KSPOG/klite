@@ -35,7 +35,6 @@ import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -44,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.imageio.ImageIO;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -421,9 +421,9 @@ public class Notifier
 	{
 		if (OSType.getOSType() == OSType.Linux && !Files.exists(notifyIconPath))
 		{
-			try (InputStream stream = Notifier.class.getResourceAsStream("/net/runelite/client/ui/runelite_128.png"))
+			try
 			{
-				Files.copy(stream, notifyIconPath);
+				ImageIO.write(ClientUI.ICON_128, "png", notifyIconPath.toFile());
 			}
 			catch (IOException ex)
 			{

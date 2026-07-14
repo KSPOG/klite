@@ -64,6 +64,15 @@ Task exceptions move the manager to `FAILED` and expose a concise error through
 `AutomationStatus`. Call `stop()` to acknowledge the failure and return to
 `IDLE` before starting another task.
 
+## Web walking
+
+Inject `WebWalker` and pass it to `WebWalkerTask` to run a cached, non-blocking
+ground walk through the automation manager. The task advances once per game
+tick and stops on arrival.
+
+See [WEB_WALKER.md](WEB_WALKER.md) for its API, traversal behavior, Shortest
+Path revision, and current ground-only boundary.
+
 ## Safety boundary
 
 The runtime provides scheduling, cancellation, snapshots, and thread marshalling.

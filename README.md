@@ -5,18 +5,21 @@ codebase. It keeps RuneLite's module boundaries and plugin model so upstream
 security, compatibility, and API changes can be incorporated with minimal
 fork-specific conflict.
 
-KLite does **not** include Microbot source, automation APIs, scripting engines,
-or botting features. Microbot was reviewed only as an architectural example of
-how a downstream RuneLite distribution can keep custom code inside the client
-module.
+KLite does **not** include Microbot source. Microbot was reviewed only as an
+architectural example of how a downstream RuneLite distribution can keep
+custom code inside the client module.
 
 ## Current KLite layer
 
 - `net.runelite.client.KLite` is the distribution-owned entry point.
 - The window title and shaded artifact are branded as KLite.
 - `KLite Core` is a built-in plugin with an optional build/status overlay.
+- KLite-branded application icons and a shield-branded marketplace window are
+  integrated into the desktop client.
 - A disabled-by-default automation runtime provides client-thread-safe snapshots,
   cancellation, task lifecycle management, and a global kill switch.
+- A cached ground web walker uses the published Shortest Path 1.20.6 collision
+  map and advances one action per automation tick.
 - The rest of the tree remains close to upstream RuneLite for maintainability.
 
 ## Requirements
@@ -62,6 +65,8 @@ dependency-injection APIs.
 See [docs/UPSTREAM.md](docs/UPSTREAM.md) for the update workflow.
 See [docs/AUTOMATION.md](docs/AUTOMATION.md) for the custom API and automation
 runtime.
+See [docs/MARKETPLACE.md](docs/MARKETPLACE.md) for the marketplace security
+boundary and future catalog requirements.
 
 ## License and third-party services
 
