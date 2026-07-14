@@ -1,25 +1,66 @@
-![](https://runelite.net/img/logo.png)
-# runelite [![CI](https://github.com/runelite/runelite/workflows/CI/badge.svg)](https://github.com/runelite/runelite/actions?query=workflow%3ACI+branch%3Amaster) [![Discord](https://img.shields.io/discord/301497432909414422.svg)](https://discord.gg/ArdAhnN)
+# KLite
 
-RuneLite is a free, open source OldSchool RuneScape client.
+KLite is a focused desktop client built directly on the open-source RuneLite
+codebase. It keeps RuneLite's module boundaries and plugin model so upstream
+security, compatibility, and API changes can be incorporated with minimal
+fork-specific conflict.
 
-If you have any questions, please join our IRC channel on [irc.rizon.net #runelite](http://qchat.rizon.net/?channels=runelite&uio=d4) or alternatively our [Discord](https://runelite.net/discord) server.
+KLite does **not** include Microbot source, automation APIs, scripting engines,
+or botting features. Microbot was reviewed only as an architectural example of
+how a downstream RuneLite distribution can keep custom code inside the client
+module.
 
-## Project Layout
+## Current KLite layer
 
-- [cache](cache/src/main/java/net/runelite/cache) - Libraries used for reading/writing cache files, as well as the data in it
-- [runelite-api](runelite-api/src/main/java/net/runelite/api) - RuneLite API, interfaces for accessing the client
-- [runelite-client](runelite-client/src/main/java/net/runelite/client) - Game client with plugins
+- `net.runelite.client.KLite` is the distribution-owned entry point.
+- The window title and shaded artifact are branded as KLite.
+- `KLite Core` is a built-in plugin with an optional build/status overlay.
+- The rest of the tree remains close to upstream RuneLite for maintainability.
 
-## Usage
+## Requirements
 
-Open the project in your IDE as a Gradle project, and then run the RuneLite class in runelite-client.  
-For more information visit the [RuneLite Wiki](https://github.com/runelite/runelite/wiki).
+- JDK 11 (selected by the upstream Gradle build)
+- Git
 
-### License
+The Gradle wrapper is included, so a separate Gradle installation is not
+required.
 
-RuneLite is licensed under the BSD 2-clause license. See the license header in the respective file to be sure.
+## Build and run
 
-## Contribute and Develop
+On Windows:
 
-Please view our [Developer Guide](https://github.com/runelite/runelite/wiki/Developer-Guide) on the RuneLite Wiki.
+```powershell
+.\gradlew.bat :client:compileJava
+.\gradlew.bat :client:runKLite
+```
+
+Build the executable shaded JAR:
+
+```powershell
+.\gradlew.bat :client:shadowJar
+```
+
+The artifact is written to `runelite-client/build/libs/klite-<version>.jar`.
+
+## Architecture
+
+RuneLite's main modules are preserved:
+
+- `runelite-api`: stable interfaces exposed to plugins.
+- `runelite-client`: application, UI, plugin runtime, and KLite-owned code.
+- `runelite-gradle-plugin`: tooling used to assemble the injected client.
+- `cache` and `runelite-jshell`: upstream cache and developer tooling.
+
+KLite-specific code belongs under
+`runelite-client/src/main/java/net/runelite/client/plugins/klite` or behind the
+`net.runelite.client.KLite` entry point. Avoid broad edits to upstream classes
+unless a feature cannot be implemented through RuneLite's public plugin and
+dependency-injection APIs.
+
+See [docs/UPSTREAM.md](docs/UPSTREAM.md) for the update workflow.
+
+## License and third-party services
+
+KLite retains RuneLite's BSD 2-Clause license and copyright notices. RuneLite's
+remote services, Plugin Hub, and game configuration endpoints remain in use.
+KLite is not affiliated with Jagex or the RuneLite project.

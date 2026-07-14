@@ -105,7 +105,7 @@ dependencies {
 val shadowJar = tasks.register<Jar>("shadowJar") {
     dependsOn(configurations.runtimeClasspath)
     manifest {
-        attributes["Main-Class"] = "net.runelite.client.RuneLite"
+        attributes["Main-Class"] = "net.runelite.client.KLite"
     }
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -123,9 +123,17 @@ val shadowJar = tasks.register<Jar>("shadowJar") {
 
     group = BasePlugin.BUILD_GROUP
     archiveClassifier = "shadow"
-    archiveFileName = project.name + "-" + project.version + "-shaded.jar"
+    archiveFileName = "klite-" + project.version + ".jar"
 }
 tasks.assemble { dependsOn(shadowJar) }
+
+tasks.register<JavaExec>("runKLite") {
+    group = "application"
+    description = "Run the KLite client"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass = "net.runelite.client.KLite"
+    jvmArgs("-ea", "-Dfile.encoding=UTF-8")
+}
 
 publishing {
     publications {
