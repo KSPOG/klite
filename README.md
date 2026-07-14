@@ -15,6 +15,8 @@ module.
 - `net.runelite.client.KLite` is the distribution-owned entry point.
 - The window title and shaded artifact are branded as KLite.
 - `KLite Core` is a built-in plugin with an optional build/status overlay.
+- A disabled-by-default automation runtime provides client-thread-safe snapshots,
+  cancellation, task lifecycle management, and a global kill switch.
 - The rest of the tree remains close to upstream RuneLite for maintainability.
 
 ## Requirements
@@ -58,6 +60,8 @@ unless a feature cannot be implemented through RuneLite's public plugin and
 dependency-injection APIs.
 
 See [docs/UPSTREAM.md](docs/UPSTREAM.md) for the update workflow.
+See [docs/AUTOMATION.md](docs/AUTOMATION.md) for the custom API and automation
+runtime.
 
 ## License and third-party services
 
