@@ -24,6 +24,7 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
   of a percent; special-attack energy uses tenths of a percent.
 - `activePrayers()` and `prayerActive(...)` read prayer varbits directly, avoiding
   RuneLite's deprecated prayer helper.
+- `grandExchangeOffers()` and `grandExchangeOffer(...)` return detached offer-slot state.
 - `inventory()`, `equipment()`, and `bankItems()` return immutable item and slot snapshots;
   `equipmentCount(...)`, `equipmentContains(...)`, and `equipmentItem(...)` provide typed
   worn-slot queries, and `isBankOpen()` reports whether the bank item container is visible.

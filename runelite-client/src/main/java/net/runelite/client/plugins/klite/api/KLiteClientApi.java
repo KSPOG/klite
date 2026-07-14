@@ -39,6 +39,10 @@ public interface KLiteClientApi
 
 	CompletableFuture<Boolean> prayerActive(Prayer prayer);
 
+	CompletableFuture<List<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffers();
+
+	CompletableFuture<Optional<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffer(int slot);
+
 	CompletableFuture<List<KLiteItemStack>> inventory();
 
 	CompletableFuture<List<KLiteItemStack>> equipment();
