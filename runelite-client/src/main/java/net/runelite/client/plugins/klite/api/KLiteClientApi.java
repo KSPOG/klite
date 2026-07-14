@@ -161,6 +161,10 @@ public interface KLiteClientApi
 
 	CompletableFuture<String> varcString(@VarCStr int varcId);
 
+	CompletableFuture<Void> setVarcInt(@VarCInt int varcId, int value);
+
+	CompletableFuture<Void> setVarcString(@VarCStr int varcId, String value);
+
 	CompletableFuture<KLiteInteractionResult> interactInventoryItem(int slot, String option);
 
 	CompletableFuture<KLiteInteractionResult> selectInventoryItem(int slot);

@@ -875,6 +875,18 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Void> setVarcInt(int varcId, int value)
+	{
+		return threadGateway.execute(() -> client.setVarcIntValue(varcId, value));
+	}
+
+	@Override
+	public CompletableFuture<Void> setVarcString(int varcId, String value)
+	{
+		return threadGateway.execute(() -> client.setVarcStrValue(varcId, value));
+	}
+
+	@Override
 	public CompletableFuture<KLiteInteractionResult> interactInventoryItem(int slot, String option)
 	{
 		return threadGateway.submit(() ->
