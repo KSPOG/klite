@@ -12,9 +12,9 @@ downloaded, installed, or executed.
 - Installed marketplace plugins will be listed in that panel.
 - The marketplace opens independently from the RuneLite configuration panel.
 - The KLite shield identifies the sidebar and marketplace content.
-- The window provides loading, error, refresh, text search, gameplay category,
-  and Free/Premium access filters for the remote catalog.
-- Schema v2 mirrors external PluginDescriptor metadata, including authors,
+- The window provides loading, error, refresh, text search,
+  and Category, Type, and Order controls for the remote catalog.
+- Schema v3 mirrors external PluginDescriptor metadata, including authors,
   version, minimum client version, default enablement, and external state.
 - Catalog entries can display reviewed PNG or JPEG artwork hosted by the same
   marketplace origin; invalid or unavailable images use the KLite fallback.

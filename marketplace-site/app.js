@@ -2,7 +2,8 @@ const pluginGrid = document.querySelector("#plugin-grid");
 const catalogStatus = document.querySelector("#catalog-status");
 const searchInput = document.querySelector("#plugin-search");
 const categoryFilter = document.querySelector("#category-filter");
-const accessFilter = document.querySelector("#access-filter");
+const typeFilter = document.querySelector("#type-filter");
+const orderFilter = document.querySelector("#order-filter");
 
 const statusLabels = {
   bundled: "Bundled with KLite",
@@ -10,12 +11,27 @@ const statusLabels = {
   "coming-soon": "Coming soon"
 };
 
+const orderComparators = {
+  "trending-day": (left, right) => right.trendingDay - left.trendingDay,
+  "trending-week": (left, right) => right.trendingWeek - left.trendingWeek,
+  "trending-month": (left, right) => right.trendingMonth - left.trendingMonth,
+  "recently-updated": (left, right) => right.updatedAt.localeCompare(left.updatedAt),
+  "recently-released": (left, right) => right.releasedAt.localeCompare(left.releasedAt),
+  name: (left, right) => left.descriptor.name.localeCompare(right.descriptor.name)
+};
+
 let plugins = [];
+
+function comparePlugins(left, right) {
+  const comparator = orderComparators[orderFilter.value] || orderComparators["trending-day"];
+  return comparator(left, right)
+    || left.descriptor.name.localeCompare(right.descriptor.name);
+}
 
 function renderPlugins() {
   const query = searchInput.value.trim().toLowerCase();
   const selectedCategory = categoryFilter.value;
-  const selectedAccess = accessFilter.value;
+  const selectedType = typeFilter.value;
   const visiblePlugins = plugins.filter((plugin) => {
     const descriptor = plugin.descriptor;
     const searchable = [
@@ -24,13 +40,13 @@ function renderPlugins() {
       ...descriptor.tags,
       ...descriptor.authors,
       ...plugin.categories,
-      plugin.access
+      plugin.type
     ].join(" ").toLowerCase();
 
     return searchable.includes(query)
       && (!selectedCategory || plugin.categories.includes(selectedCategory))
-      && (!selectedAccess || plugin.access === selectedAccess);
-  });
+      && (!selectedType || plugin.type === selectedType);
+  }).sort(comparePlugins);
 
   pluginGrid.replaceChildren();
 
@@ -75,9 +91,9 @@ function renderPlugins() {
     const meta = document.createElement("div");
     meta.className = "plugin-meta";
     const metadata = [
-      `By ${descriptor.authors.join(", ")}`,
-      `v${descriptor.version}`,
-      plugin.access,
+      "By " + descriptor.authors.join(", "),
+      "v" + descriptor.version,
+      plugin.type,
       ...plugin.categories,
       statusLabels[plugin.status] || "Unavailable"
     ];
@@ -93,21 +109,18 @@ function renderPlugins() {
   }
 }
 
-function populateCategoryFilter() {
-  const categories = [...new Set(plugins.flatMap((plugin) => plugin.categories))]
-    .sort((left, right) => left.localeCompare(right));
+function populateFilter(select, values) {
+  select.replaceChildren();
+  const all = document.createElement("option");
+  all.value = "";
+  all.textContent = "All";
+  select.append(all);
 
-  categoryFilter.replaceChildren();
-  const allCategories = document.createElement("option");
-  allCategories.value = "";
-  allCategories.textContent = "All categories";
-  categoryFilter.append(allCategories);
-
-  for (const category of categories) {
+  for (const value of values) {
     const option = document.createElement("option");
-    option.value = category;
-    option.textContent = category;
-    categoryFilter.append(option);
+    option.value = value;
+    option.textContent = value;
+    select.append(option);
   }
 }
 
@@ -115,16 +128,18 @@ async function loadCatalog() {
   try {
     const response = await fetch("plugins.json", { cache: "no-store" });
     if (!response.ok) {
-      throw new Error(`Catalog request failed with status ${response.status}`);
+      throw new Error("Catalog request failed with status " + response.status);
     }
 
     const catalog = await response.json();
-    if (catalog.schemaVersion !== 2 || !Array.isArray(catalog.plugins)) {
+    if (catalog.schemaVersion !== 3 || !Array.isArray(catalog.plugins)
+      || !Array.isArray(catalog.categories) || !Array.isArray(catalog.types)) {
       throw new Error("Unsupported marketplace catalog schema");
     }
 
     plugins = catalog.plugins;
-    populateCategoryFilter();
+    populateFilter(categoryFilter, catalog.categories);
+    populateFilter(typeFilter, catalog.types);
     renderPlugins();
   } catch (error) {
     console.error("Unable to load the plugin catalog", error);
@@ -134,5 +149,6 @@ async function loadCatalog() {
 
 searchInput.addEventListener("input", renderPlugins);
 categoryFilter.addEventListener("change", renderPlugins);
-accessFilter.addEventListener("change", renderPlugins);
+typeFilter.addEventListener("change", renderPlugins);
+orderFilter.addEventListener("change", renderPlugins);
 loadCatalog();

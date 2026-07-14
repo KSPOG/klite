@@ -1,6 +1,36 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "updatedAt": "2026-07-14T00:00:00Z",
+  "categories": [
+    "Agility",
+    "Bossing",
+    "Combat",
+    "Construction",
+    "Cooking",
+    "Crafting",
+    "Developer tools",
+    "Farming",
+    "Firemaking",
+    "Fishing",
+    "Fletching",
+    "Herblore",
+    "Hunter",
+    "Magic",
+    "Minigames",
+    "Mining",
+    "Moneymaking",
+    "Other",
+    "Prayer",
+    "Questing",
+    "Runecrafting",
+    "Sailing",
+    "Slayer",
+    "Smithing",
+    "Summoning",
+    "Thieving",
+    "Woodcutting"
+  ],
+  "types": ["Public", "Supporter", "Free", "Premium"],
   "plugins": [
     {
       "id": "klite-example",
@@ -14,11 +44,16 @@
         "enabledByDefault": false,
         "isExternal": true
       },
-      "categories": ["Skilling"],
-      "access": "Free",
+      "categories": ["Other"],
+      "type": "Free",
       "status": "coming-soon",
       "homepageUrl": "https://github.com/KSPOG/klite",
-      "iconPath": "assets/plugins/klite-example.png"
+      "iconPath": "assets/plugins/klite-example.png",
+      "releasedAt": "2026-07-14T00:00:00Z",
+      "updatedAt": "2026-07-14T00:00:00Z",
+      "trendingDay": 0,
+      "trendingWeek": 0,
+      "trendingMonth": 0
     }
   ]
 }
