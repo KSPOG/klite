@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-14T00:00:00Z",
+  "plugins": [
+    {
+      "id": "klite-example",
+      "name": "KLite Example",
+      "version": "1.0.0",
+      "author": "KSPOG",
+      "description": "A harmless bundled plugin that displays a small overlay and demonstrates the KLite marketplace catalog connection.",
+      "status": "bundled",
+      "minimumClientVersion": "1.0.0",
+      "homepageUrl": "https://github.com/KSPOG/klite"
+    }
+  ]
+}
