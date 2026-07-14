@@ -22,13 +22,17 @@ import net.runelite.api.Deque;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Friend;
 import net.runelite.api.FriendContainer;
+import net.runelite.api.FriendsChatManager;
+import net.runelite.api.FriendsChatMember;
 import net.runelite.api.GraphicsObject;
 import net.runelite.api.GrandExchangeOffer;
+import net.runelite.api.Ignore;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MessageNode;
+import net.runelite.api.NameableContainer;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import net.runelite.api.ObjectComposition;
@@ -226,6 +230,65 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	public CompletableFuture<Boolean> isFriend(String name, boolean mustBeLoggedIn)
 	{
 		return threadGateway.submit(() -> name != null && client.isFriended(name, mustBeLoggedIn));
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteIgnoreSnapshot>> ignores()
+	{
+		return threadGateway.submit(() ->
+		{
+			NameableContainer<Ignore> ignores = client.getIgnoreContainer();
+			if (ignores == null || ignores.getMembers() == null)
+			{
+				return ImmutableList.of();
+			}
+			ImmutableList.Builder<KLiteIgnoreSnapshot> snapshots = ImmutableList.builder();
+			for (Ignore ignored : ignores.getMembers())
+			{
+				if (ignored != null)
+				{
+					snapshots.add(new KLiteIgnoreSnapshot(ignored.getName(), ignored.getPrevName()));
+				}
+			}
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<Boolean> isIgnored(String name)
+	{
+		return threadGateway.submit(() ->
+		{
+			NameableContainer<Ignore> ignores = client.getIgnoreContainer();
+			return name != null && ignores != null && ignores.findByName(name) != null;
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteFriendsChatSnapshot>> friendsChat()
+	{
+		return threadGateway.submit(() ->
+		{
+			FriendsChatManager friendsChat = client.getFriendsChatManager();
+			return friendsChat == null
+				? Optional.empty()
+				: Optional.of(friendsChatSnapshot(friendsChat));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteFriendsChatMemberSnapshot>> friendsChatMember(String name)
+	{
+		return threadGateway.submit(() ->
+		{
+			FriendsChatManager friendsChat = client.getFriendsChatManager();
+			if (name == null || friendsChat == null)
+			{
+				return Optional.empty();
+			}
+			FriendsChatMember member = friendsChat.findByName(name);
+			return member == null ? Optional.empty() : Optional.of(friendsChatMemberSnapshot(member));
+		});
 	}
 
 	@Override
@@ -1472,6 +1535,34 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	{
 		Widget first = client.getWidget(firstComponentId);
 		return first == null ? client.getWidget(secondComponentId) : first;
+	}
+
+	private static KLiteFriendsChatSnapshot friendsChatSnapshot(FriendsChatManager friendsChat)
+	{
+		ImmutableList.Builder<KLiteFriendsChatMemberSnapshot> members = ImmutableList.builder();
+		FriendsChatMember[] currentMembers = friendsChat.getMembers();
+		if (currentMembers != null)
+		{
+			for (FriendsChatMember member : currentMembers)
+			{
+				if (member != null)
+				{
+					members.add(friendsChatMemberSnapshot(member));
+				}
+			}
+		}
+		return new KLiteFriendsChatSnapshot(
+			friendsChat.getOwner(),
+			friendsChat.getName(),
+			friendsChat.getMyRank(),
+			friendsChat.getKickRank(),
+			members.build());
+	}
+
+	private static KLiteFriendsChatMemberSnapshot friendsChatMemberSnapshot(FriendsChatMember member)
+	{
+		return new KLiteFriendsChatMemberSnapshot(
+			member.getName(), member.getPrevName(), member.getWorld(), member.getRank());
 	}
 
 	private List<KLiteChatMessageSnapshot> chatMessageSnapshots(@Nullable ChatMessageType type)
