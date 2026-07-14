@@ -48,16 +48,23 @@ public class KLiteMarketplaceClientTest
 
 		KLiteMarketplaceCatalog catalog = client.fetchCatalog().get(5, TimeUnit.SECONDS);
 
-		assertEquals(1, catalog.getSchemaVersion());
+		assertEquals(2, catalog.getSchemaVersion());
 		assertEquals(1, catalog.getPlugins().size());
-		assertEquals("klite-example", catalog.getPlugins().get(0).getId());
-		assertEquals("coming-soon", catalog.getPlugins().get(0).getStatus());
+		KLiteMarketplacePlugin plugin = catalog.getPlugins().get(0);
+		assertEquals("klite-example", plugin.getId());
+		assertEquals("KLite Example", plugin.getDescriptor().getName());
+		assertEquals("KSPOG", plugin.getDescriptor().getAuthors().get(0));
+		assertEquals("1.0.0", plugin.getDescriptor().getVersion());
+		assertTrue(plugin.getDescriptor().isExternal());
+		assertEquals("Skilling", plugin.getCategories().get(0));
+		assertEquals("Free", plugin.getAccess());
+		assertEquals("coming-soon", plugin.getStatus());
 	}
 
 	@Test
 	public void rejectsUnsupportedSchema() throws Exception
 	{
-		server.enqueue(jsonResponse(validCatalogJson().replace("\"schemaVersion\": 1", "\"schemaVersion\": 2")));
+		server.enqueue(jsonResponse(validCatalogJson().replace("\"schemaVersion\": 2", "\"schemaVersion\": 99")));
 
 		ExecutionException exception = expectFailure();
 
@@ -68,6 +75,26 @@ public class KLiteMarketplaceClientTest
 	public void rejectsNonHttpsHomepage() throws Exception
 	{
 		server.enqueue(jsonResponse(validCatalogJson().replace("https://github.com/KSPOG/klite", "http://example.com")));
+
+		ExecutionException exception = expectFailure();
+
+		assertTrue(exception.getCause() instanceof IllegalArgumentException);
+	}
+
+	@Test
+	public void rejectsMalformedCategory() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson().replace("\"Skilling\"", "\"<script>\"")));
+
+		ExecutionException exception = expectFailure();
+
+		assertTrue(exception.getCause() instanceof IllegalArgumentException);
+	}
+
+	@Test
+	public void rejectsNonExternalPlugin() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson().replace("\"isExternal\": true", "\"isExternal\": false")));
 
 		ExecutionException exception = expectFailure();
 
@@ -137,16 +164,23 @@ public class KLiteMarketplaceClientTest
 	private static String validCatalogJson()
 	{
 		return "{\n"
-			+ "  \"schemaVersion\": 1,\n"
+			+ "  \"schemaVersion\": 2,\n"
 			+ "  \"updatedAt\": \"2026-07-14T00:00:00Z\",\n"
 			+ "  \"plugins\": [{\n"
 			+ "    \"id\": \"klite-example\",\n"
-			+ "    \"name\": \"KLite Example\",\n"
-			+ "    \"version\": \"1.0.0\",\n"
-			+ "    \"author\": \"KSPOG\",\n"
-			+ "    \"description\": \"A safe example plugin.\",\n"
+			+ "    \"descriptor\": {\n"
+			+ "      \"name\": \"KLite Example\",\n"
+			+ "      \"description\": \"A safe example plugin.\",\n"
+			+ "      \"tags\": [\"klite\", \"example\"],\n"
+			+ "      \"authors\": [\"KSPOG\"],\n"
+			+ "      \"version\": \"1.0.0\",\n"
+			+ "      \"minClientVersion\": \"1.0.0\",\n"
+			+ "      \"enabledByDefault\": false,\n"
+			+ "      \"isExternal\": true\n"
+			+ "    },\n"
+			+ "    \"categories\": [\"Skilling\"],\n"
+			+ "    \"access\": \"Free\",\n"
 			+ "    \"status\": \"coming-soon\",\n"
-			+ "    \"minimumClientVersion\": \"1.0.0\",\n"
 			+ "    \"homepageUrl\": \"https://github.com/KSPOG/klite\",\n"
 			+ "    \"iconPath\": \"assets/plugins/klite-example.png\"\n"
 			+ "  }]\n"

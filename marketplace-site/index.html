@@ -40,13 +40,29 @@
           <p class="eyebrow">Catalog</p>
           <h2 id="catalog-title">Available plugins</h2>
         </div>
-        <label class="search-field">
-          <span class="sr-only">Search plugins</span>
-          <input id="plugin-search" type="search" placeholder="Search plugins" autocomplete="off">
-        </label>
+        <div class="catalog-controls">
+          <label class="search-field">
+            <span class="sr-only">Search plugins</span>
+            <input id="plugin-search" type="search" placeholder="Search plugins" autocomplete="off">
+          </label>
+          <label>
+            <span class="sr-only">Plugin category</span>
+            <select id="category-filter">
+              <option value="">All categories</option>
+            </select>
+          </label>
+          <label>
+            <span class="sr-only">Plugin access</span>
+            <select id="access-filter">
+              <option value="">Free &amp; Premium</option>
+              <option value="Free">Free</option>
+              <option value="Premium">Premium</option>
+            </select>
+          </label>
+        </div>
       </div>
 
-      <div id="catalog-status" class="status" role="status">Loading catalog…</div>
+      <div id="catalog-status" class="status" role="status">Loading catalog...</div>
       <div id="plugin-grid" class="plugin-grid" aria-live="polite"></div>
     </section>
   </main>

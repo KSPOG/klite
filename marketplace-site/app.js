@@ -1,14 +1,35 @@
 const pluginGrid = document.querySelector("#plugin-grid");
 const catalogStatus = document.querySelector("#catalog-status");
 const searchInput = document.querySelector("#plugin-search");
+const categoryFilter = document.querySelector("#category-filter");
+const accessFilter = document.querySelector("#access-filter");
+
+const statusLabels = {
+  bundled: "Bundled with KLite",
+  available: "Available",
+  "coming-soon": "Coming soon"
+};
 
 let plugins = [];
 
-function renderPlugins(query = "") {
-  const normalizedQuery = query.trim().toLowerCase();
+function renderPlugins() {
+  const query = searchInput.value.trim().toLowerCase();
+  const selectedCategory = categoryFilter.value;
+  const selectedAccess = accessFilter.value;
   const visiblePlugins = plugins.filter((plugin) => {
-    const searchable = `${plugin.name} ${plugin.author} ${plugin.description}`.toLowerCase();
-    return searchable.includes(normalizedQuery);
+    const descriptor = plugin.descriptor;
+    const searchable = [
+      descriptor.name,
+      descriptor.description,
+      ...descriptor.tags,
+      ...descriptor.authors,
+      ...plugin.categories,
+      plugin.access
+    ].join(" ").toLowerCase();
+
+    return searchable.includes(query)
+      && (!selectedCategory || plugin.categories.includes(selectedCategory))
+      && (!selectedAccess || plugin.access === selectedAccess);
   });
 
   pluginGrid.replaceChildren();
@@ -17,13 +38,14 @@ function renderPlugins(query = "") {
     catalogStatus.hidden = false;
     catalogStatus.textContent = plugins.length === 0
       ? "The catalog is ready. Reviewed plugins will appear here when published."
-      : "No plugins match your search.";
+      : "No plugins match the selected filters.";
     return;
   }
 
   catalogStatus.hidden = true;
 
   for (const plugin of visiblePlugins) {
+    const descriptor = plugin.descriptor;
     const card = document.createElement("article");
     card.className = "plugin-card";
 
@@ -33,7 +55,7 @@ function renderPlugins(query = "") {
     const icon = document.createElement("img");
     icon.className = "plugin-icon";
     icon.src = plugin.iconPath || "assets/klite-marketplace.png";
-    icon.alt = plugin.name + " icon";
+    icon.alt = descriptor.name + " icon";
     icon.width = 64;
     icon.height = 64;
     icon.loading = "lazy";
@@ -42,34 +64,50 @@ function renderPlugins(query = "") {
     copy.className = "plugin-copy";
 
     const title = document.createElement("h3");
-    title.textContent = plugin.name;
+    title.textContent = descriptor.name;
 
     const description = document.createElement("p");
-    description.textContent = plugin.description;
+    description.textContent = descriptor.description;
 
     copy.append(title, description);
     header.append(icon, copy);
 
     const meta = document.createElement("div");
     meta.className = "plugin-meta";
+    const metadata = [
+      `By ${descriptor.authors.join(", ")}`,
+      `v${descriptor.version}`,
+      plugin.access,
+      ...plugin.categories,
+      statusLabels[plugin.status] || "Unavailable"
+    ];
 
-    const author = document.createElement("span");
-    author.textContent = `By ${plugin.author}`;
+    for (const value of metadata) {
+      const item = document.createElement("span");
+      item.textContent = value;
+      meta.append(item);
+    }
 
-    const version = document.createElement("span");
-    version.textContent = `v${plugin.version}`;
-
-    const status = document.createElement("span");
-    const statusLabels = {
-      bundled: "Bundled with KLite",
-      available: "Available",
-      "coming-soon": "Coming soon"
-    };
-    status.textContent = statusLabels[plugin.status] || "Unavailable";
-
-    meta.append(author, version, status);
     card.append(header, meta);
     pluginGrid.append(card);
+  }
+}
+
+function populateCategoryFilter() {
+  const categories = [...new Set(plugins.flatMap((plugin) => plugin.categories))]
+    .sort((left, right) => left.localeCompare(right));
+
+  categoryFilter.replaceChildren();
+  const allCategories = document.createElement("option");
+  allCategories.value = "";
+  allCategories.textContent = "All categories";
+  categoryFilter.append(allCategories);
+
+  for (const category of categories) {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    categoryFilter.append(option);
   }
 }
 
@@ -81,7 +119,12 @@ async function loadCatalog() {
     }
 
     const catalog = await response.json();
-    plugins = Array.isArray(catalog.plugins) ? catalog.plugins : [];
+    if (catalog.schemaVersion !== 2 || !Array.isArray(catalog.plugins)) {
+      throw new Error("Unsupported marketplace catalog schema");
+    }
+
+    plugins = catalog.plugins;
+    populateCategoryFilter();
     renderPlugins();
   } catch (error) {
     console.error("Unable to load the plugin catalog", error);
@@ -89,5 +132,7 @@ async function loadCatalog() {
   }
 }
 
-searchInput.addEventListener("input", (event) => renderPlugins(event.target.value));
+searchInput.addEventListener("input", renderPlugins);
+categoryFilter.addEventListener("change", renderPlugins);
+accessFilter.addEventListener("change", renderPlugins);
 loadCatalog();

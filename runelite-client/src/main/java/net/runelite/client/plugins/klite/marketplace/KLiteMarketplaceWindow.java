@@ -10,11 +10,14 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,6 +26,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -61,9 +65,12 @@ public class KLiteMarketplaceWindow
 	private JFrame frame;
 	private JPanel catalogList;
 	private JTextField search;
+	private JComboBox<String> categoryFilter;
+	private JComboBox<String> accessFilter;
 	private JButton refreshButton;
 	private JLabel footer;
 	private boolean loading;
+	private boolean updatingFilters;
 
 	@Inject
 	KLiteMarketplaceWindow(KLiteMarketplaceClient marketplaceClient)
@@ -164,7 +171,7 @@ public class KLiteMarketplaceWindow
 		catalogArea.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		catalogArea.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
-		JPanel controls = new JPanel(new BorderLayout(10, 0));
+		JPanel controls = new JPanel(new BorderLayout(10, 10));
 		controls.setOpaque(false);
 		search = new JTextField();
 		search.setEnabled(false);
@@ -191,6 +198,20 @@ public class KLiteMarketplaceWindow
 			}
 		});
 		controls.add(search, BorderLayout.CENTER);
+
+		JPanel filters = new JPanel(new GridLayout(1, 2, 10, 0));
+		filters.setOpaque(false);
+		categoryFilter = new JComboBox<>(new String[]{"All categories"});
+		categoryFilter.addActionListener(event -> renderCatalog());
+		filters.add(categoryFilter);
+		accessFilter = new JComboBox<>(new String[]{
+			"Free & Premium",
+			KLiteMarketplacePlugin.ACCESS_FREE,
+			KLiteMarketplacePlugin.ACCESS_PREMIUM
+		});
+		accessFilter.addActionListener(event -> renderCatalog());
+		filters.add(accessFilter);
+		controls.add(filters, BorderLayout.SOUTH);
 
 		refreshButton = new JButton("Refresh");
 		refreshButton.addActionListener(event -> refreshCatalog());
@@ -238,6 +259,7 @@ public class KLiteMarketplaceWindow
 			}
 
 			plugins = catalog.getPlugins();
+			updateCategoryFilter();
 			search.setEnabled(true);
 			footer.setText("Catalog source: " + marketplaceClient.getCatalogUrl().host()
 				+ " • " + plugins.size() + " reviewed plugin" + (plugins.size() == 1 ? "" : "s"));
@@ -245,21 +267,54 @@ public class KLiteMarketplaceWindow
 		}));
 	}
 
+	private void updateCategoryFilter()
+	{
+		updatingFilters = true;
+		String selectedCategory = categoryFilter.getSelectedIndex() == 0
+			? null : (String) categoryFilter.getSelectedItem();
+		Set<String> categories = new TreeSet<>();
+		for (KLiteMarketplacePlugin plugin : plugins)
+		{
+			categories.addAll(plugin.getCategories());
+		}
+
+		categoryFilter.removeAllItems();
+		categoryFilter.addItem("All categories");
+		for (String category : categories)
+		{
+			categoryFilter.addItem(category);
+		}
+		if (selectedCategory != null)
+		{
+			categoryFilter.setSelectedItem(selectedCategory);
+		}
+		updatingFilters = false;
+	}
+
 	private void renderCatalog()
 	{
-		if (catalogList == null || search == null)
+		if (updatingFilters || catalogList == null || search == null)
 		{
 			return;
 		}
 
 		String query = search.getText().trim().toLowerCase(Locale.ROOT);
+		String selectedCategory = categoryFilter.getSelectedIndex() == 0
+			? null : (String) categoryFilter.getSelectedItem();
+		String selectedAccess = accessFilter.getSelectedIndex() == 0
+			? null : (String) accessFilter.getSelectedItem();
 		catalogList.removeAll();
 		int visiblePluginCount = 0;
 		for (KLiteMarketplacePlugin plugin : plugins)
 		{
-			String searchable = (plugin.getName() + " " + plugin.getAuthor() + " "
-				+ plugin.getDescription()).toLowerCase(Locale.ROOT);
-			if (!searchable.contains(query))
+			String searchable = (plugin.getName() + " " + plugin.getAuthorsDisplay() + " "
+				+ plugin.getDescription() + " "
+				+ String.join(" ", plugin.getDescriptor().getTags()) + " "
+				+ String.join(" ", plugin.getCategories()) + " " + plugin.getAccess())
+				.toLowerCase(Locale.ROOT);
+			if (!searchable.contains(query)
+				|| (selectedCategory != null && !plugin.getCategories().contains(selectedCategory))
+				|| (selectedAccess != null && !selectedAccess.equals(plugin.getAccess())))
 			{
 				continue;
 			}
@@ -337,7 +392,8 @@ public class KLiteMarketplaceWindow
 		description.setFont(name.getFont().deriveFont(Font.PLAIN, 13f));
 		card.add(description, BorderLayout.CENTER);
 
-		JLabel metadata = new JLabel("By " + plugin.getAuthor() + " • v" + plugin.getVersion()
+		JLabel metadata = new JLabel("By " + plugin.getAuthorsDisplay() + " • v" + plugin.getVersion()
+			+ " • " + plugin.getAccess() + " • " + String.join(", ", plugin.getCategories())
 			+ " • KLite " + plugin.getMinimumClientVersion() + "+");
 		metadata.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		card.add(metadata, BorderLayout.SOUTH);

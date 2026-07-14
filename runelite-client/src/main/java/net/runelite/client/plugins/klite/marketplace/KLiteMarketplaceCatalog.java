@@ -17,7 +17,7 @@ import java.util.Set;
  */
 public final class KLiteMarketplaceCatalog
 {
-	static final int SUPPORTED_SCHEMA_VERSION = 1;
+	static final int SUPPORTED_SCHEMA_VERSION = 2;
 	private static final int MAX_PLUGIN_COUNT = 250;
 
 	private int schemaVersion;

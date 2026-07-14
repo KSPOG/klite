@@ -6,12 +6,14 @@ This directory contains the static website deployed to Cloudflare Pages.
 
 Published plugins are listed in `plugins.json`. Keep the catalog machine-readable so the KLite client can consume the same reviewed metadata in a later release.
 
-The initial schema is intentionally small and is validated by the client. Each
-entry includes an ID, display metadata, publication status, minimum compatible
-client version, optional HTTPS homepage, and an optional reviewed image under
-assets/plugins/. A signed artifact URL, checksum,
-compatibility range, and review metadata must be added before client-side
-installation is enabled.
+Schema v2 stores plugin-owned metadata in a descriptor object mirroring
+@PluginDescriptor: name, description, tags, authors, version, minimum client
+version, default enablement, and external-plugin state. Marketplace-owned
+metadata remains outside the descriptor: ID, categories, Free/Premium access,
+publication status, homepage, and reviewed artwork under assets/plugins/.
+
+A signed artifact URL, checksum, compatibility range, and review metadata must
+be added before client-side installation is enabled.
 
 ## Local preview
 

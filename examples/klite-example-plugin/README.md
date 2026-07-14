@@ -8,6 +8,6 @@ The example adds a small informational overlay and performs no automation. Its
 `PluginDescriptor` also sets `enabledByDefault = false`, so a future verified
 installer must still require the user to enable it explicitly after installation.
 
-The marketplace currently publishes this entry as `coming-soon`. Do not change
+The annotation demonstrates authors, version, minimum client version, default-enablement, and external-plugin metadata. The marketplace currently publishes this entry as `coming-soon`. Do not change
 it to `available` until the signed artifact, checksum verification, installation,
 and uninstall flows have been implemented.

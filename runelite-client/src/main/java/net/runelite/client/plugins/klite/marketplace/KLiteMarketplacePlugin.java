@@ -7,6 +7,9 @@ package net.runelite.client.plugins.klite.marketplace;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -16,20 +19,22 @@ import java.util.regex.Pattern;
  */
 public final class KLiteMarketplacePlugin
 {
+	public static final String ACCESS_FREE = "Free";
+	public static final String ACCESS_PREMIUM = "Premium";
+
 	private static final Pattern ID_PATTERN = Pattern.compile("[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?");
-	private static final Pattern DISPLAY_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9 ._'()-]{0,63}");
-	private static final Pattern VERSION_PATTERN = Pattern.compile("[0-9]+(?:\\.[0-9]+){1,3}(?:[-+][A-Za-z0-9.-]+)?");
 	private static final Pattern ICON_PATH_PATTERN = Pattern.compile(
 		"assets/plugins/[a-z0-9][a-z0-9._-]{0,100}\\.(?:png|jpg|jpeg)");
+	private static final Pattern CATEGORY_PATTERN = Pattern.compile(
+		"[A-Za-z0-9][A-Za-z0-9 &'/-]{0,31}");
 	private static final Set<String> STATUSES = Set.of("bundled", "available", "coming-soon");
+	private static final Set<String> ACCESS_TIERS = Set.of(ACCESS_FREE, ACCESS_PREMIUM);
 
 	private String id;
-	private String name;
-	private String version;
-	private String author;
-	private String description;
+	private KLiteMarketplaceDescriptor descriptor;
+	private List<String> categories;
+	private String access;
 	private String status;
-	private String minimumClientVersion;
 	private String homepageUrl;
 	private String iconPath;
 
@@ -38,34 +43,24 @@ public final class KLiteMarketplacePlugin
 		return id;
 	}
 
-	public String getName()
+	public KLiteMarketplaceDescriptor getDescriptor()
 	{
-		return name;
+		return descriptor;
 	}
 
-	public String getVersion()
+	public List<String> getCategories()
 	{
-		return version;
+		return categories;
 	}
 
-	public String getAuthor()
+	public String getAccess()
 	{
-		return author;
-	}
-
-	public String getDescription()
-	{
-		return description;
+		return access;
 	}
 
 	public String getStatus()
 	{
 		return status;
-	}
-
-	public String getMinimumClientVersion()
-	{
-		return minimumClientVersion;
 	}
 
 	public String getHomepageUrl()
@@ -78,31 +73,47 @@ public final class KLiteMarketplacePlugin
 		return iconPath;
 	}
 
+	public String getName()
+	{
+		return descriptor.getName();
+	}
+
+	public String getDescription()
+	{
+		return descriptor.getDescription();
+	}
+
+	public String getAuthorsDisplay()
+	{
+		return String.join(", ", descriptor.getAuthors());
+	}
+
+	public String getVersion()
+	{
+		return descriptor.getVersion();
+	}
+
+	public String getMinimumClientVersion()
+	{
+		return descriptor.getMinClientVersion();
+	}
+
 	void validate()
 	{
 		if (id == null || !ID_PATTERN.matcher(id).matches())
 		{
 			throw new IllegalArgumentException("Invalid marketplace plugin id");
 		}
-		if (name == null || !DISPLAY_PATTERN.matcher(name).matches())
+		if (descriptor == null)
 		{
-			throw new IllegalArgumentException("Invalid marketplace plugin name: " + id);
+			throw new IllegalArgumentException("Marketplace plugin descriptor is required: " + id);
 		}
-		if (author == null || !DISPLAY_PATTERN.matcher(author).matches())
+		descriptor.validate(id);
+
+		validateCategories();
+		if (access == null || !ACCESS_TIERS.contains(access))
 		{
-			throw new IllegalArgumentException("Invalid marketplace plugin author: " + id);
-		}
-		if (version == null || !VERSION_PATTERN.matcher(version).matches())
-		{
-			throw new IllegalArgumentException("Invalid marketplace plugin version: " + id);
-		}
-		if (minimumClientVersion == null || !VERSION_PATTERN.matcher(minimumClientVersion).matches())
-		{
-			throw new IllegalArgumentException("Invalid minimum client version: " + id);
-		}
-		if (description == null || description.isBlank() || description.length() > 300)
-		{
-			throw new IllegalArgumentException("Invalid marketplace plugin description: " + id);
+			throw new IllegalArgumentException("Invalid marketplace plugin access tier: " + id);
 		}
 		if (status == null || !STATUSES.contains(status.toLowerCase(Locale.ROOT)))
 		{
@@ -114,6 +125,25 @@ public final class KLiteMarketplacePlugin
 		{
 			throw new IllegalArgumentException("Invalid marketplace plugin icon path: " + id);
 		}
+	}
+
+	private void validateCategories()
+	{
+		if (categories == null || categories.isEmpty() || categories.size() > 5)
+		{
+			throw new IllegalArgumentException("Invalid marketplace plugin categories: " + id);
+		}
+
+		Set<String> uniqueCategories = new HashSet<>();
+		for (String category : categories)
+		{
+			if (category == null || !CATEGORY_PATTERN.matcher(category).matches()
+				|| !uniqueCategories.add(category))
+			{
+				throw new IllegalArgumentException("Invalid marketplace plugin category: " + id);
+			}
+		}
+		categories = Collections.unmodifiableList(categories);
 	}
 
 	private static void validateHttpsUrl(String value)

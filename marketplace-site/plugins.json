@@ -1,15 +1,22 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "updatedAt": "2026-07-14T00:00:00Z",
   "plugins": [
     {
       "id": "klite-example",
-      "name": "KLite Example",
-      "version": "1.0.0",
-      "author": "KSPOG",
-      "description": "A source-only example plugin that displays a small overlay and demonstrates the future KLite marketplace installation format.",
+      "descriptor": {
+        "name": "KLite Example",
+        "description": "A source-only example plugin that displays a small overlay and demonstrates the future KLite marketplace installation format.",
+        "tags": ["klite", "example", "marketplace"],
+        "authors": ["KSPOG"],
+        "version": "1.0.0",
+        "minClientVersion": "1.0.0",
+        "enabledByDefault": false,
+        "isExternal": true
+      },
+      "categories": ["Skilling"],
+      "access": "Free",
       "status": "coming-soon",
-      "minimumClientVersion": "1.0.0",
       "homepageUrl": "https://github.com/KSPOG/klite",
       "iconPath": "assets/plugins/klite-example.png"
     }

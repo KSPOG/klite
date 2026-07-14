@@ -161,8 +161,16 @@ h2 {
   margin-bottom: 30px;
 }
 
-.search-field input {
-  width: min(320px, 70vw);
+.catalog-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.search-field input,
+.catalog-controls select {
+  min-height: 44px;
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 11px;
@@ -172,7 +180,16 @@ h2 {
   font: inherit;
 }
 
-.search-field input:focus {
+.search-field input {
+  width: min(300px, 70vw);
+}
+
+.catalog-controls select {
+  cursor: pointer;
+}
+
+.search-field input:focus,
+.catalog-controls select:focus {
   border-color: var(--cyan);
   box-shadow: 0 0 0 3px rgb(22 216 255 / 12%);
 }
@@ -239,7 +256,8 @@ h2 {
 
 .plugin-meta {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   align-self: end;
   color: #bcc7d6;
   font-size: 0.85rem;
@@ -300,7 +318,10 @@ footer p {
     flex-direction: column;
   }
 
-  .search-field input {
+  .catalog-controls,
+  .catalog-controls label,
+  .search-field input,
+  .catalog-controls select {
     width: 100%;
   }
 }
