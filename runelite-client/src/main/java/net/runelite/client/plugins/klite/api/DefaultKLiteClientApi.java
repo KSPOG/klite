@@ -756,6 +756,33 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Boolean> isShopOpen()
+	{
+		return threadGateway.submit(() -> client.getWidget(InterfaceID.Shopmain.ITEMS) != null);
+	}
+
+	@Override
+	public CompletableFuture<Boolean> isTradeOpen()
+	{
+		return threadGateway.submit(() -> client.getWidget(InterfaceID.Trademain.CONTAINER) != null
+			|| client.getWidget(InterfaceID.Tradeconfirm.FRAME) != null);
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> acceptTrade()
+	{
+		return threadGateway.submit(() ->
+		interactWidget(firstWidget(InterfaceID.Trademain.ACCEPT, InterfaceID.Tradeconfirm.TRADE2ACCEPT), "Accept"));
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> declineTrade()
+	{
+		return threadGateway.submit(() ->
+		interactWidget(firstWidget(InterfaceID.Trademain.DECLINE, InterfaceID.Tradeconfirm.TRADE2DECLINE), "Decline"));
+	}
+
+	@Override
 	public CompletableFuture<List<KLiteDialogOption>> dialogOptions()
 	{
 		return threadGateway.submit(() ->
@@ -1372,6 +1399,13 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	{
 		return new KLiteGrandExchangeOfferSnapshot(slot, offer.getItemId(), offer.getQuantitySold(),
 			offer.getTotalQuantity(), offer.getPrice(), offer.getSpent(), offer.getState());
+	}
+
+	@Nullable
+	private Widget firstWidget(int firstComponentId, int secondComponentId)
+	{
+		Widget first = client.getWidget(firstComponentId);
+		return first == null ? client.getWidget(secondComponentId) : first;
 	}
 
 	private List<KLiteChatMessageSnapshot> chatMessageSnapshots(@Nullable ChatMessageType type)
