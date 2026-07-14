@@ -14,7 +14,7 @@ downloaded, installed, or executed.
 - The KLite shield identifies the sidebar and marketplace content.
 - The window provides loading, error, refresh, text search,
   and Category, Type, and Order controls for the remote catalog.
-- Schema v3 mirrors external PluginDescriptor metadata, including authors,
+- The backward-compatible schema v2 catalog mirrors external PluginDescriptor metadata, including authors,
   version, minimum client version, default enablement, and external state.
 - Catalog entries can display reviewed PNG or JPEG artwork hosted by the same
   marketplace origin; invalid or unavailable images use the KLite fallback.

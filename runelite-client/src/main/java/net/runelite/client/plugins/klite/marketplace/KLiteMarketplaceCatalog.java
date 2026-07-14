@@ -17,7 +17,8 @@ import java.util.Set;
  */
 public final class KLiteMarketplaceCatalog
 {
-	static final int SUPPORTED_SCHEMA_VERSION = 3;
+	static final int MINIMUM_SCHEMA_VERSION = 2;
+	static final int MAXIMUM_SCHEMA_VERSION = 3;
 	private static final int MAX_PLUGIN_COUNT = 250;
 	private static final int MAX_CATEGORY_COUNT = 50;
 	private static final int MAX_TYPE_COUNT = 10;
@@ -55,7 +56,7 @@ public final class KLiteMarketplaceCatalog
 
 	void validate()
 	{
-		if (schemaVersion != SUPPORTED_SCHEMA_VERSION)
+		if (schemaVersion < MINIMUM_SCHEMA_VERSION || schemaVersion > MAXIMUM_SCHEMA_VERSION)
 		{
 			throw new IllegalArgumentException("Unsupported marketplace schema version: " + schemaVersion);
 		}

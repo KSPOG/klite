@@ -40,12 +40,12 @@ function renderPlugins() {
       ...descriptor.tags,
       ...descriptor.authors,
       ...plugin.categories,
-      plugin.type
+      plugin.type || plugin.access
     ].join(" ").toLowerCase();
 
     return searchable.includes(query)
       && (!selectedCategory || plugin.categories.includes(selectedCategory))
-      && (!selectedType || plugin.type === selectedType);
+      && (!selectedType || (plugin.type || plugin.access) === selectedType);
   }).sort(comparePlugins);
 
   pluginGrid.replaceChildren();
@@ -93,7 +93,7 @@ function renderPlugins() {
     const metadata = [
       "By " + descriptor.authors.join(", "),
       "v" + descriptor.version,
-      plugin.type,
+      plugin.type || plugin.access,
       ...plugin.categories,
       statusLabels[plugin.status] || "Unavailable"
     ];
@@ -132,7 +132,7 @@ async function loadCatalog() {
     }
 
     const catalog = await response.json();
-    if (catalog.schemaVersion !== 3 || !Array.isArray(catalog.plugins)
+    if (![2, 3].includes(catalog.schemaVersion) || !Array.isArray(catalog.plugins)
       || !Array.isArray(catalog.categories) || !Array.isArray(catalog.types)) {
       throw new Error("Unsupported marketplace catalog schema");
     }

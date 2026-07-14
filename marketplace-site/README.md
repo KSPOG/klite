@@ -6,7 +6,7 @@ This directory contains the static website deployed to Cloudflare Pages.
 
 Published plugins are listed in `plugins.json`. Keep the catalog machine-readable so the KLite client can consume the same reviewed metadata in a later release.
 
-Schema v3 stores plugin-owned metadata in a descriptor object mirroring
+The backward-compatible schema v2 catalog stores plugin-owned metadata in a descriptor object mirroring
 @PluginDescriptor: name, description, tags, authors, version, minimum client
 version, default enablement, and external-plugin state. Marketplace-owned
 metadata remains outside the descriptor: ID, categories, distribution type,

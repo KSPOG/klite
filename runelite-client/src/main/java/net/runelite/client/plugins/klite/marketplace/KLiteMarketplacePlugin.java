@@ -37,6 +37,7 @@ public final class KLiteMarketplacePlugin
 	private KLiteMarketplaceDescriptor descriptor;
 	private List<String> categories;
 	private String type;
+	private String access;
 	private String status;
 	private String homepageUrl;
 	private String iconPath;
@@ -63,7 +64,7 @@ public final class KLiteMarketplacePlugin
 
 	public String getType()
 	{
-		return type;
+		return type == null ? access : type;
 	}
 
 	public String getStatus()
@@ -144,7 +145,9 @@ public final class KLiteMarketplacePlugin
 		descriptor.validate(id);
 
 		validateCategories(allowedCategories);
-		if (type == null || !allowedTypes.contains(type))
+		String effectiveType = getType();
+		if (effectiveType == null || !allowedTypes.contains(effectiveType)
+			|| (type != null && access != null && !type.equals(access)))
 		{
 			throw new IllegalArgumentException("Invalid marketplace plugin type: " + id);
 		}

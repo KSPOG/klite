@@ -48,7 +48,7 @@ public class KLiteMarketplaceClientTest
 
 		KLiteMarketplaceCatalog catalog = client.fetchCatalog().get(5, TimeUnit.SECONDS);
 
-		assertEquals(3, catalog.getSchemaVersion());
+		assertEquals(2, catalog.getSchemaVersion());
 		assertEquals(1, catalog.getPlugins().size());
 		KLiteMarketplacePlugin plugin = catalog.getPlugins().get(0);
 		assertEquals("klite-example", plugin.getId());
@@ -64,7 +64,7 @@ public class KLiteMarketplaceClientTest
 	@Test
 	public void rejectsUnsupportedSchema() throws Exception
 	{
-		server.enqueue(jsonResponse(validCatalogJson().replace("\"schemaVersion\": 3", "\"schemaVersion\": 99")));
+		server.enqueue(jsonResponse(validCatalogJson().replace("\"schemaVersion\": 2", "\"schemaVersion\": 99")));
 
 		ExecutionException exception = expectFailure();
 
@@ -183,7 +183,7 @@ public class KLiteMarketplaceClientTest
 	private static String validCatalogJson()
 	{
 		return "{\n"
-			+ "  \"schemaVersion\": 3,\n"
+			+ "  \"schemaVersion\": 2,\n"
 			+ "  \"updatedAt\": \"2026-07-14T00:00:00Z\",\n"
 			+ "  \"categories\": [\"Other\", \"Combat\"],\n"
 			+ "  \"types\": [\"Public\", \"Supporter\", \"Free\", \"Premium\"],\n"
@@ -201,6 +201,7 @@ public class KLiteMarketplaceClientTest
 			+ "    },\n"
 			+ "    \"categories\": [\"Other\"],\n"
 			+ "    \"type\": \"Free\",\n"
+			+ "    \"access\": \"Free\",\n"
 			+ "    \"status\": \"coming-soon\",\n"
 			+ "    \"homepageUrl\": \"https://github.com/KSPOG/klite\",\n"
 			+ "    \"iconPath\": \"assets/plugins/klite-example.png\",\n"

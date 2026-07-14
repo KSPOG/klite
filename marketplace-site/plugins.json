@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 2,
   "updatedAt": "2026-07-14T00:00:00Z",
   "categories": [
     "Agility",
@@ -46,6 +46,7 @@
       },
       "categories": ["Other"],
       "type": "Free",
+      "access": "Free",
       "status": "coming-soon",
       "homepageUrl": "https://github.com/KSPOG/klite",
       "iconPath": "assets/plugins/klite-example.png",
