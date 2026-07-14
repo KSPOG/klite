@@ -1,0 +1,73 @@
+# KLite API and automation runtime
+
+KLite automation is an opt-in runtime layered on RuneLite's plugin system. It
+is disabled by default and allows one cooperative task at a time. Disabling the
+global switch immediately cancels the active task.
+
+## Threading rules
+
+RuneLite client objects are not safe to read from arbitrary threads. Automation
+tasks run on KLite's dedicated daemon executor and must access game state through
+`KLiteClientApi`:
+
+- `snapshot()` returns an immutable game-state, world, and player-location view.
+- `inventory()` returns immutable item and slot snapshots.
+- `onClientThread(...)` queues an advanced operation on RuneLite's client thread.
+
+The first two methods are preferred. Keep `onClientThread` actions short; never
+sleep, wait for network access, or execute an automation loop on the client
+thread.
+
+## Writing a task
+
+```java
+public final class ExampleTask implements AutomationTask
+{
+	@Override
+	public String name()
+	{
+		return "example";
+	}
+
+	@Override
+	public Duration interval()
+	{
+		return Duration.ofMillis(600);
+	}
+
+	@Override
+	public AutomationResult tick(AutomationContext context) throws Exception
+	{
+		KLiteClientSnapshot snapshot = context.await(
+			context.client().snapshot(), Duration.ofSeconds(2));
+		return snapshot.getGameState() == GameState.LOGGED_IN
+			? AutomationResult.CONTINUE
+			: AutomationResult.STOP;
+	}
+}
+```
+
+Inject `AutomationManager`, enable automation in the KLite Core configuration,
+and call `manager.start(task)`. A task must use an interval of at least 100 ms.
+`start` returns `false` when automation is disabled, another task is active, or
+a failed task has not been acknowledged with `manager.stop()`.
+
+## Lifecycle
+
+1. `onStart` runs once on the automation executor.
+2. `tick` runs with a fixed delay after the previous invocation completes.
+3. Returning `STOP`, calling `AutomationManager.stop()`, disabling automation,
+   or throwing an exception ends the task.
+4. `onStop` runs once for cleanup.
+
+Task exceptions move the manager to `FAILED` and expose a concise error through
+`AutomationStatus`. Call `stop()` to acknowledge the failure and return to
+`IDLE` before starting another task.
+
+## Safety boundary
+
+The runtime provides scheduling, cancellation, snapshots, and thread marshalling.
+Feature modules remain responsible for validating game state, nullability,
+distance, UI availability, and action-specific cooldowns before every operation.
+Do not store live RuneLite `Client`, `Player`, `NPC`, `Widget`, or `ItemContainer`
+objects outside the client-thread callback that produced them.
