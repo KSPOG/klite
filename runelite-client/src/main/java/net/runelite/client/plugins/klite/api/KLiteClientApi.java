@@ -39,6 +39,14 @@ public interface KLiteClientApi
 
 	CompletableFuture<Boolean> isFriend(String name, boolean mustBeLoggedIn);
 
+	CompletableFuture<List<KLiteIgnoreSnapshot>> ignores();
+
+	CompletableFuture<Boolean> isIgnored(String name);
+
+	CompletableFuture<Optional<KLiteFriendsChatSnapshot>> friendsChat();
+
+	CompletableFuture<Optional<KLiteFriendsChatMemberSnapshot>> friendsChatMember(String name);
+
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages();
 
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages(ChatMessageType type);
