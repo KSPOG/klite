@@ -25,6 +25,7 @@ import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
+import net.runelite.api.Prayer;
 import net.runelite.api.Scene;
 import net.runelite.api.Skill;
 import net.runelite.api.Tile;
@@ -35,6 +36,8 @@ import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.VarbitID;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.widgets.Widget;
 
 /** Default thread-safe implementation of the public KLite client API. */
@@ -42,6 +45,7 @@ import net.runelite.api.widgets.Widget;
 public class DefaultKLiteClientApi implements KLiteClientApi
 {
 
+	private static final int VENOM_THRESHOLD = 1_000_000;
 	private static final int[] DIALOG_CONTINUE_COMPONENTS =
 	{
 		InterfaceID.ChatBoth.CONTINUE,
@@ -91,6 +95,45 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		});
 	}
 
+	@Override
+	public CompletableFuture<KLiteCombatSnapshot> combatSnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			Player player = client.getLocalPlayer();
+			int poison = client.getVarpValue(VarPlayerID.POISON);
+			return new KLiteCombatSnapshot(
+				client.getBoostedSkillLevel(Skill.HITPOINTS),
+				client.getRealSkillLevel(Skill.HITPOINTS),
+				client.getBoostedSkillLevel(Skill.PRAYER),
+				client.getRealSkillLevel(Skill.PRAYER),
+				client.getEnergy(),
+				client.getWeight(),
+				client.getVarpValue(VarPlayerID.OPTION_RUN) != 0,
+				client.getVarpValue(VarPlayerID.SA_ENERGY),
+				client.getVarpValue(VarPlayerID.SA_ATTACK) != 0,
+				poison,
+				poison > 0 && poison < VENOM_THRESHOLD,
+				poison >= VENOM_THRESHOLD,
+				client.getVarbitValue(VarbitID.INSIDE_WILDERNESS) != 0,
+				player == null ? -1 : player.getAnimation(),
+				player == null ? -1 : player.getPoseAnimation(),
+				player == null ? null : actorName(player.getInteracting()),
+				activePrayerSnapshot());
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<Prayer>> activePrayers()
+	{
+		return threadGateway.submit(this::activePrayerSnapshot);
+	}
+
+	@Override
+	public CompletableFuture<Boolean> prayerActive(Prayer prayer)
+	{
+		return threadGateway.submit(() -> prayer != null && client.getVarbitValue(prayer.getVarbit()) != 0);
+	}
 	@Override
 	public CompletableFuture<List<KLiteItemStack>> inventory()
 	{
@@ -584,6 +627,54 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		return interactWidgetChild(InterfaceID.Bankside.ITEMS, slot, option);
 	}
 	@Override
+	public CompletableFuture<KLiteInteractionResult> setRunEnabled(boolean enabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			boolean current = client.getVarpValue(VarPlayerID.OPTION_RUN) != 0;
+			return current == enabled
+				? KLiteInteractionResult.noActionRequired("Run is already " + stateName(enabled))
+				: interactFirstWidgetAction(client.getWidget(InterfaceID.Orbs.ORB_RUNENERGY));
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setSpecialAttackEnabled(boolean enabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			boolean current = client.getVarpValue(VarPlayerID.SA_ATTACK) != 0;
+			return current == enabled
+				? KLiteInteractionResult.noActionRequired(
+					"Special attack is already " + stateName(enabled))
+				: interactFirstWidgetAction(client.getWidget(InterfaceID.CombatInterface.SPECIAL_ATTACK));
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> selectWidgetTarget(int componentId)
+	{
+		return threadGateway.submit(() -> componentId < 0
+			? KLiteInteractionResult.invalidRequest("Widget component id must be non-negative")
+			: selectWidgetTarget(client.getWidget(componentId)));
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> selectWidgetTargetChild(
+		int componentId, int childIndex)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (componentId < 0 || childIndex < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Widget component id and child index must be non-negative");
+			}
+			Widget parent = client.getWidget(componentId);
+			return selectWidgetTarget(parent == null ? null : parent.getChild(childIndex));
+		});
+	}
+	@Override
 	public CompletableFuture<KLiteInteractionResult> interactWidget(int componentId, String option)
 	{
 		return threadGateway.submit(() ->
@@ -888,6 +979,60 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		return threadGateway.execute(action);
 	}
 
+	private List<Prayer> activePrayerSnapshot()
+	{
+		ImmutableList.Builder<Prayer> prayers = ImmutableList.builder();
+		for (Prayer prayer : Prayer.values())
+		{
+			if (client.getVarbitValue(prayer.getVarbit()) != 0)
+			{
+				prayers.add(prayer);
+			}
+		}
+		return prayers.build();
+	}
+
+	private KLiteInteractionResult interactFirstWidgetAction(@Nullable Widget widget)
+	{
+		if (!isVisible(widget))
+		{
+			return KLiteInteractionResult.targetNotFound("Widget is absent or hidden");
+		}
+		String[] actions = widget.getActions();
+		if (actions != null)
+		{
+			for (String action : actions)
+			{
+				if (!isBlank(action))
+				{
+					return interactWidget(widget, action);
+				}
+			}
+		}
+		return KLiteInteractionResult.optionNotFound("Widget does not expose an action");
+	}
+
+	private KLiteInteractionResult selectWidgetTarget(@Nullable Widget widget)
+	{
+		if (!isVisible(widget))
+		{
+			return KLiteInteractionResult.targetNotFound("Widget is absent or hidden");
+		}
+		String verb = widget.getTargetVerb();
+		if (isBlank(verb))
+		{
+			return KLiteInteractionResult.optionNotFound("Widget is not a selectable target");
+		}
+		String target = isBlank(widget.getName()) ? widget.getText() : widget.getName();
+		client.menuAction(widget.getIndex(), widget.getId(), MenuAction.WIDGET_TARGET,
+			0, widget.getItemId(), verb, target == null ? "" : target);
+		return KLiteInteractionResult.dispatched();
+	}
+
+	private static String stateName(boolean enabled)
+	{
+		return enabled ? "enabled" : "disabled";
+	}
 	private Optional<Integer> findItemSlot(int inventoryId, int itemId)
 	{
 		if (itemId < 0)

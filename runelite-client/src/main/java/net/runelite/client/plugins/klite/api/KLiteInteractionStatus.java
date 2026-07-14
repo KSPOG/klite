@@ -9,6 +9,7 @@ package net.runelite.client.plugins.klite.api;
 public enum KLiteInteractionStatus
 {
 	DISPATCHED,
+	NO_ACTION_REQUIRED,
 	TARGET_NOT_FOUND,
 	OPTION_NOT_FOUND,
 	NO_WIDGET_SELECTED,

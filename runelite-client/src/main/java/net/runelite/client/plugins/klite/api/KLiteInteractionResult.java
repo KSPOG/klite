@@ -24,6 +24,11 @@ public class KLiteInteractionResult
 		return new KLiteInteractionResult(KLiteInteractionStatus.DISPATCHED, "Action dispatched");
 	}
 
+	static KLiteInteractionResult noActionRequired(String message)
+	{
+		return new KLiteInteractionResult(KLiteInteractionStatus.NO_ACTION_REQUIRED, message);
+	}
+
 	static KLiteInteractionResult targetNotFound(String message)
 	{
 		return new KLiteInteractionResult(KLiteInteractionStatus.TARGET_NOT_FOUND, message);

@@ -8,6 +8,7 @@ package net.runelite.client.plugins.klite.api;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import net.runelite.api.Prayer;
 import net.runelite.api.annotations.Component;
 import net.runelite.api.annotations.Varbit;
 import net.runelite.api.annotations.VarCInt;
@@ -19,6 +20,12 @@ import net.runelite.api.coords.WorldPoint;
 public interface KLiteClientApi
 {
 	CompletableFuture<KLiteClientSnapshot> snapshot();
+
+	CompletableFuture<KLiteCombatSnapshot> combatSnapshot();
+
+	CompletableFuture<List<Prayer>> activePrayers();
+
+	CompletableFuture<Boolean> prayerActive(Prayer prayer);
 
 	CompletableFuture<List<KLiteItemStack>> inventory();
 
@@ -102,6 +109,15 @@ public interface KLiteClientApi
 	CompletableFuture<KLiteInteractionResult> interactBankItem(int slot, String option);
 
 	CompletableFuture<KLiteInteractionResult> interactBankInventoryItem(int slot, String option);
+
+	CompletableFuture<KLiteInteractionResult> setRunEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setSpecialAttackEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> selectWidgetTarget(@Component int componentId);
+
+	CompletableFuture<KLiteInteractionResult> selectWidgetTargetChild(
+		@Component int componentId, int childIndex);
 
 	CompletableFuture<KLiteInteractionResult> interactWidget(
 		@Component int componentId, String option);
