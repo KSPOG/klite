@@ -67,7 +67,7 @@ public class SplashScreen extends JFrame implements ActionListener
 
 	private SplashScreen()
 	{
-		setTitle("RuneLite Launcher");
+		setTitle("KLite Launcher");
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setUndecorated(true);
@@ -78,7 +78,8 @@ public class SplashScreen extends JFrame implements ActionListener
 
 		Font font = new Font(Font.DIALOG, Font.PLAIN, 12);
 
-		BufferedImage logo = ImageUtil.loadImageResource(SplashScreen.class, "runelite_splash.png");
+		BufferedImage sourceLogo = ImageUtil.loadImageResource(SplashScreen.class, "klite_icon.png");
+		BufferedImage logo = ImageUtil.resizeImage(sourceLogo, WIDTH, WIDTH, true);
 		JLabel logoLabel = new JLabel(new ImageIcon(logo));
 		pane.add(logoLabel);
 		logoLabel.setBounds(0, 0, WIDTH, WIDTH);
