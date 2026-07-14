@@ -7,6 +7,7 @@ package net.runelite.client.plugins.klite.api;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import net.runelite.api.coords.WorldPoint;
 
 /** Public KLite API exposed to KLite automation modules. */
 public interface KLiteClientApi
@@ -26,6 +27,18 @@ public interface KLiteClientApi
 	CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems();
 
 	CompletableFuture<List<KLiteSceneObjectSnapshot>> sceneObjects();
+
+	CompletableFuture<KLiteInteractionResult> interactInventoryItem(int slot, String option);
+
+	CompletableFuture<KLiteInteractionResult> interactNpc(int index, String option);
+
+	CompletableFuture<KLiteInteractionResult> interactPlayer(int id, String option);
+
+	CompletableFuture<KLiteInteractionResult> interactSceneObject(
+		int objectId, WorldPoint location, String option);
+
+	CompletableFuture<KLiteInteractionResult> interactGroundItem(
+		int itemId, WorldPoint location, String option);
 
 	CompletableFuture<Void> menuAction(KLiteMenuActionRequest request);
 
