@@ -34,6 +34,12 @@ public class KLiteInteractionResult
 		return new KLiteInteractionResult(KLiteInteractionStatus.OPTION_NOT_FOUND, message);
 	}
 
+	static KLiteInteractionResult noWidgetSelected()
+	{
+		return new KLiteInteractionResult(
+			KLiteInteractionStatus.NO_WIDGET_SELECTED, "No item or spell is selected");
+	}
+
 	static KLiteInteractionResult invalidRequest(String message)
 	{
 		return new KLiteInteractionResult(KLiteInteractionStatus.INVALID_REQUEST, message);

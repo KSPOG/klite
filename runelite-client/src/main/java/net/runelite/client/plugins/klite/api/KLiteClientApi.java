@@ -24,6 +24,8 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteItemStack>> equipment();
 
+	CompletableFuture<List<KLiteItemStack>> bankItems();
+
 	CompletableFuture<List<KLiteSkillSnapshot>> skills();
 
 	CompletableFuture<List<KLitePlayerSnapshot>> players();
@@ -41,6 +43,12 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteWidgetSnapshot>> widgetChildren(@Component int componentId);
 
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> selectedWidget();
+
+	CompletableFuture<Boolean> isBankOpen();
+
+	CompletableFuture<List<KLiteDialogOption>> dialogOptions();
+
 	CompletableFuture<Integer> varbit(@Varbit int varbitId);
 
 	CompletableFuture<Integer> serverVarbit(@Varbit int varbitId);
@@ -54,6 +62,14 @@ public interface KLiteClientApi
 	CompletableFuture<String> varcString(@VarCStr int varcId);
 
 	CompletableFuture<KLiteInteractionResult> interactInventoryItem(int slot, String option);
+
+	CompletableFuture<KLiteInteractionResult> selectInventoryItem(int slot);
+
+	CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnInventoryItem(int slot);
+
+	CompletableFuture<KLiteInteractionResult> interactBankItem(int slot, String option);
+
+	CompletableFuture<KLiteInteractionResult> interactBankInventoryItem(int slot, String option);
 
 	CompletableFuture<KLiteInteractionResult> interactWidget(
 		@Component int componentId, String option);
@@ -70,6 +86,20 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteInteractionResult> interactGroundItem(
 		int itemId, WorldPoint location, String option);
+
+	CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnNpc(int index);
+
+	CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnPlayer(int id);
+
+	CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnSceneObject(
+		int objectId, WorldPoint location);
+
+	CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnGroundItem(
+		int itemId, WorldPoint location);
+
+	CompletableFuture<KLiteInteractionResult> chooseDialogOption(int index);
+
+	CompletableFuture<KLiteInteractionResult> continueDialog();
 
 	CompletableFuture<Void> menuAction(KLiteMenuActionRequest request);
 

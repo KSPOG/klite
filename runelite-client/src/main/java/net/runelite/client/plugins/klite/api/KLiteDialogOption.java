@@ -5,12 +5,12 @@
  */
 package net.runelite.client.plugins.klite.api;
 
-/** Outcome of a high-level KLite interaction request. */
-public enum KLiteInteractionStatus
+import lombok.Value;
+
+/** Immutable dialogue option exposed by the current chat menu. */
+@Value
+public class KLiteDialogOption
 {
-	DISPATCHED,
-	TARGET_NOT_FOUND,
-	OPTION_NOT_FOUND,
-	NO_WIDGET_SELECTED,
-	INVALID_REQUEST
+	int index;
+	String text;
 }

@@ -11,13 +11,20 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
 `KLiteClientApi`:
 
 - `snapshot()` returns an immutable game-state, world, and player-location view.
-- `inventory()` and `equipment()` return immutable item and slot snapshots.
+- `inventory()`, `equipment()`, and `bankItems()` return immutable item and slot snapshots;
+  `isBankOpen()` reports whether the bank item container is visible.
 - `skills()` returns real level, boosted level, and experience snapshots.
 - `players()` and `npcs()` return detached nearby-actor snapshots.
 - `groundItems()` returns detached scene-item and lifecycle snapshots.
 - `sceneObjects()` returns game, wall, ground, and decorative object snapshots.
 - `widget(...)`, `widgetChild(...)`, and `widgetChildren(...)` return immutable UI
   snapshots while preserving RuneLite's one-based widget operation numbers.
+- `selectedWidget()` reports the currently selected item or spell. `selectInventoryItem(...)`
+  enters target mode, and the `useSelectedWidgetOn...` methods revalidate targets.
+- `dialogOptions()`, `chooseDialogOption(...)`, and `continueDialog()` expose standard
+  dialogue interfaces while preserving their live widget child indices.
+- `interactBankItem(...)` and `interactBankInventoryItem(...)` resolve current bank
+  widget actions and fail safely while the relevant bank view is absent.
 - `varbit(...)`, `varp(...)`, and the server variants expose synchronized game
   variables; `varcInt(...)` and `varcString(...)` expose typed client variables.
 - `interactInventoryItem(...)`, `interactWidget(...)`,
@@ -30,7 +37,8 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
 
 Prefer the snapshot and high-level interaction methods. Every high-level
 interaction returns a `KLiteInteractionResult` with `DISPATCHED`,
-`TARGET_NOT_FOUND`, `OPTION_NOT_FOUND`, or `INVALID_REQUEST`. `menuAction(...)`
+`TARGET_NOT_FOUND`, `OPTION_NOT_FOUND`, `NO_WIDGET_SELECTED`, or
+`INVALID_REQUEST`. `menuAction(...)`
 is intentionally low-level; only use parameters resolved for the current client
 revision. Keep `onClientThread` actions short; never sleep, wait for network
 access, or execute an automation loop on the client thread.

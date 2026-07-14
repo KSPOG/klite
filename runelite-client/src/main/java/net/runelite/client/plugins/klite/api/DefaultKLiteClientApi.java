@@ -42,6 +42,14 @@ import net.runelite.api.widgets.Widget;
 public class DefaultKLiteClientApi implements KLiteClientApi
 {
 
+	private static final int[] DIALOG_CONTINUE_COMPONENTS =
+	{
+		InterfaceID.ChatBoth.CONTINUE,
+		InterfaceID.ChatLeft.CONTINUE,
+		InterfaceID.ChatRight.CONTINUE,
+		InterfaceID.Messagebox.CONTINUE,
+		InterfaceID.LevelupDisplay.CONTINUE
+	};
 	private static final MenuAction[] NPC_ACTIONS =
 	{
 		MenuAction.NPC_FIRST_OPTION,
@@ -93,6 +101,12 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	public CompletableFuture<List<KLiteItemStack>> equipment()
 	{
 		return itemContainer(InventoryID.WORN);
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteItemStack>> bankItems()
+	{
+		return itemContainer(InventoryID.BANK);
 	}
 
 	@Override
@@ -284,6 +298,43 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Optional<KLiteWidgetSnapshot>> selectedWidget()
+	{
+		return threadGateway.submit(() -> Optional.ofNullable(client.getSelectedWidget())
+			.map(DefaultKLiteClientApi::widgetSnapshot));
+	}
+
+	@Override
+	public CompletableFuture<Boolean> isBankOpen()
+	{
+		return threadGateway.submit(() -> isVisible(client.getWidget(InterfaceID.Bankmain.ITEMS)));
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteDialogOption>> dialogOptions()
+	{
+		return threadGateway.submit(() ->
+		{
+			Widget options = client.getWidget(InterfaceID.Chatmenu.OPTIONS);
+			Widget[] children = options == null ? null : options.getChildren();
+			if (children == null)
+			{
+				return ImmutableList.of();
+			}
+
+			ImmutableList.Builder<KLiteDialogOption> result = ImmutableList.builder();
+			for (Widget child : children)
+			{
+				if (child != null && child.getIndex() > 0 && !child.isHidden()
+					&& !isBlank(child.getText()))
+				{
+					result.add(new KLiteDialogOption(child.getIndex(), child.getText()));
+				}
+			}
+			return result.build();
+		});
+	}
+	@Override
 	public CompletableFuture<Integer> varbit(int varbitId)
 	{
 		return threadGateway.submit(() -> client.getVarbitValue(varbitId));
@@ -356,6 +407,65 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		});
 	}
 
+	@Override
+	public CompletableFuture<KLiteInteractionResult> selectInventoryItem(int slot)
+	{
+		return threadGateway.submit(() ->
+		{
+			Item item = itemAt(InventoryID.INV, slot);
+			if (slot < 0)
+			{
+				return KLiteInteractionResult.invalidRequest("Slot must be non-negative");
+			}
+			if (item == null)
+			{
+				return KLiteInteractionResult.targetNotFound(
+					"No inventory item exists in slot " + slot);
+			}
+
+			ItemComposition composition = client.getItemDefinition(item.getId());
+			client.menuAction(slot, InterfaceID.Inventory.ITEMS, MenuAction.WIDGET_TARGET,
+				0, item.getId(), "Use", composition.getName());
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnInventoryItem(int slot)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (slot < 0)
+			{
+				return KLiteInteractionResult.invalidRequest("Slot must be non-negative");
+			}
+			Item item = itemAt(InventoryID.INV, slot);
+			if (item == null)
+			{
+				return KLiteInteractionResult.targetNotFound(
+					"No inventory item exists in slot " + slot);
+			}
+			if (!client.isWidgetSelected() || client.getSelectedWidget() == null)
+			{
+				return KLiteInteractionResult.noWidgetSelected();
+			}
+			return dispatchSelectedTarget(slot, InterfaceID.Inventory.ITEMS,
+				MenuAction.WIDGET_TARGET_ON_WIDGET, 0, item.getId(),
+				client.getItemDefinition(item.getId()).getName());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> interactBankItem(int slot, String option)
+	{
+		return interactWidgetChild(InterfaceID.Bankmain.ITEMS, slot, option);
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> interactBankInventoryItem(int slot, String option)
+	{
+		return interactWidgetChild(InterfaceID.Bankside.ITEMS, slot, option);
+	}
 	@Override
 	public CompletableFuture<KLiteInteractionResult> interactWidget(int componentId, String option)
 	{
@@ -520,6 +630,129 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnNpc(int index)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (index < 0)
+			{
+				return KLiteInteractionResult.invalidRequest("NPC index must be non-negative");
+			}
+			NPC npc = findNpc(client.getTopLevelWorldView(), index);
+			if (npc == null)
+			{
+				return KLiteInteractionResult.targetNotFound("NPC index is not present: " + index);
+			}
+			return dispatchSelectedTarget(0, 0, MenuAction.WIDGET_TARGET_ON_NPC,
+				index, -1, npc.getName());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnPlayer(int id)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (id < 0)
+			{
+				return KLiteInteractionResult.invalidRequest("Player id must be non-negative");
+			}
+			Player player = findPlayer(client.getTopLevelWorldView(), id);
+			if (player == null)
+			{
+				return KLiteInteractionResult.targetNotFound("Player id is not present: " + id);
+			}
+			return dispatchSelectedTarget(0, 0, MenuAction.WIDGET_TARGET_ON_PLAYER,
+				id, -1, player.getName());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnSceneObject(
+		int objectId, WorldPoint location)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (objectId < 0 || location == null)
+			{
+				return KLiteInteractionResult.invalidRequest("Object id and location must be valid");
+			}
+			TileObject object = findSceneObject(client.getTopLevelWorldView(), objectId, location);
+			if (object == null)
+			{
+				return KLiteInteractionResult.targetNotFound("Scene object is no longer present");
+			}
+			LocalPoint local = object.getLocalLocation();
+			return dispatchSelectedTarget(local.getSceneX(), local.getSceneY(),
+				MenuAction.WIDGET_TARGET_ON_GAME_OBJECT, object.getId(), -1,
+				objectComposition(object).getName());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> useSelectedWidgetOnGroundItem(
+		int itemId, WorldPoint location)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (itemId < 0 || location == null)
+			{
+				return KLiteInteractionResult.invalidRequest("Item id and location must be valid");
+			}
+			Tile tile = findTile(client.getTopLevelWorldView(), location);
+			if (tile == null || !containsGroundItem(tile, itemId))
+			{
+				return KLiteInteractionResult.targetNotFound("Ground item is no longer present");
+			}
+			LocalPoint local = tile.getLocalLocation();
+			return dispatchSelectedTarget(local.getSceneX(), local.getSceneY(),
+				MenuAction.WIDGET_TARGET_ON_GROUND_ITEM, itemId, itemId,
+				client.getItemDefinition(itemId).getName());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> chooseDialogOption(int index)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (index < 1)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Dialogue option index must be at least 1");
+			}
+			Widget parent = client.getWidget(InterfaceID.Chatmenu.OPTIONS);
+			Widget option = parent == null ? null : parent.getChild(index);
+			if (!isVisible(option) || isBlank(option.getText()))
+			{
+				return KLiteInteractionResult.targetNotFound(
+					"Dialogue option is not present: " + index);
+			}
+			client.menuAction(option.getIndex(), option.getId(), MenuAction.WIDGET_CONTINUE,
+				0, option.getItemId(), option.getText(), "");
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> continueDialog()
+	{
+		return threadGateway.submit(() ->
+		{
+			for (int componentId : DIALOG_CONTINUE_COMPONENTS)
+			{
+				Widget widget = client.getWidget(componentId);
+				if (isVisible(widget))
+				{
+					client.menuAction(widget.getIndex(), widget.getId(), MenuAction.WIDGET_CONTINUE,
+						0, widget.getItemId(), "Continue", "");
+					return KLiteInteractionResult.dispatched();
+				}
+			}
+			return KLiteInteractionResult.targetNotFound("No supported continue dialogue is open");
+		});
+	}
+	@Override
 	public CompletableFuture<Void> menuAction(KLiteMenuActionRequest request)
 	{
 		return threadGateway.execute(() -> client.menuAction(
@@ -538,6 +771,40 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		return threadGateway.execute(action);
 	}
 
+	@Nullable
+	private Item itemAt(int inventoryId, int slot)
+	{
+		if (slot < 0)
+		{
+			return null;
+		}
+		ItemContainer container = client.getItemContainer(inventoryId);
+		if (container == null || slot >= container.getItems().length)
+		{
+			return null;
+		}
+		Item item = container.getItems()[slot];
+		return item.getId() >= 0 && item.getQuantity() > 0 ? item : null;
+	}
+
+	private KLiteInteractionResult dispatchSelectedTarget(
+		int param0, int param1, MenuAction action, int identifier, int itemId, @Nullable String target)
+	{
+		Widget selected = client.getSelectedWidget();
+		if (!client.isWidgetSelected() || selected == null)
+		{
+			return KLiteInteractionResult.noWidgetSelected();
+		}
+		String option = isBlank(selected.getTargetVerb()) ? "Use" : selected.getTargetVerb();
+		client.menuAction(param0, param1, action, identifier, itemId,
+			option, target == null ? "" : target);
+		return KLiteInteractionResult.dispatched();
+	}
+
+	private static boolean isVisible(@Nullable Widget widget)
+	{
+		return widget != null && !widget.isHidden();
+	}
 	private KLiteInteractionResult interactWidget(@Nullable Widget widget, @Nullable String option)
 	{
 		if (isBlank(option))
