@@ -6,7 +6,13 @@
 package net.runelite.client.plugins.klite.api;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import net.runelite.api.annotations.Component;
+import net.runelite.api.annotations.Varbit;
+import net.runelite.api.annotations.VarCInt;
+import net.runelite.api.annotations.VarCStr;
+import net.runelite.api.annotations.Varp;
 import net.runelite.api.coords.WorldPoint;
 
 /** Public KLite API exposed to KLite automation modules. */
@@ -28,7 +34,32 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteSceneObjectSnapshot>> sceneObjects();
 
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(@Component int componentId);
+
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> widgetChild(
+		@Component int componentId, int childIndex);
+
+	CompletableFuture<List<KLiteWidgetSnapshot>> widgetChildren(@Component int componentId);
+
+	CompletableFuture<Integer> varbit(@Varbit int varbitId);
+
+	CompletableFuture<Integer> serverVarbit(@Varbit int varbitId);
+
+	CompletableFuture<Integer> varp(@Varp int varpId);
+
+	CompletableFuture<Integer> serverVarp(@Varp int varpId);
+
+	CompletableFuture<Integer> varcInt(@VarCInt int varcId);
+
+	CompletableFuture<String> varcString(@VarCStr int varcId);
+
 	CompletableFuture<KLiteInteractionResult> interactInventoryItem(int slot, String option);
+
+	CompletableFuture<KLiteInteractionResult> interactWidget(
+		@Component int componentId, String option);
+
+	CompletableFuture<KLiteInteractionResult> interactWidgetChild(
+		@Component int componentId, int childIndex, String option);
 
 	CompletableFuture<KLiteInteractionResult> interactNpc(int index, String option);
 

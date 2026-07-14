@@ -16,7 +16,12 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
 - `players()` and `npcs()` return detached nearby-actor snapshots.
 - `groundItems()` returns detached scene-item and lifecycle snapshots.
 - `sceneObjects()` returns game, wall, ground, and decorative object snapshots.
-- `interactInventoryItem(...)`, `interactNpc(...)`, `interactPlayer(...)`, and
+- `widget(...)`, `widgetChild(...)`, and `widgetChildren(...)` return immutable UI
+  snapshots while preserving RuneLite's one-based widget operation numbers.
+- `varbit(...)`, `varp(...)`, and the server variants expose synchronized game
+  variables; `varcInt(...)` and `varcString(...)` expose typed client variables.
+- `interactInventoryItem(...)`, `interactWidget(...)`,
+  `interactWidgetChild(...)`, `interactNpc(...)`, `interactPlayer(...)`, and
   `interactSceneObject(...)` re-resolve the target and option on the client thread.
 - `interactGroundItem(...)` revalidates the item and supports the verified `Take`
   action; unsupported ground-item options return `OPTION_NOT_FOUND`.

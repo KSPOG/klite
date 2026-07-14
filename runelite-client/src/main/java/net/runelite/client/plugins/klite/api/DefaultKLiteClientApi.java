@@ -6,8 +6,10 @@
 package net.runelite.client.plugins.klite.api;
 
 import com.google.common.collect.ImmutableList;
+import java.awt.Rectangle;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
@@ -33,6 +35,7 @@ import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.widgets.Widget;
 
 /** Default thread-safe implementation of the public KLite client API. */
 @Singleton
@@ -228,6 +231,95 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(int componentId)
+	{
+		return threadGateway.submit(() -> componentId < 0
+			? Optional.empty()
+			: Optional.ofNullable(client.getWidget(componentId))
+				.map(DefaultKLiteClientApi::widgetSnapshot));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteWidgetSnapshot>> widgetChild(
+		int componentId, int childIndex)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (componentId < 0 || childIndex < 0)
+			{
+				return Optional.empty();
+			}
+			Widget parent = client.getWidget(componentId);
+			return Optional.ofNullable(parent == null ? null : parent.getChild(childIndex))
+				.map(DefaultKLiteClientApi::widgetSnapshot);
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteWidgetSnapshot>> widgetChildren(int componentId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (componentId < 0)
+			{
+				return ImmutableList.of();
+			}
+			Widget parent = client.getWidget(componentId);
+			Widget[] children = parent == null ? null : parent.getChildren();
+			if (children == null)
+			{
+				return ImmutableList.of();
+			}
+
+			ImmutableList.Builder<KLiteWidgetSnapshot> snapshots = ImmutableList.builder();
+			for (Widget child : children)
+			{
+				if (child != null)
+				{
+					snapshots.add(widgetSnapshot(child));
+				}
+			}
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<Integer> varbit(int varbitId)
+	{
+		return threadGateway.submit(() -> client.getVarbitValue(varbitId));
+	}
+
+	@Override
+	public CompletableFuture<Integer> serverVarbit(int varbitId)
+	{
+		return threadGateway.submit(() -> client.getServerVarbitValue(varbitId));
+	}
+
+	@Override
+	public CompletableFuture<Integer> varp(int varpId)
+	{
+		return threadGateway.submit(() -> client.getVarpValue(varpId));
+	}
+
+	@Override
+	public CompletableFuture<Integer> serverVarp(int varpId)
+	{
+		return threadGateway.submit(() -> client.getServerVarpValue(varpId));
+	}
+
+	@Override
+	public CompletableFuture<Integer> varcInt(int varcId)
+	{
+		return threadGateway.submit(() -> client.getVarcIntValue(varcId));
+	}
+
+	@Override
+	public CompletableFuture<String> varcString(int varcId)
+	{
+		return threadGateway.submit(() -> client.getVarcStrValue(varcId));
+	}
+
+	@Override
 	public CompletableFuture<KLiteInteractionResult> interactInventoryItem(int slot, String option)
 	{
 		return threadGateway.submit(() ->
@@ -261,6 +353,35 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			client.menuAction(slot, InterfaceID.Inventory.ITEMS, itemMenuAction(actionIndex),
 				actionIndex + 1, item.getId(), action, composition.getName());
 			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> interactWidget(int componentId, String option)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (componentId < 0)
+			{
+				return KLiteInteractionResult.invalidRequest("Widget component id must be non-negative");
+			}
+			return interactWidget(client.getWidget(componentId), option);
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> interactWidgetChild(
+		int componentId, int childIndex, String option)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (componentId < 0 || childIndex < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Widget component id and child index must be non-negative");
+			}
+			Widget parent = client.getWidget(componentId);
+			return interactWidget(parent == null ? null : parent.getChild(childIndex), option);
 		});
 	}
 
@@ -417,6 +538,65 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		return threadGateway.execute(action);
 	}
 
+	private KLiteInteractionResult interactWidget(@Nullable Widget widget, @Nullable String option)
+	{
+		if (isBlank(option))
+		{
+			return KLiteInteractionResult.invalidRequest("Widget option must not be blank");
+		}
+		if (widget == null || widget.isHidden())
+		{
+			return KLiteInteractionResult.targetNotFound("Widget is absent or hidden");
+		}
+
+		String[] actions = widget.getActions();
+		int actionIndex = findAction(actions, option);
+		if (actionIndex < 0)
+		{
+			return KLiteInteractionResult.optionNotFound("Widget does not expose option: " + option);
+		}
+
+		int operation = actionIndex + 1;
+		MenuAction action = operation >= 6 ? MenuAction.CC_OP_LOW_PRIORITY : MenuAction.CC_OP;
+		String target = widget.getName() == null ? "" : widget.getName();
+		client.menuAction(widget.getIndex(), widget.getId(), action, operation,
+			widget.getItemId(), actions[actionIndex], target);
+		return KLiteInteractionResult.dispatched();
+	}
+
+	private static KLiteWidgetSnapshot widgetSnapshot(Widget widget)
+	{
+		Rectangle bounds = widget.getBounds();
+		ImmutableList.Builder<KLiteWidgetAction> actions = ImmutableList.builder();
+		String[] widgetActions = widget.getActions();
+		if (widgetActions != null)
+		{
+			for (int index = 0; index < widgetActions.length; index++)
+			{
+				String option = widgetActions[index];
+				if (!isBlank(option))
+				{
+					actions.add(new KLiteWidgetAction(index + 1, option));
+				}
+			}
+		}
+		return new KLiteWidgetSnapshot(
+			widget.getId(),
+			widget.getIndex(),
+			widget.getParentId(),
+			widget.getType(),
+			widget.getContentType(),
+			widget.getText(),
+			widget.getName(),
+			widget.getItemId(),
+			widget.getItemQuantity(),
+			widget.isHidden(),
+			bounds.x,
+			bounds.y,
+			bounds.width,
+			bounds.height,
+			actions.build());
+	}
 	private static MenuAction itemMenuAction(int actionIndex)
 	{
 		return actionIndex < 3 ? MenuAction.CC_OP : MenuAction.CC_OP_LOW_PRIORITY;
