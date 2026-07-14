@@ -8,6 +8,7 @@ package net.runelite.client.plugins.klite.api;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Prayer;
 import net.runelite.api.annotations.Component;
@@ -25,6 +26,12 @@ public interface KLiteClientApi
 	CompletableFuture<KLiteRuntimeSnapshot> runtimeSnapshot();
 
 	CompletableFuture<KLiteCameraSnapshot> cameraSnapshot();
+
+	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages();
+
+	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages(ChatMessageType type);
+
+	CompletableFuture<Optional<KLiteChatMessageSnapshot>> chatMessage(int id);
 
 	CompletableFuture<KLiteCombatSnapshot> combatSnapshot();
 

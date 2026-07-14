@@ -16,12 +16,14 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Actor;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.MenuAction;
+import net.runelite.api.MessageNode;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import net.runelite.api.ObjectComposition;
@@ -136,6 +138,32 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			client.getCameraYaw(),
 			client.getCameraPitchTarget(),
 			client.getCameraYawTarget()));
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages()
+	{
+		return threadGateway.submit(() -> chatMessageSnapshots(null));
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages(ChatMessageType type)
+	{
+		return threadGateway.submit(() -> chatMessageSnapshots(type));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteChatMessageSnapshot>> chatMessage(int id)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (id < 0 || client.getMessages() == null)
+			{
+				return Optional.empty();
+			}
+			MessageNode message = client.getMessages().get(id);
+			return message == null ? Optional.empty() : Optional.of(chatMessageSnapshot(message));
+		});
 	}
 
 	@Override
@@ -1159,6 +1187,35 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			Widget parent = client.getWidget(componentId);
 			return interactWidget(parent == null ? null : parent.getChild(slot), option);
 		});
+	}
+
+	private List<KLiteChatMessageSnapshot> chatMessageSnapshots(@Nullable ChatMessageType type)
+	{
+		if (client.getMessages() == null)
+		{
+			return ImmutableList.of();
+		}
+		ImmutableList.Builder<KLiteChatMessageSnapshot> messages = ImmutableList.builder();
+		for (MessageNode message : client.getMessages())
+		{
+			if (message != null && (type == null || type == message.getType()))
+			{
+				messages.add(chatMessageSnapshot(message));
+			}
+		}
+		return messages.build();
+	}
+
+	private static KLiteChatMessageSnapshot chatMessageSnapshot(MessageNode message)
+	{
+		return new KLiteChatMessageSnapshot(
+			message.getId(),
+			message.getType(),
+			message.getName(),
+			message.getSender(),
+			message.getValue(),
+			message.getRuneLiteFormatMessage(),
+			message.getTimestamp());
 	}
 
 	private long itemCount(int inventoryId, int itemId)
