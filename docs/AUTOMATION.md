@@ -16,6 +16,9 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
   and an empty region list.
 - `cameraSnapshot()` returns current position and angles together with the input-target
   pitch and yaw, without exposing live client state.
+- `chatMessages()`, `chatMessages(...)`, and `chatMessage(...)` return detached chat
+  history data. The collection preserves the current client iteration order, which is not
+  guaranteed to be chronological.
 - `combatSnapshot()` returns health, prayer, run, weight, special-attack, poison,
   wilderness, animation, target, and active-prayer state. Run energy uses hundredths
   of a percent; special-attack energy uses tenths of a percent.
