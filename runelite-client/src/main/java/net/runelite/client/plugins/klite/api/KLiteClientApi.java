@@ -35,6 +35,10 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteInteractionResult> openWorldHopper();
 
+	CompletableFuture<List<KLiteFriendSnapshot>> friends();
+
+	CompletableFuture<Boolean> isFriend(String name, boolean mustBeLoggedIn);
+
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages();
 
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages(ChatMessageType type);
