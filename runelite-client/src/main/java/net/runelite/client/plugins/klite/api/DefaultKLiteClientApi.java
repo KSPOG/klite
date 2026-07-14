@@ -6,7 +6,9 @@
 package net.runelite.client.plugins.klite.api;
 
 import com.google.common.collect.ImmutableList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -16,11 +18,13 @@ import net.runelite.api.Client;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.NPC;
+import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
 import net.runelite.api.Scene;
 import net.runelite.api.Skill;
 import net.runelite.api.Tile;
 import net.runelite.api.TileItem;
+import net.runelite.api.TileObject;
 import net.runelite.api.WorldView;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.InventoryID;
@@ -164,11 +168,96 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<List<KLiteSceneObjectSnapshot>> sceneObjects()
+	{
+		return threadGateway.submit(() ->
+		{
+			WorldView worldView = client.getTopLevelWorldView();
+			if (worldView == null || worldView.getScene() == null)
+			{
+				return ImmutableList.of();
+			}
+
+			Set<String> seenObjects = new HashSet<>();
+			ImmutableList.Builder<KLiteSceneObjectSnapshot> snapshots = ImmutableList.builder();
+			for (Tile[][] plane : worldView.getScene().getTiles())
+			{
+				for (Tile[] row : plane)
+				{
+					for (Tile tile : row)
+					{
+						if (tile == null)
+						{
+							continue;
+						}
+						for (TileObject gameObject : tile.getGameObjects())
+						{
+							addSceneObject(gameObject, KLiteSceneObjectType.GAME, seenObjects, snapshots);
+						}
+						addSceneObject(tile.getWallObject(), KLiteSceneObjectType.WALL, seenObjects, snapshots);
+						addSceneObject(tile.getGroundObject(), KLiteSceneObjectType.GROUND, seenObjects, snapshots);
+						addSceneObject(tile.getDecorativeObject(), KLiteSceneObjectType.DECORATIVE,
+							seenObjects, snapshots);
+					}
+				}
+			}
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<Void> menuAction(KLiteMenuActionRequest request)
+	{
+		return threadGateway.execute(() -> client.menuAction(
+			request.getParam0(),
+			request.getParam1(),
+			request.getAction(),
+			request.getIdentifier(),
+			request.getItemId(),
+			request.getOption(),
+			request.getTarget()));
+	}
+	@Override
 	public CompletableFuture<Void> onClientThread(Runnable action)
 	{
 		return threadGateway.execute(action);
 	}
 
+	private void addSceneObject(
+		@Nullable TileObject object,
+		KLiteSceneObjectType type,
+		Set<String> seenObjects,
+		ImmutableList.Builder<KLiteSceneObjectSnapshot> snapshots)
+	{
+		if (object == null || !seenObjects.add(type + ":" + object.getHash()))
+		{
+			return;
+		}
+
+		ObjectComposition composition = client.getObjectDefinition(object.getId());
+		if (composition.getImpostorIds() != null)
+		{
+			ObjectComposition transformed = composition.getImpostor();
+			if (transformed != null)
+			{
+				composition = transformed;
+			}
+		}
+
+		ImmutableList.Builder<String> actions = ImmutableList.builder();
+		String[] compositionActions = composition.getActions();
+		for (int index = 0; index < compositionActions.length; index++)
+		{
+			String override = object.getOpOverride(index);
+			String action = override == null ? compositionActions[index] : override;
+			if (action != null && !action.isBlank())
+			{
+				actions.add(action);
+			}
+		}
+		snapshots.add(new KLiteSceneObjectSnapshot(
+			object.getId(), composition.getName(), type, object.getWorldLocation(), actions.build()));
+	}
 	private CompletableFuture<List<KLiteItemStack>> itemContainer(int inventoryId)
 	{
 		return threadGateway.submit(() ->

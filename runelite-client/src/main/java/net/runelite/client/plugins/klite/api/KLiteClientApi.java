@@ -25,5 +25,9 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems();
 
+	CompletableFuture<List<KLiteSceneObjectSnapshot>> sceneObjects();
+
+	CompletableFuture<Void> menuAction(KLiteMenuActionRequest request);
+
 	CompletableFuture<Void> onClientThread(Runnable action);
 }

@@ -15,9 +15,13 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
 - `skills()` returns real level, boosted level, and experience snapshots.
 - `players()` and `npcs()` return detached nearby-actor snapshots.
 - `groundItems()` returns detached scene-item and lifecycle snapshots.
+- `sceneObjects()` returns game, wall, ground, and decorative object snapshots.
+- `menuAction(...)` dispatches an immutable, typed low-level menu request.
 - `onClientThread(...)` queues an advanced operation on RuneLite's client thread.
 
-Prefer the immutable snapshot methods. Keep `onClientThread` actions short; never
+Prefer the immutable snapshot methods. `menuAction(...)` is intentionally low-level;
+only use parameters resolved for the current client revision. Keep `onClientThread`
+actions short; never
 sleep, wait for network access, or execute an automation loop on the client
 thread.
 
