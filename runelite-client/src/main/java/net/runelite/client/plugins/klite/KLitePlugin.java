@@ -17,6 +17,7 @@ import net.runelite.client.plugins.klite.api.DefaultKLiteClientApi;
 import net.runelite.client.plugins.klite.api.KLiteClientApi;
 import net.runelite.client.plugins.klite.automation.AutomationManager;
 import net.runelite.client.plugins.klite.marketplace.KLiteMarketplaceWindow;
+import net.runelite.client.plugins.klite.marketplace.KLitePluginPanel;
 import net.runelite.client.plugins.klite.walker.DefaultWebWalker;
 import net.runelite.client.plugins.klite.walker.WebWalker;
 import net.runelite.client.ui.ClientToolbar;
@@ -53,6 +54,9 @@ public class KLitePlugin extends Plugin
 
 	@Inject
 	private KLiteMarketplaceWindow marketplaceWindow;
+
+	@Inject
+	private KLitePluginPanel pluginPanel;
 
 	private NavigationButton marketplaceButton;
 
@@ -94,10 +98,10 @@ public class KLitePlugin extends Plugin
 		BufferedImage scaledIcon = ImageUtil.resizeImage(sourceIcon, 32, 32, true);
 		BufferedImage icon = ImageUtil.resizeCanvas(scaledIcon, 32, 32);
 		marketplaceButton = NavigationButton.builder()
-			.tooltip("KLite Plugin Marketplace")
+			.tooltip("KLite Plugins")
 			.icon(icon)
 			.priority(1)
-			.onClick(marketplaceWindow::open)
+			.panel(pluginPanel)
 			.build();
 		clientToolbar.addNavigation(marketplaceButton);
 	}

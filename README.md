@@ -14,8 +14,8 @@ custom code inside the client module.
 - `net.runelite.client.KLite` is the distribution-owned entry point.
 - The window title and shaded artifact are branded as KLite.
 - `KLite Core` is a built-in plugin with an optional build/status overlay.
-- KLite-branded application icons and a shield-branded marketplace window are
-  integrated into the desktop client.
+- KLite-branded application icons, a plugin sidebar, and a shield-branded
+  marketplace window are integrated into the desktop client.
 - A disabled-by-default automation runtime provides client-thread-safe snapshots,
   cancellation, task lifecycle management, and a global kill switch.
 - A cached ground web walker uses the published Shortest Path 1.20.6 collision

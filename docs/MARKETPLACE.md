@@ -1,13 +1,16 @@
 # KLite Plugin Marketplace
 
-KLite Core adds a shield-branded toolbar button that opens a standalone
-marketplace window. The window is intentionally a catalog shell today: no
-remote plugin is downloaded, installed, or executed.
+KLite Core adds a shield-branded sidebar section for installed KLite plugins.
+Its **Open Marketplace** action launches a standalone marketplace window. The
+window is intentionally a catalog shell today: no remote plugin is downloaded,
+installed, or executed.
 
 ## Current behavior
 
+- The KLite shield opens a dedicated sidebar panel.
+- Installed marketplace plugins will be listed in that panel.
 - The marketplace opens independently from the RuneLite configuration panel.
-- The KLite shield identifies the toolbar action and marketplace content.
+- The KLite shield identifies the sidebar and marketplace content.
 - The window reports that its catalog source is not configured.
 - Closing KLite Core also closes and disposes the marketplace window.
 
