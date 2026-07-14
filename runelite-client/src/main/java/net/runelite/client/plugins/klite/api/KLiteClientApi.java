@@ -71,6 +71,9 @@ public interface KLiteClientApi
 
 	CompletableFuture<Optional<KLiteItemStack>> equipmentItem(EquipmentInventorySlot slot);
 
+	CompletableFuture<KLiteInteractionResult> interactEquipmentItem(
+		EquipmentInventorySlot slot, String option);
+
 	CompletableFuture<List<KLiteItemStack>> bankItems();
 
 	CompletableFuture<Long> bankCount(int itemId);
