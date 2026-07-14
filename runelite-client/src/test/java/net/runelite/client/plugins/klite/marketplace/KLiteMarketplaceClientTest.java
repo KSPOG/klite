@@ -6,12 +6,15 @@
 package net.runelite.client.plugins.klite.marketplace;
 
 import com.google.gson.Gson;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okio.Buffer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,6 +75,36 @@ public class KLiteMarketplaceClientTest
 	}
 
 	@Test
+	public void rejectsUnsafeIconPath() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson().replace(
+			"assets/plugins/klite-example.png", "../private/icon.png")));
+
+		ExecutionException exception = expectFailure();
+
+		assertTrue(exception.getCause() instanceof IllegalArgumentException);
+	}
+
+	@Test
+	public void fetchesSameOriginPluginIcon() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson()));
+		KLiteMarketplacePlugin plugin = client.fetchCatalog().get(5, TimeUnit.SECONDS)
+			.getPlugins().get(0);
+		server.enqueue(new MockResponse()
+			.setHeader("Content-Type", "image/png")
+			.setBody(new Buffer().write(Base64.getDecoder().decode(
+				"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="))));
+
+		BufferedImage image = client.fetchIcon(plugin).get(5, TimeUnit.SECONDS);
+
+		assertEquals(1, image.getWidth());
+		assertEquals(1, image.getHeight());
+		server.takeRequest();
+		assertEquals("/assets/plugins/klite-example.png", server.takeRequest().getPath());
+	}
+
+	@Test
 	public void reportsHttpFailure() throws Exception
 	{
 		server.enqueue(new MockResponse().setResponseCode(503));
@@ -114,7 +147,8 @@ public class KLiteMarketplaceClientTest
 			+ "    \"description\": \"A safe example plugin.\",\n"
 			+ "    \"status\": \"bundled\",\n"
 			+ "    \"minimumClientVersion\": \"1.0.0\",\n"
-			+ "    \"homepageUrl\": \"https://github.com/KSPOG/klite\"\n"
+			+ "    \"homepageUrl\": \"https://github.com/KSPOG/klite\",\n"
+			+ "    \"iconPath\": \"assets/plugins/klite-example.png\"\n"
 			+ "  }]\n"
 			+ "}";
 	}

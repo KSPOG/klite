@@ -10,7 +10,8 @@
       "description": "A harmless bundled plugin that displays a small overlay and demonstrates the KLite marketplace catalog connection.",
       "status": "bundled",
       "minimumClientVersion": "1.0.0",
-      "homepageUrl": "https://github.com/KSPOG/klite"
+      "homepageUrl": "https://github.com/KSPOG/klite",
+      "iconPath": "assets/plugins/klite-example.png"
     }
   ]
 }

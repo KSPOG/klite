@@ -27,11 +27,28 @@ function renderPlugins(query = "") {
     const card = document.createElement("article");
     card.className = "plugin-card";
 
+    const header = document.createElement("div");
+    header.className = "plugin-header";
+
+    const icon = document.createElement("img");
+    icon.className = "plugin-icon";
+    icon.src = plugin.iconPath || "assets/klite-marketplace.png";
+    icon.alt = plugin.name + " icon";
+    icon.width = 64;
+    icon.height = 64;
+    icon.loading = "lazy";
+
+    const copy = document.createElement("div");
+    copy.className = "plugin-copy";
+
     const title = document.createElement("h3");
     title.textContent = plugin.name;
 
     const description = document.createElement("p");
     description.textContent = plugin.description;
+
+    copy.append(title, description);
+    header.append(icon, copy);
 
     const meta = document.createElement("div");
     meta.className = "plugin-meta";
@@ -46,7 +63,7 @@ function renderPlugins(query = "") {
     status.textContent = plugin.status === "bundled" ? "Bundled with KLite" : plugin.status;
 
     meta.append(author, version, status);
-    card.append(title, description, meta);
+    card.append(header, meta);
     pluginGrid.append(card);
   }
 }

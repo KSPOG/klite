@@ -8,7 +8,8 @@ Published plugins are listed in `plugins.json`. Keep the catalog machine-readabl
 
 The initial schema is intentionally small and is validated by the client. Each
 entry includes an ID, display metadata, publication status, minimum compatible
-client version, and optional HTTPS homepage. A signed artifact URL, checksum,
+client version, optional HTTPS homepage, and an optional reviewed image under
+assets/plugins/. A signed artifact URL, checksum,
 compatibility range, and review metadata must be added before client-side
 installation is enabled.
 

@@ -206,6 +206,26 @@ h2 {
   background: var(--surface);
 }
 
+.plugin-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.plugin-icon {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #090d14;
+  object-fit: cover;
+}
+
+.plugin-copy {
+  min-width: 0;
+}
+
 .plugin-card h3 {
   margin: 0;
   font-size: 1.25rem;

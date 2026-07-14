@@ -284,7 +284,7 @@ public class KLiteMarketplaceWindow
 		catalogList.repaint();
 	}
 
-	private static JPanel createPluginCard(KLiteMarketplacePlugin plugin)
+	private JPanel createPluginCard(KLiteMarketplacePlugin plugin)
 	{
 		JPanel card = new JPanel(new BorderLayout(14, 10));
 		card.setAlignmentX(JPanel.LEFT_ALIGNMENT);
@@ -306,6 +306,26 @@ public class KLiteMarketplaceWindow
 			? ColorScheme.PROGRESS_COMPLETE_COLOR : ColorScheme.LIGHT_GRAY_COLOR);
 		heading.add(status, BorderLayout.EAST);
 		card.add(heading, BorderLayout.NORTH);
+
+		BufferedImage fallbackImage = ImageUtil.resizeImage(BRAND_IMAGE, 56, 56, true);
+		JLabel pluginIcon = new JLabel(new ImageIcon(ImageUtil.resizeCanvas(fallbackImage, 56, 56)));
+		pluginIcon.setPreferredSize(new Dimension(64, 64));
+		pluginIcon.setHorizontalAlignment(SwingConstants.CENTER);
+		card.add(pluginIcon, BorderLayout.WEST);
+		if (plugin.getIconPath() != null)
+		{
+			marketplaceClient.fetchIcon(plugin).whenComplete((image, error) ->
+			{
+				if (image != null)
+				{
+					SwingUtilities.invokeLater(() ->
+					{
+						BufferedImage scaledImage = ImageUtil.resizeImage(image, 56, 56, true);
+						pluginIcon.setIcon(new ImageIcon(ImageUtil.resizeCanvas(scaledImage, 56, 56)));
+					});
+				}
+			});
+		}
 
 		JTextArea description = new JTextArea(plugin.getDescription());
 		description.setEditable(false);

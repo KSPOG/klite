@@ -19,6 +19,8 @@ public final class KLiteMarketplacePlugin
 	private static final Pattern ID_PATTERN = Pattern.compile("[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?");
 	private static final Pattern DISPLAY_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9 ._'()-]{0,63}");
 	private static final Pattern VERSION_PATTERN = Pattern.compile("[0-9]+(?:\\.[0-9]+){1,3}(?:[-+][A-Za-z0-9.-]+)?");
+	private static final Pattern ICON_PATH_PATTERN = Pattern.compile(
+		"assets/plugins/[a-z0-9][a-z0-9._-]{0,100}\\.(?:png|jpg|jpeg)");
 	private static final Set<String> STATUSES = Set.of("bundled", "available", "coming-soon");
 
 	private String id;
@@ -29,6 +31,7 @@ public final class KLiteMarketplacePlugin
 	private String status;
 	private String minimumClientVersion;
 	private String homepageUrl;
+	private String iconPath;
 
 	public String getId()
 	{
@@ -70,6 +73,11 @@ public final class KLiteMarketplacePlugin
 		return homepageUrl;
 	}
 
+	public String getIconPath()
+	{
+		return iconPath;
+	}
+
 	void validate()
 	{
 		if (id == null || !ID_PATTERN.matcher(id).matches())
@@ -102,6 +110,10 @@ public final class KLiteMarketplacePlugin
 		}
 		status = status.toLowerCase(Locale.ROOT);
 		validateHttpsUrl(homepageUrl);
+		if (iconPath != null && !ICON_PATH_PATTERN.matcher(iconPath).matches())
+		{
+			throw new IllegalArgumentException("Invalid marketplace plugin icon path: " + id);
+		}
 	}
 
 	private static void validateHttpsUrl(String value)

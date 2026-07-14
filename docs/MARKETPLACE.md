@@ -14,6 +14,8 @@ downloaded, installed, or executed.
 - The KLite shield identifies the sidebar and marketplace content.
 - The window provides loading, error, refresh, and search states for the remote
   catalog.
+- Catalog entries can display reviewed PNG or JPEG artwork hosted by the same
+  marketplace origin; invalid or unavailable images use the KLite fallback.
 - The bundled **KLite Example** plugin demonstrates the catalog connection with
   a harmless status overlay and is disabled by default.
 - Closing KLite Core also closes and disposes the marketplace window.
