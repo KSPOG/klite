@@ -10,11 +10,15 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,6 +27,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -61,9 +66,13 @@ public class KLiteMarketplaceWindow
 	private JFrame frame;
 	private JPanel catalogList;
 	private JTextField search;
+	private JComboBox<String> categoryFilter;
+	private JComboBox<String> typeFilter;
+	private JComboBox<String> orderFilter;
 	private JButton refreshButton;
 	private JLabel footer;
 	private boolean loading;
+	private boolean updatingFilters;
 
 	@Inject
 	KLiteMarketplaceWindow(KLiteMarketplaceClient marketplaceClient)
@@ -164,7 +173,7 @@ public class KLiteMarketplaceWindow
 		catalogArea.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		catalogArea.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
-		JPanel controls = new JPanel(new BorderLayout(10, 0));
+		JPanel controls = new JPanel(new BorderLayout(10, 10));
 		controls.setOpaque(false);
 		search = new JTextField();
 		search.setEnabled(false);
@@ -191,6 +200,26 @@ public class KLiteMarketplaceWindow
 			}
 		});
 		controls.add(search, BorderLayout.CENTER);
+
+		JPanel filters = new JPanel(new GridLayout(1, 3, 10, 0));
+		filters.setOpaque(false);
+		categoryFilter = new JComboBox<>(new String[]{"All categories"});
+		categoryFilter.addActionListener(event -> renderCatalog());
+		filters.add(categoryFilter);
+		typeFilter = new JComboBox<>(new String[]{"All types"});
+		typeFilter.addActionListener(event -> renderCatalog());
+		filters.add(typeFilter);
+		orderFilter = new JComboBox<>(new String[]{
+			"Trending today",
+			"Trending this week",
+			"Trending this month",
+			"Recently updated",
+			"Recently released",
+			"Name"
+		});
+		orderFilter.addActionListener(event -> renderCatalog());
+		filters.add(orderFilter);
+		controls.add(filters, BorderLayout.SOUTH);
 
 		refreshButton = new JButton("Refresh");
 		refreshButton.addActionListener(event -> refreshCatalog());
@@ -238,6 +267,7 @@ public class KLiteMarketplaceWindow
 			}
 
 			plugins = catalog.getPlugins();
+			updateFilters(catalog);
 			search.setEnabled(true);
 			footer.setText("Catalog source: " + marketplaceClient.getCatalogUrl().host()
 				+ " • " + plugins.size() + " reviewed plugin" + (plugins.size() == 1 ? "" : "s"));
@@ -245,21 +275,63 @@ public class KLiteMarketplaceWindow
 		}));
 	}
 
+	private void updateFilters(KLiteMarketplaceCatalog catalog)
+	{
+		updatingFilters = true;
+		String selectedCategory = categoryFilter.getSelectedIndex() == 0
+			? null : (String) categoryFilter.getSelectedItem();
+		String selectedType = typeFilter.getSelectedIndex() == 0
+			? null : (String) typeFilter.getSelectedItem();
+
+		categoryFilter.removeAllItems();
+		categoryFilter.addItem("All categories");
+		for (String category : catalog.getCategories())
+		{
+			categoryFilter.addItem(category);
+		}
+		typeFilter.removeAllItems();
+		typeFilter.addItem("All types");
+		for (String type : catalog.getTypes())
+		{
+			typeFilter.addItem(type);
+		}
+		if (selectedCategory != null)
+		{
+			categoryFilter.setSelectedItem(selectedCategory);
+		}
+		if (selectedType != null)
+		{
+			typeFilter.setSelectedItem(selectedType);
+		}
+		updatingFilters = false;
+	}
+
 	private void renderCatalog()
 	{
-		if (catalogList == null || search == null)
+		if (updatingFilters || catalogList == null || search == null)
 		{
 			return;
 		}
 
 		String query = search.getText().trim().toLowerCase(Locale.ROOT);
+		String selectedCategory = categoryFilter.getSelectedIndex() == 0
+			? null : (String) categoryFilter.getSelectedItem();
+		String selectedType = typeFilter.getSelectedIndex() == 0
+			? null : (String) typeFilter.getSelectedItem();
+		List<KLiteMarketplacePlugin> orderedPlugins = new ArrayList<>(plugins);
+		orderedPlugins.sort(getOrderComparator());
 		catalogList.removeAll();
 		int visiblePluginCount = 0;
-		for (KLiteMarketplacePlugin plugin : plugins)
+		for (KLiteMarketplacePlugin plugin : orderedPlugins)
 		{
-			String searchable = (plugin.getName() + " " + plugin.getAuthor() + " "
-				+ plugin.getDescription()).toLowerCase(Locale.ROOT);
-			if (!searchable.contains(query))
+			String searchable = (plugin.getName() + " " + plugin.getAuthorsDisplay() + " "
+				+ plugin.getDescription() + " "
+				+ String.join(" ", plugin.getDescriptor().getTags()) + " "
+				+ String.join(" ", plugin.getCategories()) + " " + plugin.getType())
+				.toLowerCase(Locale.ROOT);
+			if (!searchable.contains(query)
+				|| (selectedCategory != null && !plugin.getCategories().contains(selectedCategory))
+				|| (selectedType != null && !selectedType.equals(plugin.getType())))
 			{
 				continue;
 			}
@@ -284,7 +356,33 @@ public class KLiteMarketplaceWindow
 		catalogList.repaint();
 	}
 
-	private static JPanel createPluginCard(KLiteMarketplacePlugin plugin)
+	private Comparator<KLiteMarketplacePlugin> getOrderComparator()
+	{
+		Comparator<KLiteMarketplacePlugin> comparator;
+		switch (orderFilter.getSelectedIndex())
+		{
+			case 1:
+				comparator = Comparator.comparingInt(KLiteMarketplacePlugin::getTrendingWeek).reversed();
+				break;
+			case 2:
+				comparator = Comparator.comparingInt(KLiteMarketplacePlugin::getTrendingMonth).reversed();
+				break;
+			case 3:
+				comparator = Comparator.comparing(KLiteMarketplacePlugin::getUpdatedAt).reversed();
+				break;
+			case 4:
+				comparator = Comparator.comparing(KLiteMarketplacePlugin::getReleasedAt).reversed();
+				break;
+			case 5:
+				return Comparator.comparing(KLiteMarketplacePlugin::getName, String.CASE_INSENSITIVE_ORDER);
+			default:
+				comparator = Comparator.comparingInt(KLiteMarketplacePlugin::getTrendingDay).reversed();
+				break;
+		}
+		return comparator.thenComparing(KLiteMarketplacePlugin::getName, String.CASE_INSENSITIVE_ORDER);
+	}
+
+	private JPanel createPluginCard(KLiteMarketplacePlugin plugin)
 	{
 		JPanel card = new JPanel(new BorderLayout(14, 10));
 		card.setAlignmentX(JPanel.LEFT_ALIGNMENT);
@@ -307,6 +405,26 @@ public class KLiteMarketplaceWindow
 		heading.add(status, BorderLayout.EAST);
 		card.add(heading, BorderLayout.NORTH);
 
+		BufferedImage fallbackImage = ImageUtil.resizeImage(BRAND_IMAGE, 56, 56, true);
+		JLabel pluginIcon = new JLabel(new ImageIcon(ImageUtil.resizeCanvas(fallbackImage, 56, 56)));
+		pluginIcon.setPreferredSize(new Dimension(64, 64));
+		pluginIcon.setHorizontalAlignment(SwingConstants.CENTER);
+		card.add(pluginIcon, BorderLayout.WEST);
+		if (plugin.getIconPath() != null)
+		{
+			marketplaceClient.fetchIcon(plugin).whenComplete((image, error) ->
+			{
+				if (image != null)
+				{
+					SwingUtilities.invokeLater(() ->
+					{
+						BufferedImage scaledImage = ImageUtil.resizeImage(image, 56, 56, true);
+						pluginIcon.setIcon(new ImageIcon(ImageUtil.resizeCanvas(scaledImage, 56, 56)));
+					});
+				}
+			});
+		}
+
 		JTextArea description = new JTextArea(plugin.getDescription());
 		description.setEditable(false);
 		description.setFocusable(false);
@@ -317,7 +435,8 @@ public class KLiteMarketplaceWindow
 		description.setFont(name.getFont().deriveFont(Font.PLAIN, 13f));
 		card.add(description, BorderLayout.CENTER);
 
-		JLabel metadata = new JLabel("By " + plugin.getAuthor() + " • v" + plugin.getVersion()
+		JLabel metadata = new JLabel("By " + plugin.getAuthorsDisplay() + " • v" + plugin.getVersion()
+			+ " • " + plugin.getType() + " • " + String.join(", ", plugin.getCategories())
 			+ " • KLite " + plugin.getMinimumClientVersion() + "+");
 		metadata.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		card.add(metadata, BorderLayout.SOUTH);

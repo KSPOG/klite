@@ -11,12 +11,29 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
 `KLiteClientApi`:
 
 - `snapshot()` returns an immutable game-state, world, and player-location view.
-- `inventory()` returns immutable item and slot snapshots.
+- `inventory()` and `equipment()` return immutable item and slot snapshots.
+- `skills()` returns real level, boosted level, and experience snapshots.
+- `players()` and `npcs()` return detached nearby-actor snapshots.
+- `groundItems()` returns detached scene-item and lifecycle snapshots.
+- `sceneObjects()` returns game, wall, ground, and decorative object snapshots.
+- `widget(...)`, `widgetChild(...)`, and `widgetChildren(...)` return immutable UI
+  snapshots while preserving RuneLite's one-based widget operation numbers.
+- `varbit(...)`, `varp(...)`, and the server variants expose synchronized game
+  variables; `varcInt(...)` and `varcString(...)` expose typed client variables.
+- `interactInventoryItem(...)`, `interactWidget(...)`,
+  `interactWidgetChild(...)`, `interactNpc(...)`, `interactPlayer(...)`, and
+  `interactSceneObject(...)` re-resolve the target and option on the client thread.
+- `interactGroundItem(...)` revalidates the item and supports the verified `Take`
+  action; unsupported ground-item options return `OPTION_NOT_FOUND`.
+- `menuAction(...)` dispatches an immutable, typed low-level menu request.
 - `onClientThread(...)` queues an advanced operation on RuneLite's client thread.
 
-The first two methods are preferred. Keep `onClientThread` actions short; never
-sleep, wait for network access, or execute an automation loop on the client
-thread.
+Prefer the snapshot and high-level interaction methods. Every high-level
+interaction returns a `KLiteInteractionResult` with `DISPATCHED`,
+`TARGET_NOT_FOUND`, `OPTION_NOT_FOUND`, or `INVALID_REQUEST`. `menuAction(...)`
+is intentionally low-level; only use parameters resolved for the current client
+revision. Keep `onClientThread` actions short; never sleep, wait for network
+access, or execute an automation loop on the client thread.
 
 ## Writing a task
 

@@ -11,16 +11,22 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 /**
- * Minimal bundled plugin used to demonstrate the KLite marketplace catalog.
+ * Source-only plugin used to demonstrate the future KLite marketplace package format.
  */
 @PluginDescriptor(
 	name = "KLite Example",
 	description = "A harmless example plugin published in the KLite marketplace catalog",
 	tags = {"klite", "example", "marketplace"},
-	enabledByDefault = false
+	authors = {"KSPOG"},
+	version = KLiteExamplePlugin.VERSION,
+	minClientVersion = "1.0.0",
+	enabledByDefault = false,
+	isExternal = true
 )
 public class KLiteExamplePlugin extends Plugin
 {
+	public static final String VERSION = "1.0.0";
+
 	@Inject
 	private OverlayManager overlayManager;
 

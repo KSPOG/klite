@@ -70,13 +70,13 @@ public class KLitePluginPanel extends PluginPanel
 		JPanel message = new JPanel();
 		message.setOpaque(false);
 		message.setLayout(new BoxLayout(message, BoxLayout.Y_AXIS));
-		JLabel heading = new JLabel("No KLite plugins installed");
+		JLabel heading = new JLabel("No marketplace plugins installed");
 		heading.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		heading.setHorizontalAlignment(SwingConstants.CENTER);
 		heading.setForeground(ColorScheme.TEXT_COLOR);
 		heading.setFont(heading.getFont().deriveFont(Font.BOLD, 14f));
 		JLabel explanation = new JLabel(
-			"<html><div style='text-align:center'>Installed marketplace plugins<br>will be listed here.</div></html>");
+			"<html><div style='text-align:center'>Plugins installed from the marketplace<br>will be listed here.</div></html>");
 		explanation.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		explanation.setHorizontalAlignment(SwingConstants.CENTER);
 		explanation.setForeground(ColorScheme.LIGHT_GRAY_COLOR);

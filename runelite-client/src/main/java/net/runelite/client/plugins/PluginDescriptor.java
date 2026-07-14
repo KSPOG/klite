@@ -54,6 +54,26 @@ public @interface PluginDescriptor
 	String[] tags() default {};
 
 	/**
+	 * Plugin authors displayed by external catalogs.
+	 */
+	String[] authors() default {};
+
+	/**
+	 * Published plugin version. External plugins must provide a semantic version.
+	 */
+	String version() default "";
+
+	/**
+	 * Minimum compatible KLite client version.
+	 */
+	String minClientVersion() default "";
+
+	/**
+	 * Whether this plugin is distributed separately from the client.
+	 */
+	boolean isExternal() default false;
+
+	/**
 	 * A list of plugin names that are mutually exclusive with this plugin. Any plugins
 	 * with a name or conflicts value that matches this will be disabled when this plugin
 	 * is started

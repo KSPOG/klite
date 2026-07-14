@@ -1,16 +1,60 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "updatedAt": "2026-07-14T00:00:00Z",
+  "categories": [
+    "Agility",
+    "Bossing",
+    "Combat",
+    "Construction",
+    "Cooking",
+    "Crafting",
+    "Developer tools",
+    "Farming",
+    "Firemaking",
+    "Fishing",
+    "Fletching",
+    "Herblore",
+    "Hunter",
+    "Magic",
+    "Minigames",
+    "Mining",
+    "Moneymaking",
+    "Other",
+    "Prayer",
+    "Questing",
+    "Runecrafting",
+    "Sailing",
+    "Slayer",
+    "Smithing",
+    "Summoning",
+    "Thieving",
+    "Woodcutting"
+  ],
+  "types": ["Public", "Supporter", "Free", "Premium"],
   "plugins": [
     {
       "id": "klite-example",
-      "name": "KLite Example",
-      "version": "1.0.0",
-      "author": "KSPOG",
-      "description": "A harmless bundled plugin that displays a small overlay and demonstrates the KLite marketplace catalog connection.",
-      "status": "bundled",
-      "minimumClientVersion": "1.0.0",
-      "homepageUrl": "https://github.com/KSPOG/klite"
+      "descriptor": {
+        "name": "KLite Example",
+        "description": "A source-only example plugin that displays a small overlay and demonstrates the future KLite marketplace installation format.",
+        "tags": ["klite", "example", "marketplace"],
+        "authors": ["KSPOG"],
+        "version": "1.0.0",
+        "minClientVersion": "1.0.0",
+        "enabledByDefault": false,
+        "isExternal": true
+      },
+      "categories": ["Other"],
+      "type": "Free",
+      "access": "Free",
+      "status": "coming-soon",
+      "homepageUrl": "https://github.com/KSPOG/klite",
+      "iconPath": "assets/plugins/klite-example.png",
+      "releasedAt": "2026-07-14T00:00:00Z",
+      "updatedAt": "2026-07-14T00:00:00Z",
+      "trendingDay": 0,
+      "trendingWeek": 0,
+      "trendingMonth": 0
     }
   ]
 }

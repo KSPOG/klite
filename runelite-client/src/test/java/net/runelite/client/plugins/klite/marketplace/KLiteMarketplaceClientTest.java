@@ -6,12 +6,15 @@
 package net.runelite.client.plugins.klite.marketplace;
 
 import com.google.gson.Gson;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okio.Buffer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,16 +48,23 @@ public class KLiteMarketplaceClientTest
 
 		KLiteMarketplaceCatalog catalog = client.fetchCatalog().get(5, TimeUnit.SECONDS);
 
-		assertEquals(1, catalog.getSchemaVersion());
+		assertEquals(2, catalog.getSchemaVersion());
 		assertEquals(1, catalog.getPlugins().size());
-		assertEquals("klite-example", catalog.getPlugins().get(0).getId());
-		assertEquals("bundled", catalog.getPlugins().get(0).getStatus());
+		KLiteMarketplacePlugin plugin = catalog.getPlugins().get(0);
+		assertEquals("klite-example", plugin.getId());
+		assertEquals("KLite Example", plugin.getDescriptor().getName());
+		assertEquals("KSPOG", plugin.getDescriptor().getAuthors().get(0));
+		assertEquals("1.0.0", plugin.getDescriptor().getVersion());
+		assertTrue(plugin.getDescriptor().isExternal());
+		assertEquals("Other", plugin.getCategories().get(0));
+		assertEquals("Free", plugin.getType());
+		assertEquals("coming-soon", plugin.getStatus());
 	}
 
 	@Test
 	public void rejectsUnsupportedSchema() throws Exception
 	{
-		server.enqueue(jsonResponse(validCatalogJson().replace("\"schemaVersion\": 1", "\"schemaVersion\": 2")));
+		server.enqueue(jsonResponse(validCatalogJson().replace("\"schemaVersion\": 2", "\"schemaVersion\": 99")));
 
 		ExecutionException exception = expectFailure();
 
@@ -69,6 +79,75 @@ public class KLiteMarketplaceClientTest
 		ExecutionException exception = expectFailure();
 
 		assertTrue(exception.getCause() instanceof IllegalArgumentException);
+	}
+
+	@Test
+	public void rejectsMalformedCategory() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson().replace("\"Other\"", "\"<script>\"")));
+
+		ExecutionException exception = expectFailure();
+
+		assertTrue(exception.getCause() instanceof IllegalArgumentException);
+	}
+
+	@Test
+	public void rejectsNonExternalPlugin() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson().replace("\"isExternal\": true", "\"isExternal\": false")));
+
+		ExecutionException exception = expectFailure();
+
+		assertTrue(exception.getCause() instanceof IllegalArgumentException);
+	}
+
+	@Test
+	public void rejectsUnsafeIconPath() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson().replace(
+			"assets/plugins/klite-example.png", "../private/icon.png")));
+
+		ExecutionException exception = expectFailure();
+
+		assertTrue(exception.getCause() instanceof IllegalArgumentException);
+	}
+
+	@Test
+	public void rejectsUnknownPluginType() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson().replace("\"type\": \"Free\"", "\"type\": \"Unknown\"")));
+
+		ExecutionException exception = expectFailure();
+
+		assertTrue(exception.getCause() instanceof IllegalArgumentException);
+	}
+
+	@Test
+	public void rejectsNegativeTrendScore() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson().replace("\"trendingDay\": 0", "\"trendingDay\": -1")));
+
+		ExecutionException exception = expectFailure();
+
+		assertTrue(exception.getCause() instanceof IllegalArgumentException);
+	}
+	@Test
+	public void fetchesSameOriginPluginIcon() throws Exception
+	{
+		server.enqueue(jsonResponse(validCatalogJson()));
+		KLiteMarketplacePlugin plugin = client.fetchCatalog().get(5, TimeUnit.SECONDS)
+			.getPlugins().get(0);
+		server.enqueue(new MockResponse()
+			.setHeader("Content-Type", "image/png")
+			.setBody(new Buffer().write(Base64.getDecoder().decode(
+				"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="))));
+
+		BufferedImage image = client.fetchIcon(plugin).get(5, TimeUnit.SECONDS);
+
+		assertEquals(1, image.getWidth());
+		assertEquals(1, image.getHeight());
+		server.takeRequest();
+		assertEquals("/assets/plugins/klite-example.png", server.takeRequest().getPath());
 	}
 
 	@Test
@@ -104,17 +183,33 @@ public class KLiteMarketplaceClientTest
 	private static String validCatalogJson()
 	{
 		return "{\n"
-			+ "  \"schemaVersion\": 1,\n"
+			+ "  \"schemaVersion\": 2,\n"
 			+ "  \"updatedAt\": \"2026-07-14T00:00:00Z\",\n"
+			+ "  \"categories\": [\"Other\", \"Combat\"],\n"
+			+ "  \"types\": [\"Public\", \"Supporter\", \"Free\", \"Premium\"],\n"
 			+ "  \"plugins\": [{\n"
 			+ "    \"id\": \"klite-example\",\n"
-			+ "    \"name\": \"KLite Example\",\n"
-			+ "    \"version\": \"1.0.0\",\n"
-			+ "    \"author\": \"KSPOG\",\n"
-			+ "    \"description\": \"A safe example plugin.\",\n"
-			+ "    \"status\": \"bundled\",\n"
-			+ "    \"minimumClientVersion\": \"1.0.0\",\n"
-			+ "    \"homepageUrl\": \"https://github.com/KSPOG/klite\"\n"
+			+ "    \"descriptor\": {\n"
+			+ "      \"name\": \"KLite Example\",\n"
+			+ "      \"description\": \"A safe example plugin.\",\n"
+			+ "      \"tags\": [\"klite\", \"example\"],\n"
+			+ "      \"authors\": [\"KSPOG\"],\n"
+			+ "      \"version\": \"1.0.0\",\n"
+			+ "      \"minClientVersion\": \"1.0.0\",\n"
+			+ "      \"enabledByDefault\": false,\n"
+			+ "      \"isExternal\": true\n"
+			+ "    },\n"
+			+ "    \"categories\": [\"Other\"],\n"
+			+ "    \"type\": \"Free\",\n"
+			+ "    \"access\": \"Free\",\n"
+			+ "    \"status\": \"coming-soon\",\n"
+			+ "    \"homepageUrl\": \"https://github.com/KSPOG/klite\",\n"
+			+ "    \"iconPath\": \"assets/plugins/klite-example.png\",\n"
+			+ "    \"releasedAt\": \"2026-07-14T00:00:00Z\",\n"
+			+ "    \"updatedAt\": \"2026-07-14T00:00:00Z\",\n"
+			+ "    \"trendingDay\": 0,\n"
+			+ "    \"trendingWeek\": 0,\n"
+			+ "    \"trendingMonth\": 0\n"
 			+ "  }]\n"
 			+ "}";
 	}
