@@ -73,6 +73,10 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems();
 
+	CompletableFuture<List<KLiteProjectileSnapshot>> projectiles();
+
+	CompletableFuture<List<KLiteGraphicsObjectSnapshot>> graphicsObjects();
+
 	CompletableFuture<List<KLiteSceneObjectSnapshot>> sceneObjects();
 
 	CompletableFuture<Optional<KLitePlayerSnapshot>> nearestPlayer(String name);

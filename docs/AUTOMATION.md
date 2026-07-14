@@ -32,6 +32,7 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
 - `skills()` returns real level, boosted level, and experience snapshots.
 - `players()` and `npcs()` return detached nearby-actor snapshots.
 - `groundItems()` returns detached scene-item and lifecycle snapshots.
+- `projectiles()` and `graphicsObjects()` return detached active scene-effect snapshots.
 - `sceneObjects()` returns game, wall, ground, and decorative object snapshots.
 - The `nearest...` methods find exact ID or case-insensitive exact-name matches relative
   to the local player; `distanceTo(...)` and `hasLineOfSightTo(...)` expose spatial checks.

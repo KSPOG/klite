@@ -18,7 +18,9 @@ import javax.inject.Singleton;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.Deque;
 import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.GraphicsObject;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemComposition;
@@ -29,6 +31,7 @@ import net.runelite.api.NPCComposition;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
 import net.runelite.api.Prayer;
+import net.runelite.api.Projectile;
 import net.runelite.api.Scene;
 import net.runelite.api.Skill;
 import net.runelite.api.Tile;
@@ -383,6 +386,59 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 
 			ImmutableList.Builder<KLiteGroundItemSnapshot> snapshots = ImmutableList.builder();
 			addGroundItems(worldView.getScene(), snapshots);
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteProjectileSnapshot>> projectiles()
+	{
+		return threadGateway.submit(() ->
+		{
+			Deque<Projectile> projectiles = client.getProjectiles();
+			if (projectiles == null)
+			{
+				return ImmutableList.of();
+			}
+			ImmutableList.Builder<KLiteProjectileSnapshot> snapshots = ImmutableList.builder();
+			for (Projectile projectile : projectiles)
+			{
+				if (projectile != null)
+				{
+					snapshots.add(new KLiteProjectileSnapshot(
+						projectile.getId(), projectile.getSourceLevel(), projectile.getSourcePoint(),
+						actorName(projectile.getSourceActor()), projectile.getTargetLevel(), projectile.getTargetPoint(),
+						actorName(projectile.getTargetActor()), projectile.getEndHeight(), projectile.getStartCycle(),
+						projectile.getEndCycle(), projectile.getRemainingCycles(), projectile.getSlope(),
+						projectile.getStartPos(), projectile.getStartHeight(), projectile.getX(), projectile.getY(),
+						projectile.getZ(), projectile.getOrientation(), projectile.getAnimationFrame()));
+				}
+			}
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteGraphicsObjectSnapshot>> graphicsObjects()
+	{
+		return threadGateway.submit(() ->
+		{
+			WorldView worldView = client.getTopLevelWorldView();
+			if (worldView == null || worldView.getGraphicsObjects() == null)
+			{
+				return ImmutableList.of();
+			}
+			ImmutableList.Builder<KLiteGraphicsObjectSnapshot> snapshots = ImmutableList.builder();
+			for (GraphicsObject graphicsObject : worldView.getGraphicsObjects())
+			{
+				if (graphicsObject != null)
+				{
+					snapshots.add(new KLiteGraphicsObjectSnapshot(
+						graphicsObject.getId(), graphicsObject.getLocation(), graphicsObject.getStartCycle(),
+						graphicsObject.getLevel(), graphicsObject.getZ(), graphicsObject.finished(),
+						graphicsObject.getAnimationFrame()));
+				}
+			}
 			return snapshots.build();
 		});
 	}
