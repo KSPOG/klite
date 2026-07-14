@@ -12,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import net.runelite.api.Client;
-import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.callback.ClientThread;
 import org.junit.Before;
 import org.junit.Test;
