@@ -15,5 +15,15 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteItemStack>> inventory();
 
+	CompletableFuture<List<KLiteItemStack>> equipment();
+
+	CompletableFuture<List<KLiteSkillSnapshot>> skills();
+
+	CompletableFuture<List<KLitePlayerSnapshot>> players();
+
+	CompletableFuture<List<KLiteNpcSnapshot>> npcs();
+
+	CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems();
+
 	CompletableFuture<Void> onClientThread(Runnable action);
 }

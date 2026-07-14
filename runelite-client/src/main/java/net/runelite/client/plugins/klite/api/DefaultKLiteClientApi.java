@@ -8,15 +8,24 @@ package net.runelite.client.plugins.klite.api;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.NPC;
 import net.runelite.api.Player;
+import net.runelite.api.Scene;
+import net.runelite.api.Skill;
+import net.runelite.api.Tile;
+import net.runelite.api.TileItem;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.InventoryID;
 
+/** Default thread-safe implementation of the public KLite read API. */
 @Singleton
 public class DefaultKLiteClientApi implements KLiteClientApi
 {
@@ -48,16 +57,130 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	@Override
 	public CompletableFuture<List<KLiteItemStack>> inventory()
 	{
+		return itemContainer(InventoryID.INV);
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteItemStack>> equipment()
+	{
+		return itemContainer(InventoryID.WORN);
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteSkillSnapshot>> skills()
+	{
 		return threadGateway.submit(() ->
 		{
-			ItemContainer inventory = client.getItemContainer(InventoryID.INV);
-			if (inventory == null)
+			ImmutableList.Builder<KLiteSkillSnapshot> snapshots = ImmutableList.builder();
+			for (Skill skill : Skill.values())
+			{
+				snapshots.add(new KLiteSkillSnapshot(
+					skill,
+					client.getRealSkillLevel(skill),
+					client.getBoostedSkillLevel(skill),
+					client.getSkillExperience(skill)));
+			}
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLitePlayerSnapshot>> players()
+	{
+		return threadGateway.submit(() ->
+		{
+			WorldView worldView = client.getTopLevelWorldView();
+			if (worldView == null)
+			{
+				return ImmutableList.of();
+			}
+
+			Player localPlayer = client.getLocalPlayer();
+			ImmutableList.Builder<KLitePlayerSnapshot> snapshots = ImmutableList.builder();
+			for (Player player : worldView.players())
+			{
+				snapshots.add(new KLitePlayerSnapshot(
+					player.getId(),
+					player.getName(),
+					player.getCombatLevel(),
+					player.getWorldLocation(),
+					player.getAnimation(),
+					player.getPoseAnimation(),
+					player == localPlayer,
+					player.isFriend(),
+					player.isFriendsChatMember(),
+					player.isClanMember(),
+					actorName(player.getInteracting())));
+			}
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteNpcSnapshot>> npcs()
+	{
+		return threadGateway.submit(() ->
+		{
+			WorldView worldView = client.getTopLevelWorldView();
+			if (worldView == null)
+			{
+				return ImmutableList.of();
+			}
+
+			ImmutableList.Builder<KLiteNpcSnapshot> snapshots = ImmutableList.builder();
+			for (NPC npc : worldView.npcs())
+			{
+				snapshots.add(new KLiteNpcSnapshot(
+					npc.getId(),
+					npc.getIndex(),
+					npc.getName(),
+					npc.getCombatLevel(),
+					npc.getWorldLocation(),
+					npc.getAnimation(),
+					npc.getPoseAnimation(),
+					npc.getHealthRatio(),
+					npc.getHealthScale(),
+					actorName(npc.getInteracting())));
+			}
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems()
+	{
+		return threadGateway.submit(() ->
+		{
+			WorldView worldView = client.getTopLevelWorldView();
+			if (worldView == null || worldView.getScene() == null)
+			{
+				return ImmutableList.of();
+			}
+
+			ImmutableList.Builder<KLiteGroundItemSnapshot> snapshots = ImmutableList.builder();
+			addGroundItems(worldView.getScene(), snapshots);
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<Void> onClientThread(Runnable action)
+	{
+		return threadGateway.execute(action);
+	}
+
+	private CompletableFuture<List<KLiteItemStack>> itemContainer(int inventoryId)
+	{
+		return threadGateway.submit(() ->
+		{
+			ItemContainer container = client.getItemContainer(inventoryId);
+			if (container == null)
 			{
 				return ImmutableList.of();
 			}
 
 			ImmutableList.Builder<KLiteItemStack> items = ImmutableList.builder();
-			Item[] itemArray = inventory.getItems();
+			Item[] itemArray = container.getItems();
 			for (int slot = 0; slot < itemArray.length; slot++)
 			{
 				Item item = itemArray[slot];
@@ -70,9 +193,38 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		});
 	}
 
-	@Override
-	public CompletableFuture<Void> onClientThread(Runnable action)
+	private static void addGroundItems(
+		Scene scene, ImmutableList.Builder<KLiteGroundItemSnapshot> snapshots)
 	{
-		return threadGateway.execute(action);
+		for (Tile[][] plane : scene.getTiles())
+		{
+			for (Tile[] row : plane)
+			{
+				for (Tile tile : row)
+				{
+					if (tile == null)
+					{
+						continue;
+					}
+					for (TileItem item : tile.getGroundItems())
+					{
+						snapshots.add(new KLiteGroundItemSnapshot(
+							item.getId(),
+							item.getQuantity(),
+							tile.getWorldLocation(),
+							item.getVisibleTime(),
+							item.getDespawnTime(),
+							item.getOwnership(),
+							item.isPrivate()));
+					}
+				}
+			}
+		}
+	}
+
+	@Nullable
+	private static String actorName(@Nullable Actor actor)
+	{
+		return actor == null ? null : actor.getName();
 	}
 }

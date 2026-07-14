@@ -11,10 +11,13 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
 `KLiteClientApi`:
 
 - `snapshot()` returns an immutable game-state, world, and player-location view.
-- `inventory()` returns immutable item and slot snapshots.
+- `inventory()` and `equipment()` return immutable item and slot snapshots.
+- `skills()` returns real level, boosted level, and experience snapshots.
+- `players()` and `npcs()` return detached nearby-actor snapshots.
+- `groundItems()` returns detached scene-item and lifecycle snapshots.
 - `onClientThread(...)` queues an advanced operation on RuneLite's client thread.
 
-The first two methods are preferred. Keep `onClientThread` actions short; never
+Prefer the immutable snapshot methods. Keep `onClientThread` actions short; never
 sleep, wait for network access, or execute an automation loop on the client
 thread.
 
