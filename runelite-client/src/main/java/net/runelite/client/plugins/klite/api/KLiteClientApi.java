@@ -33,6 +33,12 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteItemStack>> bankItems();
 
+	CompletableFuture<Long> bankCount(int itemId);
+
+	CompletableFuture<Boolean> bankContains(int itemId);
+
+	CompletableFuture<Optional<Integer>> firstBankSlot(int itemId);
+
 	CompletableFuture<Long> inventoryCount(int itemId);
 
 	CompletableFuture<Boolean> inventoryContains(int itemId);
@@ -109,6 +115,16 @@ public interface KLiteClientApi
 	CompletableFuture<KLiteInteractionResult> interactBankItem(int slot, String option);
 
 	CompletableFuture<KLiteInteractionResult> interactBankInventoryItem(int slot, String option);
+
+	CompletableFuture<KLiteInteractionResult> withdrawBankItem(
+		int slot, KLiteBankQuantity quantity);
+
+	CompletableFuture<KLiteInteractionResult> depositBankInventoryItem(
+		int slot, KLiteBankQuantity quantity);
+
+	CompletableFuture<KLiteInteractionResult> depositInventory();
+
+	CompletableFuture<KLiteInteractionResult> depositEquipment();
 
 	CompletableFuture<KLiteInteractionResult> setRunEnabled(boolean enabled);
 

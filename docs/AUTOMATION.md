@@ -37,8 +37,9 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
   actions and resolve the current generated widget action before dispatch.
 - `dialogOptions()`, `chooseDialogOption(...)`, and `continueDialog()` expose standard
   dialogue interfaces while preserving their live widget child indices.
-- `interactBankItem(...)` and `interactBankInventoryItem(...)` resolve current bank
-  widget actions and fail safely while the relevant bank view is absent.
+- Bank count, containment, and first-slot queries use the live bank container. Quantity
+  helpers support `ONE`, `FIVE`, `TEN`, and `ALL`; deposit-inventory and deposit-equipment
+  helpers resolve generated bank components and live widget actions.
 - `varbit(...)`, `varp(...)`, and the server variants expose synchronized game
   variables; `varcInt(...)` and `varcString(...)` expose typed client variables.
 - `interactInventoryItem(...)`, `interactWidget(...)`,
@@ -119,3 +120,7 @@ Feature modules remain responsible for validating game state, nullability,
 distance, UI availability, and action-specific cooldowns before every operation.
 Do not store live RuneLite `Client`, `Player`, `NPC`, `Widget`, or `ItemContainer`
 objects outside the client-thread callback that produced them.
+
+Numeric/name dialogue submission and bank `X` quantities are not exposed because RuneLite
+does not provide a verified public packet-resume API. Marketplace plugin download and
+loading also remain outside this API layer.

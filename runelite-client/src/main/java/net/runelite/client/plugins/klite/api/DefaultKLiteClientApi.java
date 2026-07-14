@@ -134,6 +134,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	{
 		return threadGateway.submit(() -> prayer != null && client.getVarbitValue(prayer.getVarbit()) != 0);
 	}
+
 	@Override
 	public CompletableFuture<List<KLiteItemStack>> inventory()
 	{
@@ -153,28 +154,27 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Long> bankCount(int itemId)
+	{
+		return threadGateway.submit(() -> itemCount(InventoryID.BANK, itemId));
+	}
+
+	@Override
+	public CompletableFuture<Boolean> bankContains(int itemId)
+	{
+		return threadGateway.submit(() -> findItemSlot(InventoryID.BANK, itemId).isPresent());
+	}
+
+	@Override
+	public CompletableFuture<Optional<Integer>> firstBankSlot(int itemId)
+	{
+		return threadGateway.submit(() -> findItemSlot(InventoryID.BANK, itemId));
+	}
+
+	@Override
 	public CompletableFuture<Long> inventoryCount(int itemId)
 	{
-		return threadGateway.submit(() ->
-		{
-			if (itemId < 0)
-			{
-				return 0L;
-			}
-			long count = 0L;
-			ItemContainer inventory = client.getItemContainer(InventoryID.INV);
-			if (inventory != null)
-			{
-				for (Item item : inventory.getItems())
-				{
-					if (item.getId() == itemId && item.getQuantity() > 0)
-					{
-						count += item.getQuantity();
-					}
-				}
-			}
-			return count;
-		});
+		return threadGateway.submit(() -> itemCount(InventoryID.INV, itemId));
 	}
 
 	@Override
@@ -210,6 +210,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			return freeSlots;
 		});
 	}
+
 	@Override
 	public CompletableFuture<List<KLiteSkillSnapshot>> skills()
 	{
@@ -247,6 +248,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			return snapshots.build();
 		});
 	}
+
 	@Override
 	public CompletableFuture<List<KLiteNpcSnapshot>> npcs()
 	{
@@ -265,6 +267,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			return snapshots.build();
 		});
 	}
+
 	@Override
 	public CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems()
 	{
@@ -287,6 +290,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	{
 		return threadGateway.submit(this::currentSceneObjectSnapshots);
 	}
+
 	@Override
 	public CompletableFuture<Optional<KLitePlayerSnapshot>> nearestPlayer(String name)
 	{
@@ -404,6 +408,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 				&& player.getWorldArea().hasLineOfSightTo(worldView, location);
 		});
 	}
+
 	@Override
 	public CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(int componentId)
 	{
@@ -494,6 +499,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			return result.build();
 		});
 	}
+
 	@Override
 	public CompletableFuture<Integer> varbit(int varbitId)
 	{
@@ -626,6 +632,37 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	{
 		return interactWidgetChild(InterfaceID.Bankside.ITEMS, slot, option);
 	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> withdrawBankItem(
+		int slot, KLiteBankQuantity quantity)
+	{
+		return bankItemInteraction(
+			InterfaceID.Bankmain.ITEMS, slot,
+			quantity == null ? null : quantity.getWithdrawOption());
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> depositBankInventoryItem(
+		int slot, KLiteBankQuantity quantity)
+	{
+		return bankItemInteraction(
+			InterfaceID.Bankside.ITEMS, slot,
+			quantity == null ? null : quantity.getDepositOption());
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> depositInventory()
+	{
+		return interactWidget(InterfaceID.Bankmain.DEPOSITINV, "Deposit inventory");
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> depositEquipment()
+	{
+		return interactWidget(InterfaceID.Bankmain.DEPOSITWORN, "Deposit worn items");
+	}
+
 	@Override
 	public CompletableFuture<KLiteInteractionResult> setRunEnabled(boolean enabled)
 	{
@@ -674,6 +711,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			return selectWidgetTarget(parent == null ? null : parent.getChild(childIndex));
 		});
 	}
+
 	@Override
 	public CompletableFuture<KLiteInteractionResult> interactWidget(int componentId, String option)
 	{
@@ -960,6 +998,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			return KLiteInteractionResult.targetNotFound("No supported continue dialogue is open");
 		});
 	}
+
 	@Override
 	public CompletableFuture<Void> menuAction(KLiteMenuActionRequest request)
 	{
@@ -1032,6 +1071,41 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	private static String stateName(boolean enabled)
 	{
 		return enabled ? "enabled" : "disabled";
+	}
+	private CompletableFuture<KLiteInteractionResult> bankItemInteraction(
+		int componentId, int slot, @Nullable String option)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (slot < 0 || isBlank(option))
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Bank slot must be non-negative and quantity must be provided");
+			}
+			Widget parent = client.getWidget(componentId);
+			return interactWidget(parent == null ? null : parent.getChild(slot), option);
+		});
+	}
+
+	private long itemCount(int inventoryId, int itemId)
+	{
+		if (itemId < 0)
+		{
+			return 0L;
+		}
+		long count = 0L;
+		ItemContainer container = client.getItemContainer(inventoryId);
+		if (container != null)
+		{
+			for (Item item : container.getItems())
+			{
+				if (item.getId() == itemId && item.getQuantity() > 0)
+				{
+					count += item.getQuantity();
+				}
+			}
+		}
+		return count;
 	}
 	private Optional<Integer> findItemSlot(int inventoryId, int itemId)
 	{
