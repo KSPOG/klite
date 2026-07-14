@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemComposition;
@@ -96,6 +97,48 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteRuntimeSnapshot> runtimeSnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			WorldView worldView = client.getTopLevelWorldView();
+			ImmutableList.Builder<Integer> mapRegions = ImmutableList.builder();
+			if (worldView != null && worldView.getMapRegions() != null)
+			{
+				for (int mapRegion : worldView.getMapRegions())
+				{
+					mapRegions.add(mapRegion);
+				}
+			}
+			return new KLiteRuntimeSnapshot(
+				client.getGameState(),
+				client.getWorld(),
+				client.getWorldHost(),
+				ImmutableList.copyOf(client.getWorldType()),
+				client.getTickCount(),
+				client.getGameCycle(),
+				client.getFPS(),
+				worldView == null ? -1 : worldView.getPlane(),
+				client.isInInstancedRegion(),
+				mapRegions.build(),
+				System.currentTimeMillis());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteCameraSnapshot> cameraSnapshot()
+	{
+		return threadGateway.submit(() -> new KLiteCameraSnapshot(
+			client.getCameraX(),
+			client.getCameraY(),
+			client.getCameraZ(),
+			client.getCameraPitch(),
+			client.getCameraYaw(),
+			client.getCameraPitchTarget(),
+			client.getCameraYawTarget()));
+	}
+
+	@Override
 	public CompletableFuture<KLiteCombatSnapshot> combatSnapshot()
 	{
 		return threadGateway.submit(() ->
@@ -145,6 +188,37 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	public CompletableFuture<List<KLiteItemStack>> equipment()
 	{
 		return itemContainer(InventoryID.WORN);
+	}
+
+	@Override
+	public CompletableFuture<Long> equipmentCount(int itemId)
+	{
+		return threadGateway.submit(() -> itemCount(InventoryID.WORN, itemId));
+	}
+
+	@Override
+	public CompletableFuture<Boolean> equipmentContains(int itemId)
+	{
+		return threadGateway.submit(() -> findItemSlot(InventoryID.WORN, itemId).isPresent());
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteItemStack>> equipmentItem(EquipmentInventorySlot slot)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (slot == null)
+			{
+				return Optional.empty();
+			}
+			Item item = itemAt(InventoryID.WORN, slot.getSlotIdx());
+			if (item == null || item.getId() < 0 || item.getQuantity() <= 0)
+			{
+				return Optional.empty();
+			}
+			return Optional.of(new KLiteItemStack(
+				slot.getSlotIdx(), item.getId(), item.getQuantity()));
+		});
 	}
 
 	@Override

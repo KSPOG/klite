@@ -11,13 +11,19 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
 `KLiteClientApi`:
 
 - `snapshot()` returns an immutable game-state, world, and player-location view.
+- `runtimeSnapshot()` returns detached world type, host, tick, cycle, FPS, plane,
+  instancing, and loaded-region state; a missing world view is represented by plane `-1`
+  and an empty region list.
+- `cameraSnapshot()` returns current position and angles together with the input-target
+  pitch and yaw, without exposing live client state.
 - `combatSnapshot()` returns health, prayer, run, weight, special-attack, poison,
   wilderness, animation, target, and active-prayer state. Run energy uses hundredths
   of a percent; special-attack energy uses tenths of a percent.
 - `activePrayers()` and `prayerActive(...)` read prayer varbits directly, avoiding
   RuneLite's deprecated prayer helper.
 - `inventory()`, `equipment()`, and `bankItems()` return immutable item and slot snapshots;
-  `isBankOpen()` reports whether the bank item container is visible.
+  `equipmentCount(...)`, `equipmentContains(...)`, and `equipmentItem(...)` provide typed
+  worn-slot queries, and `isBankOpen()` reports whether the bank item container is visible.
 - `inventoryCount(...)`, `inventoryContains(...)`, `firstInventorySlot(...)`, and
   `inventoryFreeSlots()` provide overflow-safe inventory queries.
 - `skills()` returns real level, boosted level, and experience snapshots.

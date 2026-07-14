@@ -8,6 +8,7 @@ package net.runelite.client.plugins.klite.api;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Prayer;
 import net.runelite.api.annotations.Component;
 import net.runelite.api.annotations.Varbit;
@@ -21,6 +22,10 @@ public interface KLiteClientApi
 {
 	CompletableFuture<KLiteClientSnapshot> snapshot();
 
+	CompletableFuture<KLiteRuntimeSnapshot> runtimeSnapshot();
+
+	CompletableFuture<KLiteCameraSnapshot> cameraSnapshot();
+
 	CompletableFuture<KLiteCombatSnapshot> combatSnapshot();
 
 	CompletableFuture<List<Prayer>> activePrayers();
@@ -30,6 +35,12 @@ public interface KLiteClientApi
 	CompletableFuture<List<KLiteItemStack>> inventory();
 
 	CompletableFuture<List<KLiteItemStack>> equipment();
+
+	CompletableFuture<Long> equipmentCount(int itemId);
+
+	CompletableFuture<Boolean> equipmentContains(int itemId);
+
+	CompletableFuture<Optional<KLiteItemStack>> equipmentItem(EquipmentInventorySlot slot);
 
 	CompletableFuture<List<KLiteItemStack>> bankItems();
 
