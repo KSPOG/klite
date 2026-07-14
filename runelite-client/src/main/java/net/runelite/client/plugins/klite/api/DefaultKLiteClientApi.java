@@ -393,6 +393,19 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInteractionResult> interactEquipmentItem(
+		EquipmentInventorySlot slot, String option)
+	{
+		return threadGateway.submit(() ->
+		{
+			int componentId = equipmentComponent(slot);
+			return componentId < 0
+				? KLiteInteractionResult.invalidRequest("Equipment slot has no public item widget")
+				: interactWidget(client.getWidget(componentId), option);
+		});
+	}
+
+	@Override
 	public CompletableFuture<List<KLiteItemStack>> bankItems()
 	{
 		return itemContainer(InventoryID.BANK);
@@ -1417,6 +1430,29 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	{
 		return new KLiteGrandExchangeOfferSnapshot(slot, offer.getItemId(), offer.getQuantitySold(),
 			offer.getTotalQuantity(), offer.getPrice(), offer.getSpent(), offer.getState());
+	}
+
+	private static int equipmentComponent(@Nullable EquipmentInventorySlot slot)
+	{
+		if (slot == null)
+		{
+			return -1;
+		}
+		switch (slot)
+		{
+			case HEAD: return InterfaceID.Wornitems.SLOT0;
+			case CAPE: return InterfaceID.Wornitems.SLOT1;
+			case AMULET: return InterfaceID.Wornitems.SLOT2;
+			case WEAPON: return InterfaceID.Wornitems.SLOT3;
+			case BODY: return InterfaceID.Wornitems.SLOT4;
+			case SHIELD: return InterfaceID.Wornitems.SLOT5;
+			case LEGS: return InterfaceID.Wornitems.SLOT7;
+			case GLOVES: return InterfaceID.Wornitems.SLOT9;
+			case BOOTS: return InterfaceID.Wornitems.SLOT10;
+			case RING: return InterfaceID.Wornitems.SLOT12;
+			case AMMO: return InterfaceID.Wornitems.SLOT13;
+			default: return -1;
+		}
 	}
 
 	@Nullable
