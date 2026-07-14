@@ -145,6 +145,59 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Optional<WorldPoint>> destination()
+	{
+		return threadGateway.submit(() ->
+		{
+			LocalPoint destination = client.getLocalDestinationLocation();
+			return destination == null ? Optional.empty() : Optional.of(WorldPoint.fromLocalInstance(client, destination));
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setCameraYawTarget(int yaw)
+	{
+		return threadGateway.submit(() ->
+		{
+			int normalizedYaw = Math.floorMod(yaw, 16_384);
+			if (client.getCameraYawTarget() == normalizedYaw)
+			{
+				return KLiteInteractionResult.noActionRequired("Camera yaw is already targeted");
+			}
+			client.setCameraYawTarget(normalizedYaw);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setCameraPitchTarget(int pitch)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (pitch < 0 || pitch >= 16_384)
+			{
+				return KLiteInteractionResult.invalidRequest("Camera pitch must be a JAU14 angle");
+			}
+			if (client.getCameraPitchTarget() == pitch)
+			{
+				return KLiteInteractionResult.noActionRequired("Camera pitch is already targeted");
+			}
+			client.setCameraPitchTarget(pitch);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> openWorldHopper()
+	{
+		return threadGateway.submit(() ->
+		{
+			client.openWorldHopper();
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages()
 	{
 		return threadGateway.submit(() -> chatMessageSnapshots(null));

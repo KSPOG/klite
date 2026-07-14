@@ -27,6 +27,14 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteCameraSnapshot> cameraSnapshot();
 
+	CompletableFuture<Optional<WorldPoint>> destination();
+
+	CompletableFuture<KLiteInteractionResult> setCameraYawTarget(int yaw);
+
+	CompletableFuture<KLiteInteractionResult> setCameraPitchTarget(int pitch);
+
+	CompletableFuture<KLiteInteractionResult> openWorldHopper();
+
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages();
 
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages(ChatMessageType type);
