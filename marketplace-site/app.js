@@ -42,7 +42,10 @@ function renderPlugins(query = "") {
     const version = document.createElement("span");
     version.textContent = `v${plugin.version}`;
 
-    meta.append(author, version);
+    const status = document.createElement("span");
+    status.textContent = plugin.status === "bundled" ? "Bundled with KLite" : plugin.status;
+
+    meta.append(author, version, status);
     card.append(title, description, meta);
     pluginGrid.append(card);
   }

@@ -6,7 +6,11 @@ This directory contains the static website deployed to Cloudflare Pages.
 
 Published plugins are listed in `plugins.json`. Keep the catalog machine-readable so the KLite client can consume the same reviewed metadata in a later release.
 
-The initial schema is intentionally small. A signed artifact URL, checksum, compatibility range, and review metadata should be added before client-side installation is enabled.
+The initial schema is intentionally small and is validated by the client. Each
+entry includes an ID, display metadata, publication status, minimum compatible
+client version, and optional HTTPS homepage. A signed artifact URL, checksum,
+compatibility range, and review metadata must be added before client-side
+installation is enabled.
 
 ## Local preview
 

@@ -12,28 +12,39 @@ import java.awt.Frame;
 import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
 /**
- * Standalone KLite plugin marketplace shell.
+ * Standalone viewer for the public KLite plugin catalog.
  *
- * <p>The window intentionally does not download or execute plugins until a
- * signed KLite catalog and verification policy are available.</p>
+ * <p>The window reads validated metadata only. Downloading and executing
+ * marketplace artifacts remains disabled until a signed distribution format
+ * is implemented.</p>
  */
 @Singleton
 public class KLiteMarketplaceWindow
@@ -43,12 +54,30 @@ public class KLiteMarketplaceWindow
 	private static final BufferedImage BRAND_IMAGE = ImageUtil.loadImageResource(
 		KLiteMarketplaceWindow.class, "klite_marketplace.png");
 
+	private final KLiteMarketplaceClient marketplaceClient;
+	private List<KLiteMarketplacePlugin> plugins = Collections.emptyList();
+
 	@Nullable
 	private JFrame frame;
+	private JPanel catalogList;
+	private JTextField search;
+	private JButton refreshButton;
+	private JLabel footer;
+	private boolean loading;
+
+	@Inject
+	KLiteMarketplaceWindow(KLiteMarketplaceClient marketplaceClient)
+	{
+		this.marketplaceClient = marketplaceClient;
+	}
 
 	public void open()
 	{
-		SwingUtilities.invokeLater(this::showWindow);
+		SwingUtilities.invokeLater(() ->
+		{
+			showWindow();
+			refreshCatalog();
+		});
 	}
 
 	public void close()
@@ -77,7 +106,7 @@ public class KLiteMarketplaceWindow
 		frame.requestFocus();
 	}
 
-	private static JFrame createFrame()
+	private JFrame createFrame()
 	{
 		JFrame marketplaceFrame = new JFrame("KLite Plugin Marketplace");
 		marketplaceFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
@@ -89,14 +118,14 @@ public class KLiteMarketplaceWindow
 		return marketplaceFrame;
 	}
 
-	private static JPanel createContent()
+	private JPanel createContent()
 	{
 		JPanel content = new JPanel(new BorderLayout());
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		content.add(createHeader(), BorderLayout.NORTH);
 		content.add(createCatalogArea(), BorderLayout.CENTER);
 
-		JLabel footer = new JLabel("Catalog source: not configured");
+		footer = new JLabel("Catalog source: " + marketplaceClient.getCatalogUrl().host());
 		footer.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		footer.setBorder(BorderFactory.createEmptyBorder(10, 20, 14, 20));
 		content.add(footer, BorderLayout.SOUTH);
@@ -118,7 +147,7 @@ public class KLiteMarketplaceWindow
 		JLabel title = new JLabel("KLite Plugin Marketplace");
 		title.setForeground(ColorScheme.TEXT_COLOR);
 		title.setFont(title.getFont().deriveFont(Font.BOLD, 25f));
-		JLabel subtitle = new JLabel("Discover and manage extensions built for KLite.");
+		JLabel subtitle = new JLabel("Discover reviewed extensions published for KLite.");
 		subtitle.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		copy.add(Box.createVerticalGlue());
 		copy.add(title);
@@ -129,45 +158,198 @@ public class KLiteMarketplaceWindow
 		return header;
 	}
 
-	private static JPanel createCatalogArea()
+	private JPanel createCatalogArea()
 	{
-		JPanel catalogArea = new JPanel(new BorderLayout(0, 18));
+		JPanel catalogArea = new JPanel(new BorderLayout(0, 14));
 		catalogArea.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		catalogArea.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
-		JTextField search = new JTextField("Search KLite plugins");
+		JPanel controls = new JPanel(new BorderLayout(10, 0));
+		controls.setOpaque(false);
+		search = new JTextField();
 		search.setEnabled(false);
-		search.setToolTipText("Search becomes available when a catalog source is configured");
+		search.setToolTipText("Search the loaded KLite plugin catalog");
 		search.setPreferredSize(new Dimension(0, 34));
-		catalogArea.add(search, BorderLayout.NORTH);
+		search.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent event)
+			{
+				renderCatalog();
+			}
 
-		JPanel emptyState = new JPanel(new GridBagLayout());
-		emptyState.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		JPanel message = new JPanel();
-		message.setOpaque(false);
-		message.setLayout(new BoxLayout(message, BoxLayout.Y_AXIS));
+			@Override
+			public void removeUpdate(DocumentEvent event)
+			{
+				renderCatalog();
+			}
 
-		BufferedImage emptyLogo = ImageUtil.resizeImage(BRAND_IMAGE, 126, 156, true);
-		JLabel icon = new JLabel(new ImageIcon(emptyLogo));
-		icon.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-		JLabel heading = new JLabel("The marketplace is ready for future plugins");
-		heading.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-		heading.setHorizontalAlignment(SwingConstants.CENTER);
-		heading.setForeground(ColorScheme.TEXT_COLOR);
-		heading.setFont(heading.getFont().deriveFont(Font.BOLD, 17f));
-		JLabel explanation = new JLabel(
-			"A verified KLite catalog will appear here when its distribution service is configured.");
-		explanation.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-		explanation.setHorizontalAlignment(SwingConstants.CENTER);
-		explanation.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+			@Override
+			public void changedUpdate(DocumentEvent event)
+			{
+				renderCatalog();
+			}
+		});
+		controls.add(search, BorderLayout.CENTER);
 
-		message.add(icon);
-		message.add(Box.createVerticalStrut(12));
-		message.add(heading);
-		message.add(Box.createVerticalStrut(7));
-		message.add(explanation);
-		emptyState.add(message);
-		catalogArea.add(emptyState, BorderLayout.CENTER);
+		refreshButton = new JButton("Refresh");
+		refreshButton.addActionListener(event -> refreshCatalog());
+		controls.add(refreshButton, BorderLayout.EAST);
+		catalogArea.add(controls, BorderLayout.NORTH);
+
+		catalogList = new JPanel();
+		catalogList.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		catalogList.setLayout(new BoxLayout(catalogList, BoxLayout.Y_AXIS));
+		showCatalogStatus("Open the marketplace to load the catalog.");
+
+		JScrollPane scrollPane = new JScrollPane(catalogList);
+		scrollPane.setBorder(BorderFactory.createEmptyBorder());
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		scrollPane.getViewport().setBackground(ColorScheme.DARK_GRAY_COLOR);
+		catalogArea.add(scrollPane, BorderLayout.CENTER);
 		return catalogArea;
+	}
+
+	private void refreshCatalog()
+	{
+		assert SwingUtilities.isEventDispatchThread() : "must be on EDT";
+		if (loading)
+		{
+			return;
+		}
+
+		loading = true;
+		search.setEnabled(false);
+		refreshButton.setEnabled(false);
+		footer.setText("Loading catalog from " + marketplaceClient.getCatalogUrl().host() + "…");
+		showCatalogStatus("Loading reviewed plugins…");
+
+		marketplaceClient.fetchCatalog().whenComplete((catalog, error) -> SwingUtilities.invokeLater(() ->
+		{
+			loading = false;
+			refreshButton.setEnabled(true);
+			if (error != null)
+			{
+				plugins = Collections.emptyList();
+				footer.setText("Catalog unavailable — no remote code was loaded");
+				showCatalogStatus("Unable to load the marketplace catalog. Check your connection and try again.");
+				return;
+			}
+
+			plugins = catalog.getPlugins();
+			search.setEnabled(true);
+			footer.setText("Catalog source: " + marketplaceClient.getCatalogUrl().host()
+				+ " • " + plugins.size() + " reviewed plugin" + (plugins.size() == 1 ? "" : "s"));
+			renderCatalog();
+		}));
+	}
+
+	private void renderCatalog()
+	{
+		if (catalogList == null || search == null)
+		{
+			return;
+		}
+
+		String query = search.getText().trim().toLowerCase(Locale.ROOT);
+		catalogList.removeAll();
+		int visiblePluginCount = 0;
+		for (KLiteMarketplacePlugin plugin : plugins)
+		{
+			String searchable = (plugin.getName() + " " + plugin.getAuthor() + " "
+				+ plugin.getDescription()).toLowerCase(Locale.ROOT);
+			if (!searchable.contains(query))
+			{
+				continue;
+			}
+
+			if (visiblePluginCount++ > 0)
+			{
+				catalogList.add(Box.createVerticalStrut(10));
+			}
+			catalogList.add(createPluginCard(plugin));
+		}
+
+		if (visiblePluginCount == 0)
+		{
+			showCatalogStatus(plugins.isEmpty()
+				? "No reviewed plugins have been published yet."
+				: "No plugins match your search.");
+			return;
+		}
+
+		catalogList.add(Box.createVerticalGlue());
+		catalogList.revalidate();
+		catalogList.repaint();
+	}
+
+	private static JPanel createPluginCard(KLiteMarketplacePlugin plugin)
+	{
+		JPanel card = new JPanel(new BorderLayout(14, 10));
+		card.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+		card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		card.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
+			BorderFactory.createEmptyBorder(14, 16, 14, 16)));
+
+		JPanel heading = new JPanel(new BorderLayout());
+		heading.setOpaque(false);
+		JLabel name = new JLabel(plugin.getName());
+		name.setForeground(ColorScheme.TEXT_COLOR);
+		name.setFont(name.getFont().deriveFont(Font.BOLD, 16f));
+		heading.add(name, BorderLayout.WEST);
+
+		JLabel status = new JLabel(formatStatus(plugin.getStatus()));
+		status.setForeground("bundled".equals(plugin.getStatus())
+			? ColorScheme.PROGRESS_COMPLETE_COLOR : ColorScheme.LIGHT_GRAY_COLOR);
+		heading.add(status, BorderLayout.EAST);
+		card.add(heading, BorderLayout.NORTH);
+
+		JTextArea description = new JTextArea(plugin.getDescription());
+		description.setEditable(false);
+		description.setFocusable(false);
+		description.setLineWrap(true);
+		description.setWrapStyleWord(true);
+		description.setOpaque(false);
+		description.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		description.setFont(name.getFont().deriveFont(Font.PLAIN, 13f));
+		card.add(description, BorderLayout.CENTER);
+
+		JLabel metadata = new JLabel("By " + plugin.getAuthor() + " • v" + plugin.getVersion()
+			+ " • KLite " + plugin.getMinimumClientVersion() + "+");
+		metadata.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		card.add(metadata, BorderLayout.SOUTH);
+		return card;
+	}
+
+	private static String formatStatus(String status)
+	{
+		switch (status)
+		{
+			case "bundled":
+				return "Bundled";
+			case "available":
+				return "Available";
+			default:
+				return "Coming soon";
+		}
+	}
+
+	private void showCatalogStatus(String text)
+	{
+		catalogList.removeAll();
+		JPanel emptyState = new JPanel(new GridBagLayout());
+		emptyState.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		emptyState.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+		emptyState.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+		JLabel message = new JLabel(text, SwingConstants.CENTER);
+		message.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		emptyState.add(message);
+		catalogList.add(emptyState);
+		catalogList.revalidate();
+		catalogList.repaint();
 	}
 }
