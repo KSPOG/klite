@@ -20,6 +20,8 @@ import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.Deque;
 import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.Friend;
+import net.runelite.api.FriendContainer;
 import net.runelite.api.GraphicsObject;
 import net.runelite.api.GrandExchangeOffer;
 import net.runelite.api.Item;
@@ -195,6 +197,35 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			client.openWorldHopper();
 			return KLiteInteractionResult.dispatched();
 		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteFriendSnapshot>> friends()
+	{
+		return threadGateway.submit(() ->
+		{
+			FriendContainer friends = client.getFriendContainer();
+			if (friends == null || friends.getMembers() == null)
+			{
+				return ImmutableList.of();
+			}
+			ImmutableList.Builder<KLiteFriendSnapshot> snapshots = ImmutableList.builder();
+			for (Friend friend : friends.getMembers())
+			{
+				if (friend != null)
+				{
+					snapshots.add(new KLiteFriendSnapshot(
+						friend.getName(), friend.getPrevName(), friend.getWorld()));
+				}
+			}
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<Boolean> isFriend(String name, boolean mustBeLoggedIn)
+	{
+		return threadGateway.submit(() -> name != null && client.isFriended(name, mustBeLoggedIn));
 	}
 
 	@Override
