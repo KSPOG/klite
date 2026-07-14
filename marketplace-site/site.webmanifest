@@ -1,0 +1,15 @@
+{
+  "name": "KLite Plugin Marketplace",
+  "short_name": "KLite Market",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080b11",
+  "theme_color": "#080b11",
+  "icons": [
+    {
+      "src": "assets/klite-marketplace.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ]
+}

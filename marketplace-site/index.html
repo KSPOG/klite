@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browse reviewed plugins for the KLite client.">
+  <meta name="theme-color" content="#080b11">
+  <title>KLite Plugin Marketplace</title>
+  <link rel="icon" type="image/png" href="assets/klite-marketplace.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="KLite marketplace home">
+      <img src="assets/klite-marketplace.png" alt="" width="48" height="48">
+      <span>
+        <strong>KLite</strong>
+        <small>Plugin Marketplace</small>
+      </span>
+    </a>
+    <a class="client-link" href="https://github.com/KSPOG/klite" rel="noreferrer">View client source</a>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Reviewed extensions for KLite</p>
+        <h1 id="hero-title">Extend your client with confidence.</h1>
+        <p class="hero-description">
+          Discover plugins reviewed and published for the KLite client. The catalog is being prepared for its first releases.
+        </p>
+      </div>
+      <img class="hero-mark" src="assets/klite-marketplace.png" alt="KLite shield logo" width="280" height="280">
+    </section>
+
+    <section class="catalog" aria-labelledby="catalog-title">
+      <div class="catalog-heading">
+        <div>
+          <p class="eyebrow">Catalog</p>
+          <h2 id="catalog-title">Available plugins</h2>
+        </div>
+        <label class="search-field">
+          <span class="sr-only">Search plugins</span>
+          <input id="plugin-search" type="search" placeholder="Search plugins" autocomplete="off">
+        </label>
+      </div>
+
+      <div id="catalog-status" class="status" role="status">Loading catalog…</div>
+      <div id="plugin-grid" class="plugin-grid" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>KLite is an independent RuneLite-based client project.</p>
+    <p>Only install plugins you trust.</p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
