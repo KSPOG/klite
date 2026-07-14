@@ -26,6 +26,14 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteItemStack>> bankItems();
 
+	CompletableFuture<Long> inventoryCount(int itemId);
+
+	CompletableFuture<Boolean> inventoryContains(int itemId);
+
+	CompletableFuture<Optional<Integer>> firstInventorySlot(int itemId);
+
+	CompletableFuture<Integer> inventoryFreeSlots();
+
 	CompletableFuture<List<KLiteSkillSnapshot>> skills();
 
 	CompletableFuture<List<KLitePlayerSnapshot>> players();
@@ -35,6 +43,30 @@ public interface KLiteClientApi
 	CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems();
 
 	CompletableFuture<List<KLiteSceneObjectSnapshot>> sceneObjects();
+
+	CompletableFuture<Optional<KLitePlayerSnapshot>> nearestPlayer(String name);
+
+	CompletableFuture<Optional<KLiteNpcSnapshot>> nearestNpc(int npcId);
+
+	CompletableFuture<Optional<KLiteNpcSnapshot>> nearestNpc(String name);
+
+	CompletableFuture<Optional<KLiteGroundItemSnapshot>> nearestGroundItem(int itemId);
+
+	CompletableFuture<Optional<KLiteGroundItemSnapshot>> nearestGroundItem(String name);
+
+	CompletableFuture<Optional<KLiteSceneObjectSnapshot>> nearestSceneObject(int objectId);
+
+	CompletableFuture<Optional<KLiteSceneObjectSnapshot>> nearestSceneObject(String name);
+
+	CompletableFuture<Optional<KLiteItemDefinition>> itemDefinition(int itemId);
+
+	CompletableFuture<Optional<KLiteNpcDefinition>> npcDefinition(int npcId);
+
+	CompletableFuture<Optional<KLiteObjectDefinition>> objectDefinition(int objectId);
+
+	CompletableFuture<Optional<Integer>> distanceTo(WorldPoint location);
+
+	CompletableFuture<Boolean> hasLineOfSightTo(WorldPoint location);
 
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(@Component int componentId);
 

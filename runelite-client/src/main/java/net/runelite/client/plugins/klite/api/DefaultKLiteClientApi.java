@@ -110,6 +110,64 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Long> inventoryCount(int itemId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (itemId < 0)
+			{
+				return 0L;
+			}
+			long count = 0L;
+			ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+			if (inventory != null)
+			{
+				for (Item item : inventory.getItems())
+				{
+					if (item.getId() == itemId && item.getQuantity() > 0)
+					{
+						count += item.getQuantity();
+					}
+				}
+			}
+			return count;
+		});
+	}
+
+	@Override
+	public CompletableFuture<Boolean> inventoryContains(int itemId)
+	{
+		return threadGateway.submit(() -> findItemSlot(InventoryID.INV, itemId).isPresent());
+	}
+
+	@Override
+	public CompletableFuture<Optional<Integer>> firstInventorySlot(int itemId)
+	{
+		return threadGateway.submit(() -> findItemSlot(InventoryID.INV, itemId));
+	}
+
+	@Override
+	public CompletableFuture<Integer> inventoryFreeSlots()
+	{
+		return threadGateway.submit(() ->
+		{
+			ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+			if (inventory == null)
+			{
+				return 0;
+			}
+			int freeSlots = 0;
+			for (Item item : inventory.getItems())
+			{
+				if (item.getId() < 0 || item.getQuantity() <= 0)
+				{
+					freeSlots++;
+				}
+			}
+			return freeSlots;
+		});
+	}
+	@Override
 	public CompletableFuture<List<KLiteSkillSnapshot>> skills()
 	{
 		return threadGateway.submit(() ->
@@ -137,28 +195,15 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			{
 				return ImmutableList.of();
 			}
-
 			Player localPlayer = client.getLocalPlayer();
 			ImmutableList.Builder<KLitePlayerSnapshot> snapshots = ImmutableList.builder();
 			for (Player player : worldView.players())
 			{
-				snapshots.add(new KLitePlayerSnapshot(
-					player.getId(),
-					player.getName(),
-					player.getCombatLevel(),
-					player.getWorldLocation(),
-					player.getAnimation(),
-					player.getPoseAnimation(),
-					player == localPlayer,
-					player.isFriend(),
-					player.isFriendsChatMember(),
-					player.isClanMember(),
-					actorName(player.getInteracting())));
+				snapshots.add(playerSnapshot(player, player == localPlayer));
 			}
 			return snapshots.build();
 		});
 	}
-
 	@Override
 	public CompletableFuture<List<KLiteNpcSnapshot>> npcs()
 	{
@@ -169,26 +214,14 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			{
 				return ImmutableList.of();
 			}
-
 			ImmutableList.Builder<KLiteNpcSnapshot> snapshots = ImmutableList.builder();
 			for (NPC npc : worldView.npcs())
 			{
-				snapshots.add(new KLiteNpcSnapshot(
-					npc.getId(),
-					npc.getIndex(),
-					npc.getName(),
-					npc.getCombatLevel(),
-					npc.getWorldLocation(),
-					npc.getAnimation(),
-					npc.getPoseAnimation(),
-					npc.getHealthRatio(),
-					npc.getHealthScale(),
-					actorName(npc.getInteracting())));
+				snapshots.add(npcSnapshot(npc));
 			}
 			return snapshots.build();
 		});
 	}
-
 	@Override
 	public CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems()
 	{
@@ -209,41 +242,125 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	@Override
 	public CompletableFuture<List<KLiteSceneObjectSnapshot>> sceneObjects()
 	{
+		return threadGateway.submit(this::currentSceneObjectSnapshots);
+	}
+	@Override
+	public CompletableFuture<Optional<KLitePlayerSnapshot>> nearestPlayer(String name)
+	{
+		return threadGateway.submit(() -> nearestPlayerSnapshot(name));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteNpcSnapshot>> nearestNpc(int npcId)
+	{
+		return threadGateway.submit(() -> nearestNpcSnapshot(npcId, null));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteNpcSnapshot>> nearestNpc(String name)
+	{
+		return threadGateway.submit(() -> nearestNpcSnapshot(-1, name));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteGroundItemSnapshot>> nearestGroundItem(int itemId)
+	{
+		return threadGateway.submit(() -> nearestGroundItemSnapshot(itemId, null));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteGroundItemSnapshot>> nearestGroundItem(String name)
+	{
+		return threadGateway.submit(() -> nearestGroundItemSnapshot(-1, name));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteSceneObjectSnapshot>> nearestSceneObject(int objectId)
+	{
+		return threadGateway.submit(() -> nearestSceneObjectSnapshot(objectId, null));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteSceneObjectSnapshot>> nearestSceneObject(String name)
+	{
+		return threadGateway.submit(() -> nearestSceneObjectSnapshot(-1, name));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteItemDefinition>> itemDefinition(int itemId)
+	{
+		return threadGateway.submit(() -> itemId < 0
+			? Optional.empty()
+			: Optional.of(itemDefinitionSnapshot(client.getItemDefinition(itemId))));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteNpcDefinition>> npcDefinition(int npcId)
+	{
 		return threadGateway.submit(() ->
 		{
-			WorldView worldView = client.getTopLevelWorldView();
-			if (worldView == null || worldView.getScene() == null)
+			if (npcId < 0)
 			{
-				return ImmutableList.of();
+				return Optional.empty();
 			}
-
-			Set<String> seenObjects = new HashSet<>();
-			ImmutableList.Builder<KLiteSceneObjectSnapshot> snapshots = ImmutableList.builder();
-			for (Tile[][] plane : worldView.getScene().getTiles())
+			NPCComposition composition = client.getNpcDefinition(npcId);
+			if (composition.getConfigs() != null)
 			{
-				for (Tile[] row : plane)
+				NPCComposition transformed = composition.transform();
+				if (transformed != null)
 				{
-					for (Tile tile : row)
-					{
-						if (tile == null)
-						{
-							continue;
-						}
-						for (TileObject gameObject : tile.getGameObjects())
-						{
-							addSceneObject(gameObject, KLiteSceneObjectType.GAME, seenObjects, snapshots);
-						}
-						addSceneObject(tile.getWallObject(), KLiteSceneObjectType.WALL, seenObjects, snapshots);
-						addSceneObject(tile.getGroundObject(), KLiteSceneObjectType.GROUND, seenObjects, snapshots);
-						addSceneObject(tile.getDecorativeObject(), KLiteSceneObjectType.DECORATIVE,
-							seenObjects, snapshots);
-					}
+					composition = transformed;
 				}
 			}
-			return snapshots.build();
+			return Optional.of(npcDefinitionSnapshot(composition));
 		});
 	}
 
+	@Override
+	public CompletableFuture<Optional<KLiteObjectDefinition>> objectDefinition(int objectId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (objectId < 0)
+			{
+				return Optional.empty();
+			}
+			ObjectComposition composition = client.getObjectDefinition(objectId);
+			if (composition.getImpostorIds() != null)
+			{
+				ObjectComposition transformed = composition.getImpostor();
+				if (transformed != null)
+				{
+					composition = transformed;
+				}
+			}
+			return Optional.of(objectDefinitionSnapshot(composition));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<Integer>> distanceTo(WorldPoint location)
+	{
+		return threadGateway.submit(() ->
+		{
+			Player player = client.getLocalPlayer();
+			return player == null || location == null
+				? Optional.empty()
+				: Optional.of(player.getWorldLocation().distanceTo(location));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Boolean> hasLineOfSightTo(WorldPoint location)
+	{
+		return threadGateway.submit(() ->
+		{
+			Player player = client.getLocalPlayer();
+			WorldView worldView = client.getTopLevelWorldView();
+			return player != null && worldView != null && location != null
+				&& player.getWorldArea().hasLineOfSightTo(worldView, location);
+		});
+	}
 	@Override
 	public CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(int componentId)
 	{
@@ -771,6 +888,240 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		return threadGateway.execute(action);
 	}
 
+	private Optional<Integer> findItemSlot(int inventoryId, int itemId)
+	{
+		if (itemId < 0)
+		{
+			return Optional.empty();
+		}
+		ItemContainer container = client.getItemContainer(inventoryId);
+		if (container == null)
+		{
+			return Optional.empty();
+		}
+		Item[] items = container.getItems();
+		for (int slot = 0; slot < items.length; slot++)
+		{
+			if (items[slot].getId() == itemId && items[slot].getQuantity() > 0)
+			{
+				return Optional.of(slot);
+			}
+		}
+		return Optional.empty();
+	}
+
+	private Optional<KLitePlayerSnapshot> nearestPlayerSnapshot(@Nullable String name)
+	{
+		WorldView worldView = client.getTopLevelWorldView();
+		Player localPlayer = client.getLocalPlayer();
+		if (worldView == null || localPlayer == null || isBlank(name))
+		{
+			return Optional.empty();
+		}
+		Player nearest = null;
+		int nearestDistance = Integer.MAX_VALUE;
+		for (Player player : worldView.players())
+		{
+			if (name.equalsIgnoreCase(player.getName()))
+			{
+				int distance = localPlayer.getWorldLocation().distanceTo(player.getWorldLocation());
+				if (nearest == null || distance < nearestDistance)
+				{
+					nearest = player;
+					nearestDistance = distance;
+				}
+			}
+		}
+		return nearest == null ? Optional.empty()
+			: Optional.of(playerSnapshot(nearest, nearest == localPlayer));
+	}
+
+	private Optional<KLiteNpcSnapshot> nearestNpcSnapshot(int npcId, @Nullable String name)
+	{
+		WorldView worldView = client.getTopLevelWorldView();
+		Player localPlayer = client.getLocalPlayer();
+		if (worldView == null || localPlayer == null || npcId < 0 && isBlank(name))
+		{
+			return Optional.empty();
+		}
+		NPC nearest = null;
+		int nearestDistance = Integer.MAX_VALUE;
+		for (NPC npc : worldView.npcs())
+		{
+			boolean matches = npcId >= 0 ? npc.getId() == npcId : name.equalsIgnoreCase(npc.getName());
+			if (matches)
+			{
+				int distance = localPlayer.getWorldLocation().distanceTo(npc.getWorldLocation());
+				if (nearest == null || distance < nearestDistance)
+				{
+					nearest = npc;
+					nearestDistance = distance;
+				}
+			}
+		}
+		return nearest == null ? Optional.empty() : Optional.of(npcSnapshot(nearest));
+	}
+
+	private Optional<KLiteGroundItemSnapshot> nearestGroundItemSnapshot(
+		int itemId, @Nullable String name)
+	{
+		WorldView worldView = client.getTopLevelWorldView();
+		Player localPlayer = client.getLocalPlayer();
+		if (worldView == null || worldView.getScene() == null || localPlayer == null
+			|| itemId < 0 && isBlank(name))
+		{
+			return Optional.empty();
+		}
+		KLiteGroundItemSnapshot nearest = null;
+		int nearestDistance = Integer.MAX_VALUE;
+		for (Tile[][] plane : worldView.getScene().getTiles())
+		{
+			for (Tile[] row : plane)
+			{
+				for (Tile tile : row)
+				{
+					if (tile == null)
+					{
+						continue;
+					}
+					for (TileItem item : tile.getGroundItems())
+					{
+						boolean matches = itemId >= 0 ? item.getId() == itemId
+							: name.equalsIgnoreCase(client.getItemDefinition(item.getId()).getName());
+						int distance = localPlayer.getWorldLocation().distanceTo(tile.getWorldLocation());
+						if (matches && (nearest == null || distance < nearestDistance))
+						{
+							nearest = groundItemSnapshot(item, tile.getWorldLocation());
+							nearestDistance = distance;
+						}
+					}
+				}
+			}
+		}
+		return Optional.ofNullable(nearest);
+	}
+
+	private Optional<KLiteSceneObjectSnapshot> nearestSceneObjectSnapshot(
+		int objectId, @Nullable String name)
+	{
+		Player localPlayer = client.getLocalPlayer();
+		if (localPlayer == null || objectId < 0 && isBlank(name))
+		{
+			return Optional.empty();
+		}
+		KLiteSceneObjectSnapshot nearest = null;
+		int nearestDistance = Integer.MAX_VALUE;
+		for (KLiteSceneObjectSnapshot object : currentSceneObjectSnapshots())
+		{
+			boolean matches = objectId >= 0 ? object.getObjectId() == objectId
+				: name.equalsIgnoreCase(object.getName());
+			int distance = localPlayer.getWorldLocation().distanceTo(object.getLocation());
+			if (matches && (nearest == null || distance < nearestDistance))
+			{
+				nearest = object;
+				nearestDistance = distance;
+			}
+		}
+		return Optional.ofNullable(nearest);
+	}
+
+	private List<KLiteSceneObjectSnapshot> currentSceneObjectSnapshots()
+	{
+		WorldView worldView = client.getTopLevelWorldView();
+		if (worldView == null || worldView.getScene() == null)
+		{
+			return ImmutableList.of();
+		}
+		Set<String> seenObjects = new HashSet<>();
+		ImmutableList.Builder<KLiteSceneObjectSnapshot> snapshots = ImmutableList.builder();
+		for (Tile[][] plane : worldView.getScene().getTiles())
+		{
+			for (Tile[] row : plane)
+			{
+				for (Tile tile : row)
+				{
+					if (tile == null)
+					{
+						continue;
+					}
+					for (TileObject gameObject : tile.getGameObjects())
+					{
+						addSceneObject(gameObject, KLiteSceneObjectType.GAME, seenObjects, snapshots);
+					}
+					addSceneObject(tile.getWallObject(), KLiteSceneObjectType.WALL, seenObjects, snapshots);
+					addSceneObject(tile.getGroundObject(), KLiteSceneObjectType.GROUND, seenObjects, snapshots);
+					addSceneObject(tile.getDecorativeObject(), KLiteSceneObjectType.DECORATIVE,
+						seenObjects, snapshots);
+				}
+			}
+		}
+		return snapshots.build();
+	}
+
+	private static KLitePlayerSnapshot playerSnapshot(Player player, boolean localPlayer)
+	{
+		return new KLitePlayerSnapshot(
+			player.getId(), player.getName(), player.getCombatLevel(), player.getWorldLocation(),
+			player.getAnimation(), player.getPoseAnimation(), localPlayer, player.isFriend(),
+			player.isFriendsChatMember(), player.isClanMember(), actorName(player.getInteracting()));
+	}
+
+	private static KLiteNpcSnapshot npcSnapshot(NPC npc)
+	{
+		return new KLiteNpcSnapshot(
+			npc.getId(), npc.getIndex(), npc.getName(), npc.getCombatLevel(), npc.getWorldLocation(),
+			npc.getAnimation(), npc.getPoseAnimation(), npc.getHealthRatio(), npc.getHealthScale(),
+			actorName(npc.getInteracting()));
+	}
+
+	private static KLiteGroundItemSnapshot groundItemSnapshot(TileItem item, WorldPoint location)
+	{
+		return new KLiteGroundItemSnapshot(
+			item.getId(), item.getQuantity(), location, item.getVisibleTime(), item.getDespawnTime(),
+			item.getOwnership(), item.isPrivate());
+	}
+
+	private static KLiteItemDefinition itemDefinitionSnapshot(ItemComposition composition)
+	{
+		return new KLiteItemDefinition(
+			composition.getId(), composition.getName(), composition.getMembersName(),
+			composition.getPrice(), composition.getHaPrice(), composition.isMembers(),
+			composition.isStackable(), composition.isTradeable(), composition.isGeTradeable(),
+			composition.getLinkedNoteId(), composition.getPlaceholderId(),
+			immutableActions(composition.getInventoryActions()));
+	}
+
+	private static KLiteNpcDefinition npcDefinitionSnapshot(NPCComposition composition)
+	{
+		return new KLiteNpcDefinition(
+			composition.getId(), composition.getName(), composition.getCombatLevel(),
+			composition.getSize(), composition.isInteractible(), composition.isMinimapVisible(),
+			composition.isFollower(), immutableActions(composition.getActions()));
+	}
+
+	private static KLiteObjectDefinition objectDefinitionSnapshot(ObjectComposition composition)
+	{
+		return new KLiteObjectDefinition(
+			composition.getId(), composition.getName(), composition.getSizeX(), composition.getSizeY(),
+			composition.getMapSceneId(), composition.getMapIconId(), composition.getVarbitId(),
+			composition.getVarPlayerId(), immutableActions(composition.getActions()));
+	}
+
+	private static List<String> immutableActions(@Nullable String[] actions)
+	{
+		ImmutableList.Builder<String> result = ImmutableList.builder();
+		if (actions != null)
+		{
+			for (String action : actions)
+			{
+				if (!isBlank(action))
+				{
+					result.add(action);
+				}
+			}
+		}
+		return result.build();
+	}
 	@Nullable
 	private Item itemAt(int inventoryId, int slot)
 	{

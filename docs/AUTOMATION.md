@@ -13,10 +13,16 @@ tasks run on KLite's dedicated daemon executor and must access game state throug
 - `snapshot()` returns an immutable game-state, world, and player-location view.
 - `inventory()`, `equipment()`, and `bankItems()` return immutable item and slot snapshots;
   `isBankOpen()` reports whether the bank item container is visible.
+- `inventoryCount(...)`, `inventoryContains(...)`, `firstInventorySlot(...)`, and
+  `inventoryFreeSlots()` provide overflow-safe inventory queries.
 - `skills()` returns real level, boosted level, and experience snapshots.
 - `players()` and `npcs()` return detached nearby-actor snapshots.
 - `groundItems()` returns detached scene-item and lifecycle snapshots.
 - `sceneObjects()` returns game, wall, ground, and decorative object snapshots.
+- The `nearest...` methods find exact ID or case-insensitive exact-name matches relative
+  to the local player; `distanceTo(...)` and `hasLineOfSightTo(...)` expose spatial checks.
+- `itemDefinition(...)`, `npcDefinition(...)`, and `objectDefinition(...)` return
+  detached metadata and resolve the current NPC or object transformation when available.
 - `widget(...)`, `widgetChild(...)`, and `widgetChildren(...)` return immutable UI
   snapshots while preserving RuneLite's one-based widget operation numbers.
 - `selectedWidget()` reports the currently selected item or spell. `selectInventoryItem(...)`
