@@ -21,6 +21,7 @@ import net.runelite.api.Client;
 import net.runelite.api.Deque;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.GraphicsObject;
+import net.runelite.api.GrandExchangeOffer;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemComposition;
@@ -207,6 +208,43 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	public CompletableFuture<Boolean> prayerActive(Prayer prayer)
 	{
 		return threadGateway.submit(() -> prayer != null && client.getVarbitValue(prayer.getVarbit()) != 0);
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffers()
+	{
+		return threadGateway.submit(() ->
+		{
+			GrandExchangeOffer[] offers = client.getGrandExchangeOffers();
+			if (offers == null)
+			{
+				return ImmutableList.of();
+			}
+			ImmutableList.Builder<KLiteGrandExchangeOfferSnapshot> snapshots = ImmutableList.builder();
+			for (int slot = 0; slot < offers.length; slot++)
+			{
+				GrandExchangeOffer offer = offers[slot];
+				if (offer != null)
+				{
+					snapshots.add(grandExchangeOfferSnapshot(slot, offer));
+				}
+			}
+			return snapshots.build();
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffer(int slot)
+	{
+		return threadGateway.submit(() ->
+		{
+			GrandExchangeOffer[] offers = client.getGrandExchangeOffers();
+			if (offers == null || slot < 0 || slot >= offers.length || offers[slot] == null)
+			{
+				return Optional.empty();
+			}
+			return Optional.of(grandExchangeOfferSnapshot(slot, offers[slot]));
+		});
 	}
 
 	@Override
@@ -1243,6 +1281,13 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			Widget parent = client.getWidget(componentId);
 			return interactWidget(parent == null ? null : parent.getChild(slot), option);
 		});
+	}
+
+	private static KLiteGrandExchangeOfferSnapshot grandExchangeOfferSnapshot(
+		int slot, GrandExchangeOffer offer)
+	{
+		return new KLiteGrandExchangeOfferSnapshot(slot, offer.getItemId(), offer.getQuantitySold(),
+			offer.getTotalQuantity(), offer.getPrice(), offer.getSpent(), offer.getState());
 	}
 
 	private List<KLiteChatMessageSnapshot> chatMessageSnapshots(@Nullable ChatMessageType type)
