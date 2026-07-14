@@ -295,6 +295,24 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Boolean> isGrandExchangeOpen()
+	{
+		return threadGateway.submit(() -> client.getWidget(InterfaceID.GeOffers.FRAME) != null);
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> collectAllGrandExchange()
+	{
+		return interactWidget(InterfaceID.GeOffers.COLLECTALL, "Collect");
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> collectGrandExchangeOffer()
+	{
+		return interactWidget(InterfaceID.GeOffers.DETAILS_COLLECT, "Collect");
+	}
+
+	@Override
 	public CompletableFuture<List<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffers()
 	{
 		return threadGateway.submit(() ->

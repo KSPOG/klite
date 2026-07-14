@@ -51,6 +51,12 @@ public interface KLiteClientApi
 
 	CompletableFuture<Boolean> prayerActive(Prayer prayer);
 
+	CompletableFuture<Boolean> isGrandExchangeOpen();
+
+	CompletableFuture<KLiteInteractionResult> collectAllGrandExchange();
+
+	CompletableFuture<KLiteInteractionResult> collectGrandExchangeOffer();
+
 	CompletableFuture<List<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffers();
 
 	CompletableFuture<Optional<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffer(int slot);
