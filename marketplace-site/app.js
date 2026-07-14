@@ -60,7 +60,12 @@ function renderPlugins(query = "") {
     version.textContent = `v${plugin.version}`;
 
     const status = document.createElement("span");
-    status.textContent = plugin.status === "bundled" ? "Bundled with KLite" : plugin.status;
+    const statusLabels = {
+      bundled: "Bundled with KLite",
+      available: "Available",
+      "coming-soon": "Coming soon"
+    };
+    status.textContent = statusLabels[plugin.status] || "Unavailable";
 
     meta.append(author, version, status);
     card.append(header, meta);

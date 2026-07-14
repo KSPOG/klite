@@ -16,8 +16,8 @@ downloaded, installed, or executed.
   catalog.
 - Catalog entries can display reviewed PNG or JPEG artwork hosted by the same
   marketplace origin; invalid or unavailable images use the KLite fallback.
-- The bundled **KLite Example** plugin demonstrates the catalog connection with
-  a harmless status overlay and is disabled by default.
+- The source-only **KLite Example** plugin demonstrates the future package
+  format. It is not compiled into or installed with the client.
 - Closing KLite Core also closes and disposes the marketplace window.
 
 ## Future catalog requirements

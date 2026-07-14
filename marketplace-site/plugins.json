@@ -7,8 +7,8 @@
       "name": "KLite Example",
       "version": "1.0.0",
       "author": "KSPOG",
-      "description": "A harmless bundled plugin that displays a small overlay and demonstrates the KLite marketplace catalog connection.",
-      "status": "bundled",
+      "description": "A source-only example plugin that displays a small overlay and demonstrates the future KLite marketplace installation format.",
+      "status": "coming-soon",
       "minimumClientVersion": "1.0.0",
       "homepageUrl": "https://github.com/KSPOG/klite",
       "iconPath": "assets/plugins/klite-example.png"

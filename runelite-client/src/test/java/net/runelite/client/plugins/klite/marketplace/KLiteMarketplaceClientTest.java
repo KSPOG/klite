@@ -51,7 +51,7 @@ public class KLiteMarketplaceClientTest
 		assertEquals(1, catalog.getSchemaVersion());
 		assertEquals(1, catalog.getPlugins().size());
 		assertEquals("klite-example", catalog.getPlugins().get(0).getId());
-		assertEquals("bundled", catalog.getPlugins().get(0).getStatus());
+		assertEquals("coming-soon", catalog.getPlugins().get(0).getStatus());
 	}
 
 	@Test
@@ -145,7 +145,7 @@ public class KLiteMarketplaceClientTest
 			+ "    \"version\": \"1.0.0\",\n"
 			+ "    \"author\": \"KSPOG\",\n"
 			+ "    \"description\": \"A safe example plugin.\",\n"
-			+ "    \"status\": \"bundled\",\n"
+			+ "    \"status\": \"coming-soon\",\n"
 			+ "    \"minimumClientVersion\": \"1.0.0\",\n"
 			+ "    \"homepageUrl\": \"https://github.com/KSPOG/klite\",\n"
 			+ "    \"iconPath\": \"assets/plugins/klite-example.png\"\n"

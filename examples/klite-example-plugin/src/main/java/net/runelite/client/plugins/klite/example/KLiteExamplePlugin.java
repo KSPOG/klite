@@ -11,7 +11,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 /**
- * Minimal bundled plugin used to demonstrate the KLite marketplace catalog.
+ * Source-only plugin used to demonstrate the future KLite marketplace package format.
  */
 @PluginDescriptor(
 	name = "KLite Example",
