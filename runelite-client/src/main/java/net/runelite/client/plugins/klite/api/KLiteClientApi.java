@@ -130,6 +130,14 @@ public interface KLiteClientApi
 
 	CompletableFuture<Boolean> isBankOpen();
 
+	CompletableFuture<Boolean> isShopOpen();
+
+	CompletableFuture<Boolean> isTradeOpen();
+
+	CompletableFuture<KLiteInteractionResult> acceptTrade();
+
+	CompletableFuture<KLiteInteractionResult> declineTrade();
+
 	CompletableFuture<List<KLiteDialogOption>> dialogOptions();
 
 	CompletableFuture<Integer> varbit(@Varbit int varbitId);
