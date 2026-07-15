@@ -45,6 +45,8 @@ import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.Prayer;
 import net.runelite.api.Projectile;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.api.Scene;
 import net.runelite.api.Skill;
 import net.runelite.api.Tile;
@@ -1273,6 +1275,14 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			}
 			return snapshots.build();
 		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<QuestState>> questState(Quest quest)
+	{
+		return threadGateway.submit(() -> quest == null
+			? Optional.empty()
+			: Optional.of(quest.getState(client)));
 	}
 
 	@Override

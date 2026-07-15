@@ -11,6 +11,8 @@ import java.util.concurrent.CompletableFuture;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Prayer;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.api.annotations.Component;
 import net.runelite.api.annotations.Varbit;
 import net.runelite.api.annotations.VarCInt;
@@ -200,6 +202,8 @@ public interface KLiteClientApi
 	CompletableFuture<Integer> inventoryFreeSlots();
 
 	CompletableFuture<List<KLiteSkillSnapshot>> skills();
+
+	CompletableFuture<Optional<QuestState>> questState(Quest quest);
 
 	CompletableFuture<List<KLitePlayerSnapshot>> players();
 
