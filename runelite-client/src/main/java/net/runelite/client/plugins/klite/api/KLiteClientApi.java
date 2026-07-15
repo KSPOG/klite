@@ -29,6 +29,20 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteDisplaySnapshot> displaySnapshot();
 
+	CompletableFuture<Integer> musicVolume();
+
+	CompletableFuture<KLiteInteractionResult> setMusicVolume(int volume);
+
+	CompletableFuture<KLiteInteractionResult> playSoundEffect(int soundId);
+
+	CompletableFuture<KLiteInteractionResult> playSoundEffectAtVolume(int soundId, int volume);
+
+	CompletableFuture<KLiteInteractionResult> playAreaSoundEffect(
+		int soundId, int x, int y, int range);
+
+	CompletableFuture<KLiteInteractionResult> playAreaSoundEffect(
+		int soundId, int x, int y, int range, int delay);
+
 	CompletableFuture<KLiteCameraSnapshot> cameraSnapshot();
 
 	CompletableFuture<KLiteFreeCameraSnapshot> freeCameraSnapshot();

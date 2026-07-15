@@ -186,6 +186,75 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Integer> musicVolume()
+	{
+		return threadGateway.submit(client::getMusicVolume);
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setMusicVolume(int volume)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (volume < 0 || volume > 255)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Music volume must be between 0 and 255");
+			}
+			if (client.getMusicVolume() == volume)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Music volume is already set");
+			}
+			client.setMusicVolume(volume);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> playSoundEffect(int soundId)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.playSoundEffect(soundId);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> playSoundEffectAtVolume(
+		int soundId, int volume)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.playSoundEffect(soundId, volume);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> playAreaSoundEffect(
+		int soundId, int x, int y, int range)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.playSoundEffect(soundId, x, y, range);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> playAreaSoundEffect(
+		int soundId, int x, int y, int range, int delay)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.playSoundEffect(soundId, x, y, range, delay);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<KLiteCameraSnapshot> cameraSnapshot()
 	{
 		return threadGateway.submit(() -> new KLiteCameraSnapshot(
