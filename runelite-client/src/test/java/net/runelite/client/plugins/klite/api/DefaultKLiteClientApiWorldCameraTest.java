@@ -139,4 +139,39 @@ public class DefaultKLiteClientApiWorldCameraTest
 			api.setFreeCameraSpeed(12).get().getStatus());
 		verify(client).setFreeCameraSpeed(12);
 	}
+
+	@Test
+	public void cameraSpeedRejectsNonFiniteAndDispatchesFiniteValues() throws Exception
+	{
+		assertEquals(KLiteInteractionStatus.INVALID_REQUEST,
+			api.setCameraSpeed(Float.NaN).get().getStatus());
+		assertEquals(KLiteInteractionStatus.INVALID_REQUEST,
+			api.setCameraSpeed(Float.NEGATIVE_INFINITY).get().getStatus());
+		verify(client, never()).setCameraSpeed(Float.NaN);
+		verify(client, never()).setCameraSpeed(Float.NEGATIVE_INFINITY);
+
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setCameraSpeed(-1.5f).get().getStatus());
+		verify(client).setCameraSpeed(-1.5f);
+	}
+
+	@Test
+	public void cameraInputControlsDispatchExactValues() throws Exception
+	{
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setCameraMouseButtonMask(-7).get().getStatus());
+		verify(client).setCameraMouseButtonMask(-7);
+
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setCameraPitchRelaxerEnabled(true).get().getStatus());
+		verify(client).setCameraPitchRelaxerEnabled(true);
+
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setInvertYaw(true).get().getStatus());
+		verify(client).setInvertYaw(true);
+
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setInvertPitch(false).get().getStatus());
+		verify(client).setInvertPitch(false);
+	}
 }

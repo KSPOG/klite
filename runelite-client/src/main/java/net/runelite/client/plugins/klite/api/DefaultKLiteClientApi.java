@@ -690,6 +690,61 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInteractionResult> setCameraSpeed(float speed)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (!Float.isFinite(speed))
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Camera speed must be finite");
+			}
+			client.setCameraSpeed(speed);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setCameraMouseButtonMask(int mask)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.setCameraMouseButtonMask(mask);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setCameraPitchRelaxerEnabled(boolean enabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.setCameraPitchRelaxerEnabled(enabled);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setInvertYaw(boolean inverted)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.setInvertYaw(inverted);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setInvertPitch(boolean inverted)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.setInvertPitch(inverted);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<KLiteInteractionResult> openWorldHopper()
 	{
 		return threadGateway.submit(() ->

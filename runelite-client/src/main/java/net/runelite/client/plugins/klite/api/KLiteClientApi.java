@@ -75,6 +75,16 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteInteractionResult> setFreeCameraSpeed(int speed);
 
+	CompletableFuture<KLiteInteractionResult> setCameraSpeed(float speed);
+
+	CompletableFuture<KLiteInteractionResult> setCameraMouseButtonMask(int mask);
+
+	CompletableFuture<KLiteInteractionResult> setCameraPitchRelaxerEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setInvertYaw(boolean inverted);
+
+	CompletableFuture<KLiteInteractionResult> setInvertPitch(boolean inverted);
+
 	CompletableFuture<Optional<KLiteWorldMapSnapshot>> worldMapSnapshot();
 
 	CompletableFuture<Boolean> worldMapContains(WorldPoint location);
