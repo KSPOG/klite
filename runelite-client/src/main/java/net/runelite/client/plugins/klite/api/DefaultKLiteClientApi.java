@@ -646,15 +646,70 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Optional<KLiteItemContainerSnapshot>> itemContainer(int containerId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (containerId < 0)
+			{
+				return Optional.empty();
+			}
+			ItemContainer container = client.getItemContainer(containerId);
+			return container == null
+				? Optional.empty()
+				: Optional.of(itemContainerSnapshot(container));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteItemStack>> itemContainerItem(
+		int containerId, int slot)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (containerId < 0 || slot < 0)
+			{
+				return Optional.empty();
+			}
+			Item item = itemAt(containerId, slot);
+			return item == null
+				? Optional.empty()
+				: Optional.of(new KLiteItemStack(slot, item.getId(), item.getQuantity()));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Long> itemContainerCount(int containerId, int itemId)
+	{
+		return threadGateway.submit(() ->
+			containerId < 0 ? 0L : itemCount(containerId, itemId));
+	}
+
+	@Override
+	public CompletableFuture<Boolean> itemContainerContains(int containerId, int itemId)
+	{
+		return threadGateway.submit(() ->
+			containerId >= 0 && findItemSlot(containerId, itemId).isPresent());
+	}
+
+	@Override
+	public CompletableFuture<Optional<Integer>> firstItemContainerSlot(
+		int containerId, int itemId)
+	{
+		return threadGateway.submit(() ->
+			containerId < 0 ? Optional.empty() : findItemSlot(containerId, itemId));
+	}
+
+	@Override
 	public CompletableFuture<List<KLiteItemStack>> inventory()
 	{
-		return itemContainer(InventoryID.INV);
+		return itemStacks(InventoryID.INV);
 	}
 
 	@Override
 	public CompletableFuture<List<KLiteItemStack>> equipment()
 	{
-		return itemContainer(InventoryID.WORN);
+		return itemStacks(InventoryID.WORN);
 	}
 
 	@Override
@@ -704,7 +759,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	@Override
 	public CompletableFuture<List<KLiteItemStack>> bankItems()
 	{
-		return itemContainer(InventoryID.BANK);
+		return itemStacks(InventoryID.BANK);
 	}
 
 	@Override
@@ -2050,7 +2105,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		{
 			for (Item item : container.getItems())
 			{
-				if (item.getId() == itemId && item.getQuantity() > 0)
+				if (item != null && item.getId() == itemId && item.getQuantity() > 0)
 				{
 					count += item.getQuantity();
 				}
@@ -2058,6 +2113,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		}
 		return count;
 	}
+
 	private Optional<Integer> findItemSlot(int inventoryId, int itemId)
 	{
 		if (itemId < 0)
@@ -2072,7 +2128,8 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		Item[] items = container.getItems();
 		for (int slot = 0; slot < items.length; slot++)
 		{
-			if (items[slot].getId() == itemId && items[slot].getQuantity() > 0)
+			Item item = items[slot];
+			if (item != null && item.getId() == itemId && item.getQuantity() > 0)
 			{
 				return Optional.of(slot);
 			}
@@ -2292,6 +2349,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		}
 		return result.build();
 	}
+
 	@Nullable
 	private Item itemAt(int inventoryId, int slot)
 	{
@@ -2305,7 +2363,7 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			return null;
 		}
 		Item item = container.getItems()[slot];
-		return item.getId() >= 0 && item.getQuantity() > 0 ? item : null;
+		return item != null && item.getId() >= 0 && item.getQuantity() > 0 ? item : null;
 	}
 
 	private KLiteInteractionResult dispatchSelectedTarget(
@@ -2576,28 +2634,35 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		snapshots.add(new KLiteSceneObjectSnapshot(
 			object.getId(), composition.getName(), type, object.getWorldLocation(), actions.build()));
 	}
-	private CompletableFuture<List<KLiteItemStack>> itemContainer(int inventoryId)
+
+	private CompletableFuture<List<KLiteItemStack>> itemStacks(int inventoryId)
 	{
 		return threadGateway.submit(() ->
 		{
 			ItemContainer container = client.getItemContainer(inventoryId);
-			if (container == null)
-			{
-				return ImmutableList.of();
-			}
-
-			ImmutableList.Builder<KLiteItemStack> items = ImmutableList.builder();
-			Item[] itemArray = container.getItems();
-			for (int slot = 0; slot < itemArray.length; slot++)
-			{
-				Item item = itemArray[slot];
-				if (item.getId() >= 0 && item.getQuantity() > 0)
-				{
-					items.add(new KLiteItemStack(slot, item.getId(), item.getQuantity()));
-				}
-			}
-			return items.build();
+			return container == null ? ImmutableList.of() : itemStackSnapshots(container);
 		});
+	}
+
+	private static KLiteItemContainerSnapshot itemContainerSnapshot(ItemContainer container)
+	{
+		return new KLiteItemContainerSnapshot(
+			container.getId(), container.size(), container.count(), itemStackSnapshots(container));
+	}
+
+	private static List<KLiteItemStack> itemStackSnapshots(ItemContainer container)
+	{
+		ImmutableList.Builder<KLiteItemStack> items = ImmutableList.builder();
+		Item[] itemArray = container.getItems();
+		for (int slot = 0; slot < itemArray.length; slot++)
+		{
+			Item item = itemArray[slot];
+			if (item != null && item.getId() >= 0 && item.getQuantity() > 0)
+			{
+				items.add(new KLiteItemStack(slot, item.getId(), item.getQuantity()));
+			}
+		}
+		return items.build();
 	}
 
 	private static void addGroundItems(

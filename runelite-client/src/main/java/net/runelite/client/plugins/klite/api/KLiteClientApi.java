@@ -94,6 +94,17 @@ public interface KLiteClientApi
 
 	CompletableFuture<Optional<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffer(int slot);
 
+	CompletableFuture<Optional<KLiteItemContainerSnapshot>> itemContainer(int containerId);
+
+	CompletableFuture<Optional<KLiteItemStack>> itemContainerItem(int containerId, int slot);
+
+	CompletableFuture<Long> itemContainerCount(int containerId, int itemId);
+
+	CompletableFuture<Boolean> itemContainerContains(int containerId, int itemId);
+
+	CompletableFuture<Optional<Integer>> firstItemContainerSlot(
+		int containerId, int itemId);
+
 	CompletableFuture<List<KLiteItemStack>> inventory();
 
 	CompletableFuture<List<KLiteItemStack>> equipment();
