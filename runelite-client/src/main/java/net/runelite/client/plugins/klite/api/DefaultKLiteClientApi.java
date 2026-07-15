@@ -1586,6 +1586,38 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Boolean> widgetTargetSelected()
+	{
+		return threadGateway.submit(client::isWidgetSelected);
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> clearWidgetTarget()
+	{
+		return threadGateway.submit(() ->
+		{
+			if (!client.isWidgetSelected())
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"No widget target is selected");
+			}
+			client.setWidgetSelected(false);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<WorldPoint>> selectedSceneTile()
+	{
+		return threadGateway.submit(() ->
+		{
+			WorldView worldView = client.getTopLevelWorldView();
+			Tile tile = worldView == null ? null : worldView.getSelectedSceneTile();
+			return Optional.ofNullable(tile == null ? null : tile.getWorldLocation());
+		});
+	}
+
+	@Override
 	public CompletableFuture<Optional<KLiteWidgetSnapshot>> focusedInputWidget()
 	{
 		return threadGateway.submit(() -> Optional.ofNullable(client.getFocusedInputFieldWidget())

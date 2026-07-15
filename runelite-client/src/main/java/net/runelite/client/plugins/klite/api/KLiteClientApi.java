@@ -252,6 +252,12 @@ public interface KLiteClientApi
 
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> selectedWidget();
 
+	CompletableFuture<Boolean> widgetTargetSelected();
+
+	CompletableFuture<KLiteInteractionResult> clearWidgetTarget();
+
+	CompletableFuture<Optional<WorldPoint>> selectedSceneTile();
+
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> focusedInputWidget();
 
 	CompletableFuture<Boolean> isBankOpen();

@@ -8,12 +8,16 @@ package net.runelite.client.plugins.klite.api;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.Rectangle;
 import java.util.Optional;
 import net.runelite.api.Client;
 import net.runelite.api.NPC;
+import net.runelite.api.Tile;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
@@ -85,5 +89,47 @@ public class DefaultKLiteClientApiContextStateTest
 		Optional<KLiteWidgetSnapshot> snapshot = api.focusedInputWidget().get();
 
 		assertFalse(snapshot.isPresent());
+	}
+
+	@Test
+	public void widgetTargetStateReadsAndClearsSelection() throws Exception
+	{
+		when(client.isWidgetSelected()).thenReturn(true);
+
+		assertEquals(Boolean.TRUE, api.widgetTargetSelected().get());
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.clearWidgetTarget().get().getStatus());
+		verify(client).setWidgetSelected(false);
+	}
+
+	@Test
+	public void clearWidgetTargetSkipsAbsentSelection() throws Exception
+	{
+		assertEquals(KLiteInteractionStatus.NO_ACTION_REQUIRED,
+			api.clearWidgetTarget().get().getStatus());
+		verify(client, never()).setWidgetSelected(false);
+	}
+
+	@Test
+	public void selectedSceneTileReturnsDetachedLocation() throws Exception
+	{
+		WorldView worldView = mock(WorldView.class);
+		Tile tile = mock(Tile.class);
+		WorldPoint location = new WorldPoint(3210, 3220, 1);
+		when(client.getTopLevelWorldView()).thenReturn(worldView);
+		when(worldView.getSelectedSceneTile()).thenReturn(tile);
+		when(tile.getWorldLocation()).thenReturn(location);
+
+		assertEquals(location, api.selectedSceneTile().get().get());
+	}
+
+	@Test
+	public void selectedSceneTileIsEmptyWithoutWorldOrTile() throws Exception
+	{
+		assertFalse(api.selectedSceneTile().get().isPresent());
+
+		WorldView worldView = mock(WorldView.class);
+		when(client.getTopLevelWorldView()).thenReturn(worldView);
+		assertFalse(api.selectedSceneTile().get().isPresent());
 	}
 }
