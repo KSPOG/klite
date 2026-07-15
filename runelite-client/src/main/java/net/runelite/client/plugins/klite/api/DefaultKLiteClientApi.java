@@ -127,6 +127,60 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteLoginSnapshot> loginSnapshot()
+	{
+		return threadGateway.submit(() -> new KLiteLoginSnapshot(
+			client.getLoginIndex(),
+			client.getCurrentLoginField(),
+			client.getLauncherDisplayName()));
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setLoginUsername(String username)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (username == null)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Login username must not be null");
+			}
+			client.setUsername(username);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setLoginPassword(String password)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (password == null)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Login password must not be null");
+			}
+			client.setPassword(password);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setLoginOtp(String otp)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (otp == null)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Login OTP must not be null");
+			}
+			client.setOtp(otp);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<KLiteRuntimeSnapshot> runtimeSnapshot()
 	{
 		return threadGateway.submit(() ->

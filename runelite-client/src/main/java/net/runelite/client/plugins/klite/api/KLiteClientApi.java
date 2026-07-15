@@ -25,6 +25,14 @@ public interface KLiteClientApi
 {
 	CompletableFuture<KLiteClientSnapshot> snapshot();
 
+	CompletableFuture<KLiteLoginSnapshot> loginSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setLoginUsername(String username);
+
+	CompletableFuture<KLiteInteractionResult> setLoginPassword(String password);
+
+	CompletableFuture<KLiteInteractionResult> setLoginOtp(String otp);
+
 	CompletableFuture<KLiteRuntimeSnapshot> runtimeSnapshot();
 
 	CompletableFuture<Integer> idleTimeout();
