@@ -32,7 +32,9 @@ import net.runelite.api.Ignore;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemComposition;
+import net.runelite.api.Menu;
 import net.runelite.api.MenuAction;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.MessageNode;
 import net.runelite.api.NameableContainer;
 import net.runelite.api.NPC;
@@ -1644,6 +1646,70 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteMenuSnapshot> menuSnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			Menu menu = client.getMenu();
+			if (menu == null)
+			{
+				return new KLiteMenuSnapshot(
+					client.isMenuOpen(), client.isMenuScrollable(), client.getMenuScroll(),
+					0, 0, 0, 0, ImmutableList.of());
+			}
+			MenuEntry[] entries = menu.getMenuEntries();
+			ImmutableList.Builder<KLiteMenuEntrySnapshot> snapshots = ImmutableList.builder();
+			if (entries != null)
+			{
+				for (int index = 0; index < entries.length; index++)
+				{
+					if (entries[index] != null)
+					{
+						snapshots.add(menuEntrySnapshot(index, entries[index]));
+					}
+				}
+			}
+			return new KLiteMenuSnapshot(
+				client.isMenuOpen(),
+				client.isMenuScrollable(),
+				client.getMenuScroll(),
+				menu.getMenuX(),
+				menu.getMenuY(),
+				menu.getMenuWidth(),
+				menu.getMenuHeight(),
+				snapshots.build());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> interactMenuEntry(int index)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (index < 0)
+			{
+				return KLiteInteractionResult.invalidRequest("Menu entry index must be non-negative");
+			}
+			Menu menu = client.getMenu();
+			MenuEntry[] entries = menu == null ? null : menu.getMenuEntries();
+			if (entries == null || index >= entries.length || entries[index] == null)
+			{
+				return KLiteInteractionResult.targetNotFound(
+					"Menu entry is not present at index " + index);
+			}
+			MenuEntry entry = entries[index];
+			if (entry.getType() == null)
+			{
+				return KLiteInteractionResult.optionNotFound("Menu entry has no action");
+			}
+			client.menuAction(
+				entry.getParam0(), entry.getParam1(), entry.getType(), entry.getIdentifier(),
+				entry.getItemId(), nullToEmpty(entry.getOption()), nullToEmpty(entry.getTarget()));
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<Void> menuAction(KLiteMenuActionRequest request)
 	{
 		return threadGateway.execute(() -> client.menuAction(
@@ -2338,6 +2404,28 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			}
 		}
 		return -1;
+	}
+
+	private static KLiteMenuEntrySnapshot menuEntrySnapshot(int index, MenuEntry entry)
+	{
+		return new KLiteMenuEntrySnapshot(
+			index,
+			entry.getOption(),
+			entry.getTarget(),
+			entry.getType(),
+			entry.getIdentifier(),
+			entry.getParam0(),
+			entry.getParam1(),
+			entry.getItemId(),
+			entry.getItemOp(),
+			entry.getWorldViewId(),
+			entry.isForceLeftClick(),
+			entry.isDeprioritized());
+	}
+
+	private static String nullToEmpty(@Nullable String value)
+	{
+		return value == null ? "" : value;
 	}
 
 	private static boolean isBlank(@Nullable String value)

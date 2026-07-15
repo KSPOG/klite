@@ -257,6 +257,10 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteInteractionResult> continueDialog();
 
+	CompletableFuture<KLiteMenuSnapshot> menuSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> interactMenuEntry(int index);
+
 	CompletableFuture<Void> menuAction(KLiteMenuActionRequest request);
 
 	CompletableFuture<Void> onClientThread(Runnable action);
