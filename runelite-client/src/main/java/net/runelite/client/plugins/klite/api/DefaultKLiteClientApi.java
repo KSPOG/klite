@@ -24,6 +24,7 @@ import net.runelite.api.Friend;
 import net.runelite.api.FriendContainer;
 import net.runelite.api.FriendsChatManager;
 import net.runelite.api.FriendsChatMember;
+import net.runelite.api.GameState;
 import net.runelite.api.GraphicsObject;
 import net.runelite.api.GrandExchangeOffer;
 import net.runelite.api.Ignore;
@@ -44,6 +45,7 @@ import net.runelite.api.Skill;
 import net.runelite.api.Tile;
 import net.runelite.api.TileItem;
 import net.runelite.api.TileObject;
+import net.runelite.api.World;
 import net.runelite.api.WorldView;
 import net.runelite.api.clan.ClanChannel;
 import net.runelite.api.clan.ClanChannelMember;
@@ -206,6 +208,55 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		return threadGateway.submit(() ->
 		{
 			client.openWorldHopper();
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteWorldSnapshot>> worlds()
+	{
+		return threadGateway.submit(this::worldSnapshots);
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteWorldSnapshot>> world(int worldId)
+	{
+		return threadGateway.submit(() ->
+		{
+			World world = findWorld(worldId);
+			return world == null ? Optional.empty() : Optional.of(worldSnapshot(world));
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> hopToWorld(int worldId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (worldId <= 0)
+			{
+				return KLiteInteractionResult.invalidRequest("World id must be positive");
+			}
+			if (client.getWorld() == worldId)
+			{
+				return KLiteInteractionResult.noActionRequired("Already on world " + worldId);
+			}
+			World world = findWorld(worldId);
+			if (world == null)
+			{
+				return KLiteInteractionResult.targetNotFound(
+					"World is not present in the loaded world list: " + worldId);
+			}
+			if (client.getGameState() == GameState.LOGIN_SCREEN)
+			{
+				client.changeWorld(world);
+				return KLiteInteractionResult.dispatched();
+			}
+			if (!isVisible(client.getWidget(InterfaceID.Worldswitcher.BUTTONS)))
+			{
+				return KLiteInteractionResult.targetNotFound("World hopper is not open");
+			}
+			client.hopToWorld(world);
 			return KLiteInteractionResult.dispatched();
 		});
 	}
@@ -1612,6 +1663,50 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	{
 		Widget first = client.getWidget(firstComponentId);
 		return first == null ? client.getWidget(secondComponentId) : first;
+	}
+
+	private List<KLiteWorldSnapshot> worldSnapshots()
+	{
+		World[] worlds = client.getWorldList();
+		if (worlds == null)
+		{
+			return ImmutableList.of();
+		}
+		ImmutableList.Builder<KLiteWorldSnapshot> snapshots = ImmutableList.builder();
+		for (World world : worlds)
+		{
+			if (world != null)
+			{
+				snapshots.add(worldSnapshot(world));
+			}
+		}
+		return snapshots.build();
+	}
+
+	@Nullable
+	private World findWorld(int worldId)
+	{
+		World[] worlds = client.getWorldList();
+		if (worldId <= 0 || worlds == null)
+		{
+			return null;
+		}
+		for (World world : worlds)
+		{
+			if (world != null && world.getId() == worldId)
+			{
+				return world;
+			}
+		}
+		return null;
+	}
+
+	private static KLiteWorldSnapshot worldSnapshot(World world)
+	{
+		return new KLiteWorldSnapshot(
+			world.getId(), world.getIndex(), world.getPlayerCount(), world.getLocation(),
+			world.getActivity(), world.getAddress(),
+			world.getTypes() == null ? ImmutableList.of() : ImmutableList.copyOf(world.getTypes()));
 	}
 
 	@Nullable
