@@ -2258,6 +2258,22 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInteractionResult> runScript(Object... arguments)
+	{
+		Object[] copiedArguments = arguments == null ? null : arguments.clone();
+		return threadGateway.submit(() ->
+		{
+			if (copiedArguments == null || copiedArguments.length == 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Client script arguments must include a script identifier");
+			}
+			client.runScript(copiedArguments);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<Void> menuAction(KLiteMenuActionRequest request)
 	{
 		return threadGateway.execute(() -> client.menuAction(

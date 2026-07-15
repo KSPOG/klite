@@ -351,6 +351,8 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteInteractionResult> interactMenuEntry(int index);
 
+	CompletableFuture<KLiteInteractionResult> runScript(Object... arguments);
+
 	CompletableFuture<Void> menuAction(KLiteMenuActionRequest request);
 
 	CompletableFuture<Void> onClientThread(Runnable action);
