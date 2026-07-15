@@ -25,6 +25,10 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteRuntimeSnapshot> runtimeSnapshot();
 
+	CompletableFuture<KLiteInputSnapshot> inputSnapshot();
+
+	CompletableFuture<KLiteDisplaySnapshot> displaySnapshot();
+
 	CompletableFuture<KLiteCameraSnapshot> cameraSnapshot();
 
 	CompletableFuture<Optional<WorldPoint>> destination();

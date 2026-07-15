@@ -6,6 +6,7 @@
 package net.runelite.client.plugins.klite.api;
 
 import com.google.common.collect.ImmutableList;
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.util.HashSet;
 import java.util.List;
@@ -146,6 +147,41 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 				client.isInInstancedRegion(),
 				mapRegions.build(),
 				System.currentTimeMillis());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInputSnapshot> inputSnapshot()
+	{
+		return threadGateway.submit(() -> new KLiteInputSnapshot(
+			client.getMouseCanvasPosition(),
+			client.getMouseIdleTicks(),
+			client.getMouseLastPressedMillis(),
+			client.getKeyboardIdleTicks()));
+	}
+
+	@Override
+	public CompletableFuture<KLiteDisplaySnapshot> displaySnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			Dimension stretched = client.getStretchedDimensions();
+			Dimension real = client.getRealDimensions();
+			return new KLiteDisplaySnapshot(
+				client.getCanvasWidth(),
+				client.getCanvasHeight(),
+				client.getViewportXOffset(),
+				client.getViewportYOffset(),
+				client.getViewportWidth(),
+				client.getViewportHeight(),
+				client.getScale(),
+				client.isResized(),
+				client.isStretchedEnabled(),
+				client.isStretchedFast(),
+				stretched == null ? -1 : stretched.width,
+				stretched == null ? -1 : stretched.height,
+				real == null ? -1 : real.width,
+				real == null ? -1 : real.height);
 		});
 	}
 
