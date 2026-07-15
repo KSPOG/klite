@@ -47,6 +47,15 @@ public interface KLiteClientApi
 
 	CompletableFuture<Optional<KLiteFriendsChatMemberSnapshot>> friendsChatMember(String name);
 
+	CompletableFuture<Optional<KLiteClanChannelSnapshot>> clanChannel(KLiteClanType type);
+
+	CompletableFuture<Optional<KLiteClanSettingsSnapshot>> clanSettings(KLiteClanType type);
+
+	CompletableFuture<Optional<KLiteClanChannelMemberSnapshot>> clanChannelMember(
+		KLiteClanType type, String name);
+
+	CompletableFuture<Optional<KLiteClanMemberSnapshot>> clanMember(KLiteClanType type, String name);
+
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages();
 
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages(ChatMessageType type);

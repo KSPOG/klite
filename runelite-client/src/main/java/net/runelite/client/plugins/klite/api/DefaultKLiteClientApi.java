@@ -45,6 +45,13 @@ import net.runelite.api.Tile;
 import net.runelite.api.TileItem;
 import net.runelite.api.TileObject;
 import net.runelite.api.WorldView;
+import net.runelite.api.clan.ClanChannel;
+import net.runelite.api.clan.ClanChannelMember;
+import net.runelite.api.clan.ClanID;
+import net.runelite.api.clan.ClanMember;
+import net.runelite.api.clan.ClanRank;
+import net.runelite.api.clan.ClanSettings;
+import net.runelite.api.clan.ClanTitle;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.InterfaceID;
@@ -288,6 +295,76 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			}
 			FriendsChatMember member = friendsChat.findByName(name);
 			return member == null ? Optional.empty() : Optional.of(friendsChatMemberSnapshot(member));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteClanChannelSnapshot>> clanChannel(KLiteClanType type)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (type == null)
+			{
+				return Optional.empty();
+			}
+			ClanChannel channel = clanChannelFor(type);
+			return channel == null
+				? Optional.empty()
+				: Optional.of(clanChannelSnapshot(type, channel, clanSettingsFor(type)));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteClanSettingsSnapshot>> clanSettings(KLiteClanType type)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (type == null)
+			{
+				return Optional.empty();
+			}
+			ClanSettings settings = clanSettingsFor(type);
+			return settings == null
+				? Optional.empty()
+				: Optional.of(clanSettingsSnapshot(type, settings));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteClanChannelMemberSnapshot>> clanChannelMember(
+		KLiteClanType type, String name)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (type == null || isBlank(name))
+			{
+				return Optional.empty();
+			}
+			ClanChannel channel = clanChannelFor(type);
+			if (channel == null)
+			{
+				return Optional.empty();
+			}
+			ClanChannelMember member = channel.findMember(name);
+			return member == null
+				? Optional.empty()
+				: Optional.of(clanChannelMemberSnapshot(member, clanSettingsFor(type)));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteClanMemberSnapshot>> clanMember(
+		KLiteClanType type, String name)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (type == null || isBlank(name))
+			{
+				return Optional.empty();
+			}
+			ClanSettings settings = clanSettingsFor(type);
+			ClanMember member = settings == null ? null : settings.findMember(name);
+			return member == null ? Optional.empty() : Optional.of(clanMemberSnapshot(member, settings));
 		});
 	}
 
@@ -1535,6 +1612,109 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	{
 		Widget first = client.getWidget(firstComponentId);
 		return first == null ? client.getWidget(secondComponentId) : first;
+	}
+
+	@Nullable
+	private ClanChannel clanChannelFor(KLiteClanType type)
+	{
+		switch (type)
+		{
+			case PRIMARY:
+				return client.getClanChannel();
+			case GUEST:
+				return client.getGuestClanChannel();
+			case GROUP_IRONMAN:
+				return client.getClanChannel(ClanID.GROUP_IRONMAN);
+			default:
+				return null;
+		}
+	}
+
+	@Nullable
+	private ClanSettings clanSettingsFor(KLiteClanType type)
+	{
+		switch (type)
+		{
+			case PRIMARY:
+				return client.getClanSettings();
+			case GUEST:
+				return client.getGuestClanSettings();
+			case GROUP_IRONMAN:
+				return client.getClanSettings(ClanID.GROUP_IRONMAN);
+			default:
+				return null;
+		}
+	}
+
+	private static KLiteClanChannelSnapshot clanChannelSnapshot(
+		KLiteClanType type, ClanChannel channel, @Nullable ClanSettings settings)
+	{
+		ImmutableList.Builder<KLiteClanChannelMemberSnapshot> members = ImmutableList.builder();
+		List<ClanChannelMember> currentMembers = channel.getMembers();
+		if (currentMembers != null)
+		{
+			for (ClanChannelMember member : currentMembers)
+			{
+				if (member != null)
+				{
+					members.add(clanChannelMemberSnapshot(member, settings));
+				}
+			}
+		}
+		return new KLiteClanChannelSnapshot(type, channel.getName(), members.build());
+	}
+
+	private static KLiteClanSettingsSnapshot clanSettingsSnapshot(
+		KLiteClanType type, ClanSettings settings)
+	{
+		ImmutableList.Builder<KLiteClanMemberSnapshot> members = ImmutableList.builder();
+		List<ClanMember> currentMembers = settings.getMembers();
+		if (currentMembers != null)
+		{
+			for (ClanMember member : currentMembers)
+			{
+				if (member != null)
+				{
+					members.add(clanMemberSnapshot(member, settings));
+				}
+			}
+		}
+		return new KLiteClanSettingsSnapshot(type, settings.getName(), members.build());
+	}
+
+	private static KLiteClanChannelMemberSnapshot clanChannelMemberSnapshot(
+		ClanChannelMember member, @Nullable ClanSettings settings)
+	{
+		ClanRank rank = member.getRank();
+		return new KLiteClanChannelMemberSnapshot(
+			member.getName(),
+			member.getPrevName(),
+			member.getWorld(),
+			rank,
+			clanTitleSnapshot(settings, rank));
+	}
+
+	private static KLiteClanMemberSnapshot clanMemberSnapshot(
+		ClanMember member, ClanSettings settings)
+	{
+		ClanRank rank = member.getRank();
+		return new KLiteClanMemberSnapshot(
+			member.getName(),
+			rank,
+			member.getJoinDate(),
+			clanTitleSnapshot(settings, rank));
+	}
+
+	@Nullable
+	private static KLiteClanTitleSnapshot clanTitleSnapshot(
+		@Nullable ClanSettings settings, @Nullable ClanRank rank)
+	{
+		if (settings == null || rank == null)
+		{
+			return null;
+		}
+		ClanTitle title = settings.titleForRank(rank);
+		return title == null ? null : new KLiteClanTitleSnapshot(title.getId(), title.getName());
 	}
 
 	private static KLiteFriendsChatSnapshot friendsChatSnapshot(FriendsChatManager friendsChat)
