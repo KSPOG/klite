@@ -914,6 +914,13 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Optional<KLiteNpcSnapshot>> follower()
+	{
+		return threadGateway.submit(() -> Optional.ofNullable(client.getFollower())
+			.map(DefaultKLiteClientApi::npcSnapshot));
+	}
+
+	@Override
 	public CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems()
 	{
 		return threadGateway.submit(() ->
@@ -1164,6 +1171,13 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	public CompletableFuture<Optional<KLiteWidgetSnapshot>> selectedWidget()
 	{
 		return threadGateway.submit(() -> Optional.ofNullable(client.getSelectedWidget())
+			.map(DefaultKLiteClientApi::widgetSnapshot));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteWidgetSnapshot>> focusedInputWidget()
+	{
+		return threadGateway.submit(() -> Optional.ofNullable(client.getFocusedInputFieldWidget())
 			.map(DefaultKLiteClientApi::widgetSnapshot));
 	}
 

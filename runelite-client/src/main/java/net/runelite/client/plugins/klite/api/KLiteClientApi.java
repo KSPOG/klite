@@ -144,6 +144,8 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteNpcSnapshot>> npcs();
 
+	CompletableFuture<Optional<KLiteNpcSnapshot>> follower();
+
 	CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems();
 
 	CompletableFuture<List<KLiteProjectileSnapshot>> projectiles();
@@ -184,6 +186,8 @@ public interface KLiteClientApi
 	CompletableFuture<List<KLiteWidgetSnapshot>> widgetChildren(@Component int componentId);
 
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> selectedWidget();
+
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> focusedInputWidget();
 
 	CompletableFuture<Boolean> isBankOpen();
 
