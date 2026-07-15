@@ -199,6 +199,21 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteFreeCameraSnapshot> freeCameraSnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			int modeId = client.getCameraMode();
+			return new KLiteFreeCameraSnapshot(
+				KLiteCameraMode.fromId(modeId),
+				modeId,
+				client.getCameraFocalPointX(),
+				client.getCameraFocalPointY(),
+				client.getCameraFocalPointZ());
+		});
+	}
+
+	@Override
 	public CompletableFuture<Optional<WorldPoint>> destination()
 	{
 		return threadGateway.submit(() ->
@@ -339,6 +354,67 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 				return KLiteInteractionResult.noActionRequired("Camera pitch is already targeted");
 			}
 			client.setCameraPitchTarget(pitch);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setFreeCameraEnabled(boolean enabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			int mode = enabled ? KLiteCameraMode.FREE.getId() : KLiteCameraMode.NORMAL.getId();
+			if (client.getCameraMode() == mode)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					enabled ? "Free camera is already enabled" : "Free camera is already disabled");
+			}
+			client.setCameraMode(mode);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setFreeCameraFocalPoint(
+		float x, float y, float z)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (!Float.isFinite(x) || !Float.isFinite(y) || !Float.isFinite(z))
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Free-camera focal coordinates must be finite");
+			}
+			if (client.getCameraMode() != KLiteCameraMode.FREE.getId())
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Free-camera focal point requires free-camera mode");
+			}
+			if (Float.compare(client.getCameraFocalPointX(), x) == 0
+				&& Float.compare(client.getCameraFocalPointY(), y) == 0
+				&& Float.compare(client.getCameraFocalPointZ(), z) == 0)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Free-camera focal point is already targeted");
+			}
+			client.setCameraFocalPointX(x);
+			client.setCameraFocalPointY(y);
+			client.setCameraFocalPointZ(z);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setFreeCameraSpeed(int speed)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (speed < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Free-camera speed must be non-negative");
+			}
+			client.setFreeCameraSpeed(speed);
 			return KLiteInteractionResult.dispatched();
 		});
 	}

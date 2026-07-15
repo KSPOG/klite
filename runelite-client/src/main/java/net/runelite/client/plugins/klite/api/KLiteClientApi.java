@@ -31,6 +31,14 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteCameraSnapshot> cameraSnapshot();
 
+	CompletableFuture<KLiteFreeCameraSnapshot> freeCameraSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setFreeCameraEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setFreeCameraFocalPoint(float x, float y, float z);
+
+	CompletableFuture<KLiteInteractionResult> setFreeCameraSpeed(int speed);
+
 	CompletableFuture<Optional<WorldPoint>> destination();
 
 	CompletableFuture<Optional<KLiteHintArrowSnapshot>> hintArrow();
