@@ -29,6 +29,16 @@ public interface KLiteClientApi
 
 	CompletableFuture<Optional<WorldPoint>> destination();
 
+	CompletableFuture<Optional<KLiteHintArrowSnapshot>> hintArrow();
+
+	CompletableFuture<KLiteInteractionResult> setHintArrow(WorldPoint point);
+
+	CompletableFuture<KLiteInteractionResult> setHintArrowNpc(int index);
+
+	CompletableFuture<KLiteInteractionResult> setHintArrowPlayer(int id);
+
+	CompletableFuture<KLiteInteractionResult> clearHintArrow();
+
 	CompletableFuture<KLiteInteractionResult> setCameraYawTarget(int yaw);
 
 	CompletableFuture<KLiteInteractionResult> setCameraPitchTarget(int pitch);

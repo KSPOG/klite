@@ -27,6 +27,7 @@ import net.runelite.api.FriendsChatMember;
 import net.runelite.api.GameState;
 import net.runelite.api.GraphicsObject;
 import net.runelite.api.GrandExchangeOffer;
+import net.runelite.api.HintArrowType;
 import net.runelite.api.Ignore;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
@@ -166,6 +167,108 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		{
 			LocalPoint destination = client.getLocalDestinationLocation();
 			return destination == null ? Optional.empty() : Optional.of(WorldPoint.fromLocalInstance(client, destination));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteHintArrowSnapshot>> hintArrow()
+	{
+		return threadGateway.submit(() ->
+		{
+			if (!client.hasHintArrow())
+			{
+				return Optional.empty();
+			}
+			int typeId = client.getHintArrowType();
+			Player player = typeId == HintArrowType.PLAYER ? client.getHintArrowPlayer() : null;
+			NPC npc = typeId == HintArrowType.NPC ? client.getHintArrowNpc() : null;
+			WorldPoint point = typeId == HintArrowType.COORDINATE ? client.getHintArrowPoint() : null;
+			return Optional.of(new KLiteHintArrowSnapshot(
+				KLiteHintArrowType.fromId(typeId),
+				typeId,
+				point,
+				player == null ? null : playerSnapshot(player, player == client.getLocalPlayer()),
+				npc == null ? null : npcSnapshot(npc)));
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setHintArrow(WorldPoint point)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (point == null)
+			{
+				return KLiteInteractionResult.invalidRequest("Hint-arrow point must not be null");
+			}
+			if (client.getHintArrowType() == HintArrowType.COORDINATE
+				&& point.equals(client.getHintArrowPoint()))
+			{
+				return KLiteInteractionResult.noActionRequired("Hint arrow already targets this point");
+			}
+			client.setHintArrow(point);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setHintArrowNpc(int index)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (index < 0)
+			{
+				return KLiteInteractionResult.invalidRequest("NPC index must be non-negative");
+			}
+			NPC npc = findNpc(client.getTopLevelWorldView(), index);
+			if (npc == null)
+			{
+				return KLiteInteractionResult.targetNotFound("NPC index is not present: " + index);
+			}
+			if (client.getHintArrowType() == HintArrowType.NPC && client.getHintArrowNpc() == npc)
+			{
+				return KLiteInteractionResult.noActionRequired("Hint arrow already targets this NPC");
+			}
+			client.setHintArrow(npc);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setHintArrowPlayer(int id)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (id < 0)
+			{
+				return KLiteInteractionResult.invalidRequest("Player id must be non-negative");
+			}
+			Player player = findPlayer(client.getTopLevelWorldView(), id);
+			if (player == null)
+			{
+				return KLiteInteractionResult.targetNotFound("Player id is not present: " + id);
+			}
+			if (client.getHintArrowType() == HintArrowType.PLAYER
+				&& client.getHintArrowPlayer() == player)
+			{
+				return KLiteInteractionResult.noActionRequired("Hint arrow already targets this player");
+			}
+			client.setHintArrow(player);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> clearHintArrow()
+	{
+		return threadGateway.submit(() ->
+		{
+			if (!client.hasHintArrow())
+			{
+				return KLiteInteractionResult.noActionRequired("No hint arrow is active");
+			}
+			client.clearHintArrow();
+			return KLiteInteractionResult.dispatched();
 		});
 	}
 
