@@ -153,6 +153,11 @@ public interface KLiteClientApi
 
 	CompletableFuture<Optional<KLiteChatMessageSnapshot>> chatMessage(int id);
 
+	CompletableFuture<KLiteInteractionResult> addLocalChatMessage(
+		ChatMessageType type, String name, String message, String sender, boolean postEvent);
+
+	CompletableFuture<KLiteInteractionResult> refreshChat();
+
 	CompletableFuture<KLiteCombatSnapshot> combatSnapshot();
 
 	CompletableFuture<List<Prayer>> activePrayers();

@@ -1044,6 +1044,37 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInteractionResult> addLocalChatMessage(
+		ChatMessageType type, String name, String message, String sender, boolean postEvent)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (type == null)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Chat message type must not be null");
+			}
+			if (name == null)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Chat message name must not be null");
+			}
+			client.addChatMessage(type, name, message, sender, postEvent);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> refreshChat()
+	{
+		return threadGateway.submit(() ->
+		{
+			client.refreshChat();
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<KLiteCombatSnapshot> combatSnapshot()
 	{
 		return threadGateway.submit(() ->

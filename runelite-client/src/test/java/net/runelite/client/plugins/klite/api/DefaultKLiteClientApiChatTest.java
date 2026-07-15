@@ -9,6 +9,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -67,6 +69,37 @@ public class DefaultKLiteClientApiChatTest
 	{
 		assertTrue(api.chatMessages().get().isEmpty());
 		assertFalse(api.chatMessage(1).get().isPresent());
+	}
+
+	@Test
+	public void localChatMessageDispatchesExactFieldsAndEventChoice() throws Exception
+	{
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.addLocalChatMessage(
+				ChatMessageType.GAMEMESSAGE, "", "Local notice", null, false)
+				.get().getStatus());
+		verify(client).addChatMessage(
+			ChatMessageType.GAMEMESSAGE, "", "Local notice", null, false);
+
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.refreshChat().get().getStatus());
+		verify(client).refreshChat();
+	}
+
+	@Test
+	public void localChatMessageRejectsMissingRequiredFields() throws Exception
+	{
+		assertEquals(KLiteInteractionStatus.INVALID_REQUEST,
+			api.addLocalChatMessage(null, "", "Message", "", true)
+				.get().getStatus());
+		assertEquals(KLiteInteractionStatus.INVALID_REQUEST,
+			api.addLocalChatMessage(
+				ChatMessageType.GAMEMESSAGE, null, "Message", "", true)
+				.get().getStatus());
+		verify(client, never()).addChatMessage(
+			null, "", "Message", "", true);
+		verify(client, never()).addChatMessage(
+			ChatMessageType.GAMEMESSAGE, null, "Message", "", true);
 	}
 
 	private static MessageNode message(
