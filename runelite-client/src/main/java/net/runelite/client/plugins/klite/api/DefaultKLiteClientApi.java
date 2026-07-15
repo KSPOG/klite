@@ -1363,6 +1363,14 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteSkillTotalsSnapshot> skillTotals()
+	{
+		return threadGateway.submit(() -> new KLiteSkillTotalsSnapshot(
+			client.getTotalLevel(),
+			client.getOverallExperience()));
+	}
+
+	@Override
 	public CompletableFuture<Optional<QuestState>> questState(Quest quest)
 	{
 		return threadGateway.submit(() -> quest == null

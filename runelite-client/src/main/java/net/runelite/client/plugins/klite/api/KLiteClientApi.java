@@ -216,6 +216,8 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteSkillSnapshot>> skills();
 
+	CompletableFuture<KLiteSkillTotalsSnapshot> skillTotals();
+
 	CompletableFuture<Optional<QuestState>> questState(Quest quest);
 
 	CompletableFuture<List<KLitePlayerSnapshot>> players();
