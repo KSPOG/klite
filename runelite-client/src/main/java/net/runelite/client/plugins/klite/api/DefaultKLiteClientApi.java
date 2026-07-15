@@ -42,6 +42,7 @@ import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
+import net.runelite.api.Point;
 import net.runelite.api.Prayer;
 import net.runelite.api.Projectile;
 import net.runelite.api.Scene;
@@ -65,6 +66,8 @@ import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.worldmap.WorldMap;
+import net.runelite.api.worldmap.WorldMapData;
 
 /** Default thread-safe implementation of the public KLite client API. */
 @Singleton
@@ -279,6 +282,70 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 				client.getCameraFocalPointX(),
 				client.getCameraFocalPointY(),
 				client.getCameraFocalPointZ());
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteWorldMapSnapshot>> worldMapSnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			WorldMap worldMap = client.getWorldMap();
+			if (worldMap == null)
+			{
+				return Optional.empty();
+			}
+			Point position = worldMap.getWorldMapPosition();
+			return position == null
+				? Optional.empty()
+				: Optional.of(new KLiteWorldMapSnapshot(
+					position, worldMap.getWorldMapZoom()));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Boolean> worldMapContains(WorldPoint location)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (location == null)
+			{
+				return false;
+			}
+			WorldMap worldMap = client.getWorldMap();
+			WorldMapData data = worldMap == null ? null : worldMap.getWorldMapData();
+			return data != null
+				&& data.surfaceContainsPosition(location.getX(), location.getY());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setWorldMapPositionTarget(
+		WorldPoint location)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (location == null)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"World-map target must not be null");
+			}
+			WorldMap worldMap = client.getWorldMap();
+			if (worldMap == null)
+			{
+				return KLiteInteractionResult.targetNotFound(
+					"World map is unavailable");
+			}
+			Point position = worldMap.getWorldMapPosition();
+			if (position != null
+				&& position.getX() == location.getX()
+				&& position.getY() == location.getY())
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"World map is already centered on this position");
+			}
+			worldMap.setWorldMapPositionTarget(location);
+			return KLiteInteractionResult.dispatched();
 		});
 	}
 

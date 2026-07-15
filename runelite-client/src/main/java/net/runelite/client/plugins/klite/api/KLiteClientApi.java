@@ -53,6 +53,13 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteInteractionResult> setFreeCameraSpeed(int speed);
 
+	CompletableFuture<Optional<KLiteWorldMapSnapshot>> worldMapSnapshot();
+
+	CompletableFuture<Boolean> worldMapContains(WorldPoint location);
+
+	CompletableFuture<KLiteInteractionResult> setWorldMapPositionTarget(
+		WorldPoint location);
+
 	CompletableFuture<Optional<WorldPoint>> destination();
 
 	CompletableFuture<Optional<KLiteHintArrowSnapshot>> hintArrow();
