@@ -25,6 +25,16 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteRuntimeSnapshot> runtimeSnapshot();
 
+	CompletableFuture<Integer> idleTimeout();
+
+	CompletableFuture<KLiteInteractionResult> setIdleTimeout(int ticks);
+
+	CompletableFuture<KLiteMinimapSnapshot> minimapSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setMinimapZoomEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setMinimapZoom(double pixelsPerTile);
+
 	CompletableFuture<KLiteInputSnapshot> inputSnapshot();
 
 	CompletableFuture<KLiteDisplaySnapshot> displaySnapshot();

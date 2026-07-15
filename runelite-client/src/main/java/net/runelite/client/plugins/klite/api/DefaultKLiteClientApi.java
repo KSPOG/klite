@@ -154,6 +154,70 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Integer> idleTimeout()
+	{
+		return threadGateway.submit(client::getIdleTimeout);
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setIdleTimeout(int ticks)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (client.getIdleTimeout() == ticks)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Idle timeout is already set");
+			}
+			client.setIdleTimeout(ticks);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteMinimapSnapshot> minimapSnapshot()
+	{
+		return threadGateway.submit(() -> new KLiteMinimapSnapshot(
+			client.isMinimapZoom(),
+			client.getMinimapZoom()));
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setMinimapZoomEnabled(boolean enabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (client.isMinimapZoom() == enabled)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					enabled ? "Minimap zoom is already enabled" : "Minimap zoom is already disabled");
+			}
+			client.setMinimapZoom(enabled);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setMinimapZoom(double pixelsPerTile)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (!Double.isFinite(pixelsPerTile))
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Minimap zoom must be finite");
+			}
+			if (Double.compare(client.getMinimapZoom(), pixelsPerTile) == 0)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Minimap zoom is already set");
+			}
+			client.setMinimapZoom(pixelsPerTile);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<KLiteInputSnapshot> inputSnapshot()
 	{
 		return threadGateway.submit(() -> new KLiteInputSnapshot(
