@@ -7,6 +7,8 @@ package net.runelite.client.plugins.klite.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.Dimension;
@@ -74,5 +76,57 @@ public class DefaultKLiteClientApiInputDisplayTest
 		assertEquals(-1, snapshot.getStretchedHeight());
 		assertEquals(-1, snapshot.getRealWidth());
 		assertEquals(-1, snapshot.getRealHeight());
+	}
+
+	@Test
+	public void stretchedEnabledIsIdempotentAndDispatchesChanges() throws Exception
+	{
+		when(client.isStretchedEnabled()).thenReturn(true);
+
+		assertEquals(KLiteInteractionStatus.NO_ACTION_REQUIRED,
+			api.setStretchedEnabled(true).get().getStatus());
+		verify(client, never()).setStretchedEnabled(true);
+
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setStretchedEnabled(false).get().getStatus());
+		verify(client).setStretchedEnabled(false);
+	}
+
+	@Test
+	public void stretchedFastIsIdempotentAndDispatchesChanges() throws Exception
+	{
+		when(client.isStretchedFast()).thenReturn(false);
+
+		assertEquals(KLiteInteractionStatus.NO_ACTION_REQUIRED,
+			api.setStretchedFast(false).get().getStatus());
+		verify(client, never()).setStretchedFast(false);
+
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setStretchedFast(true).get().getStatus());
+		verify(client).setStretchedFast(true);
+	}
+
+	@Test
+	public void setterOnlyStretchingOptionsDispatchExactValues() throws Exception
+	{
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setStretchedIntegerScaling(true).get().getStatus());
+		verify(client).setStretchedIntegerScaling(true);
+
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setStretchedKeepAspectRatio(false).get().getStatus());
+		verify(client).setStretchedKeepAspectRatio(false);
+	}
+
+	@Test
+	public void scalingAndInvalidationDispatchExactValues() throws Exception
+	{
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.setScalingFactor(-25).get().getStatus());
+		verify(client).setScalingFactor(-25);
+
+		assertEquals(KLiteInteractionStatus.DISPATCHED,
+			api.invalidateStretching(true).get().getStatus());
+		verify(client).invalidateStretching(true);
 	}
 }

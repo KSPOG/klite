@@ -39,6 +39,18 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteDisplaySnapshot> displaySnapshot();
 
+	CompletableFuture<KLiteInteractionResult> setStretchedEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setStretchedFast(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setStretchedIntegerScaling(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setStretchedKeepAspectRatio(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setScalingFactor(int factor);
+
+	CompletableFuture<KLiteInteractionResult> invalidateStretching(boolean resize);
+
 	CompletableFuture<Integer> musicVolume();
 
 	CompletableFuture<KLiteInteractionResult> setMusicVolume(int volume);

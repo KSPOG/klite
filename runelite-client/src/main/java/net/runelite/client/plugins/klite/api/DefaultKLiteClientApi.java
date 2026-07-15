@@ -253,6 +253,76 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInteractionResult> setStretchedEnabled(boolean enabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (client.isStretchedEnabled() == enabled)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					enabled ? "Stretching is already enabled" : "Stretching is already disabled");
+			}
+			client.setStretchedEnabled(enabled);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setStretchedFast(boolean enabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (client.isStretchedFast() == enabled)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					enabled ? "Fast stretching is already enabled" : "Fast stretching is already disabled");
+			}
+			client.setStretchedFast(enabled);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setStretchedIntegerScaling(boolean enabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.setStretchedIntegerScaling(enabled);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setStretchedKeepAspectRatio(boolean enabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.setStretchedKeepAspectRatio(enabled);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setScalingFactor(int factor)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.setScalingFactor(factor);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> invalidateStretching(boolean resize)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.invalidateStretching(resize);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<Integer> musicVolume()
 	{
 		return threadGateway.submit(client::getMusicVolume);
