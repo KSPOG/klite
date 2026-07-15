@@ -16,8 +16,8 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @PluginDescriptor(
 	name = "KLite Example",
 	description = "A harmless example plugin published in the KLite marketplace catalog",
-	tags = {"klite", "example", "marketplace"},
-	authors = {"KSPOG"},
+	tags = {"klite", "example", "marketplace", "Free"},
+	authors = {"KSP"},
 	version = KLiteExamplePlugin.VERSION,
 	minClientVersion = "1.0.0",
 	enabledByDefault = false,
