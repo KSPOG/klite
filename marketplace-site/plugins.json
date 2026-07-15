@@ -38,7 +38,7 @@
         "name": "KLite Example",
         "description": "A source-only example plugin that displays a small overlay and demonstrates the future KLite marketplace installation format.",
         "tags": ["klite", "example", "marketplace"],
-        "authors": ["KSPOG"],
+        "authors": ["KSP"],
         "version": "1.0.0",
         "minClientVersion": "1.0.0",
         "enabledByDefault": false,
