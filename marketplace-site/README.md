@@ -13,8 +13,10 @@ account code, migrations, and deployment configuration are not web-accessible.
 - A dual-role Plugin Dev capability, submission dashboard, and reviewer queue.
 - An authenticated, generated client/automation/web-walker API reference that
   deliberately excludes marketplace internals.
-- Plugin Dev-only Discord announcement settings with scheduled new-release and
-  version-update posts to a validated server channel.
+- A Discord Dev-only bot dashboard with live application, server, command,
+  role, channel, account, session, and announcement information.
+- Configurable bot role mappings, account-link automation, audit/welcome
+  channels, and scheduled plugin release/update announcements.
 - Capability-gated client hot reload for jars built into the local
   `sideloaded-plugins` directory.
 - A shared catalog in `public/plugins.json` for the website and client.
@@ -57,7 +59,16 @@ Set `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`, and `DISCORD_PLUGIN_DEV_ROLE_ID` in
 `wrangler.jsonc`. OAuth requests `guilds.members.read` so the backend can verify
 the server role without trusting browser or client claims. Store
 `DISCORD_CLIENT_SECRET`, `DISCORD_PUBLIC_KEY`, and `DISCORD_BOT_TOKEN` as Worker
-secrets. Register the global slash commands from a trusted terminal with
+secrets. Create a Discord role named exactly `Dev`; only linked members who
+currently hold that role can load or change the bot dashboard. The first
+authorized request resolves that role by name, after which its stable role ID is
+stored in D1.
+
+The bot needs View Channels, Send Messages, Embed Links, and Read Message
+History. It also needs Manage Roles when automatic account-link role assignment
+is enabled. The bot's highest role must be above the configured member role.
+
+Register the global slash commands from a trusted terminal with
 `DISCORD_APPLICATION_ID` and `DISCORD_BOT_TOKEN` set:
 
 ```powershell

@@ -1,11 +1,15 @@
 import { API_REFERENCE } from "./api-reference.generated.js";
 import {
-  announcementSettings,
-  normalizeDiscordChannelId,
-  saveAnnouncementSettings,
   syncPluginAnnouncements
 } from "./announcements.js";
 
+import {
+  DiscordSettingsError,
+  discordBotDashboard,
+  pluginDeveloperRoleId,
+  notifyDiscordAccountLinked,
+  updateDiscordBotSettings
+} from "./discord-dashboard.js";
 const encoder = new TextEncoder();
 const PASSWORD_ITERATIONS = 600_000;
 const WEB_SESSION_SECONDS = 7 * 24 * 60 * 60;
@@ -61,6 +65,15 @@ async function route(request, env, url) {
   if (request.method === "POST" && url.pathname === "/api/discord/interactions") {
     return discordInteraction(request, env);
   }
+  if (request.method === "GET" && url.pathname === "/api/discord-bot/dashboard") {
+    return getDiscordBotDashboard(request, env);
+  }
+  if (request.method === "PUT" && url.pathname === "/api/discord-bot/settings") {
+    return putDiscordBotSettings(request, env);
+  }
+  if (request.method === "POST" && url.pathname === "/api/discord-bot/announcements/sync") {
+    return syncDiscordBotAnnouncements(request, env);
+  }
   if (request.method === "GET" && url.pathname === "/api/client/entitlements") {
     return clientEntitlements(request, env);
   }
@@ -73,15 +86,6 @@ async function route(request, env, url) {
   }
   if (url.pathname === "/api/developer/submissions" && request.method === "POST") {
     return createPluginSubmission(request, env);
-  }
-  if (url.pathname === "/api/developer/announcements" && request.method === "GET") {
-    return discordAnnouncementSettings(request, env);
-  }
-  if (url.pathname === "/api/developer/announcements" && request.method === "PUT") {
-    return updateDiscordAnnouncementSettings(request, env);
-  }
-  if (url.pathname === "/api/developer/announcements/sync" && request.method === "POST") {
-    return syncDiscordAnnouncements(request, env);
   }
   if (url.pathname === "/api/review/submissions" && request.method === "GET") {
     return reviewSubmissions(request, env);
@@ -257,10 +261,18 @@ async function discordCallback(url, env) {
     { headers: { authorization: `Bearer ${oauth.access_token}` } }
   );
   const member = memberResponse.ok ? await memberResponse.json() : null;
+  const pluginDevRoleId = await pluginDeveloperRoleId(env);
   const hasPluginDevRole = Array.isArray(member?.roles)
-    && member.roles.includes(env.DISCORD_PLUGIN_DEV_ROLE_ID);
+    && pluginDevRoleId && member.roles.includes(pluginDevRoleId);
   const linked = await linkDiscordAccount(env, linkState.user_id, discord,
     hasPluginDevRole, Boolean(member));
+  if (linked) {
+    try {
+      await notifyDiscordAccountLinked(env, discord.id);
+    } catch (error) {
+      console.error("Unable to apply Discord account-link automation", error);
+    }
+  }
   return redirectAccount(env, linked ? "discord_linked" : "discord_already_linked");
 }
 
@@ -325,10 +337,16 @@ async function discordLinkCommand(env, discordUser, code, guildId, memberRoles) 
     return discordMessage("That link code has already been used.");
   }
   const roleVerified = guildId === env.DISCORD_GUILD_ID && Array.isArray(memberRoles);
+  const pluginDevRoleId = await pluginDeveloperRoleId(env);
   const linked = await linkDiscordAccount(env, pending.user_id, discordUser,
-    roleVerified && memberRoles.includes(env.DISCORD_PLUGIN_DEV_ROLE_ID), roleVerified);
+    roleVerified && pluginDevRoleId && memberRoles.includes(pluginDevRoleId), roleVerified);
   if (!linked) {
     return discordMessage("That Discord user is already linked to another KLite account.");
+  }
+  try {
+    await notifyDiscordAccountLinked(env, discordUser.id);
+  } catch (error) {
+    console.error("Unable to apply Discord account-link automation", error);
   }
   return discordMessage("Discord is now linked to your KLite account.");
 }
@@ -336,9 +354,10 @@ async function discordLinkCommand(env, discordUser, code, guildId, memberRoles) 
 async function discordAccountCommand(env, discordId, guildId, memberRoles) {
   const roleVerified = guildId === env.DISCORD_GUILD_ID && Array.isArray(memberRoles);
   if (roleVerified) {
+    const pluginDevRoleId = await pluginDeveloperRoleId(env);
     await env.DB.prepare(
       "UPDATE discord_accounts SET plugin_dev_role = ?, role_verified_at = ? WHERE discord_id = ?"
-    ).bind(memberRoles.includes(env.DISCORD_PLUGIN_DEV_ROLE_ID) ? 1 : 0,
+    ).bind(pluginDevRoleId && memberRoles.includes(pluginDevRoleId) ? 1 : 0,
       nowSeconds(), discordId).run();
   }
   const account = await env.DB.prepare(
@@ -347,6 +366,78 @@ async function discordAccountCommand(env, discordId, guildId, memberRoles) {
   return discordMessage(account
     ? `Linked KLite account: **${escapeDiscord(account.username)}**`
     : "No KLite account is linked. Sign in on the marketplace and create a Discord link code.");
+}
+
+async function getDiscordBotDashboard(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) {
+    return apiError(401, "authentication_required", "Sign in to view the bot dashboard.");
+  }
+  if (!env.DISCORD_BOT_TOKEN || !env.DISCORD_GUILD_ID) {
+    return apiError(503, "discord_bot_unavailable", "The Discord bot is not configured.");
+  }
+  try {
+    const dashboard = await discordBotDashboard(env, session.user_id);
+    return dashboard
+      ? json(dashboard)
+      : apiError(403, "discord_dev_required",
+        "The linked Discord account must currently have the Dev role.");
+  } catch (error) {
+    console.error("Unable to load Discord bot dashboard", error);
+    return apiError(502, "discord_unavailable",
+      "Discord bot information is temporarily unavailable.");
+  }
+}
+
+async function putDiscordBotSettings(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) {
+    return apiError(401, "authentication_required", "Sign in to update bot settings.");
+  }
+  if (!env.DISCORD_BOT_TOKEN || !env.DISCORD_GUILD_ID) {
+    return apiError(503, "discord_bot_unavailable", "The Discord bot is not configured.");
+  }
+  const body = await readJson(request);
+  if (!body) {
+    return apiError(400, "invalid_json", "A JSON request body is required.");
+  }
+  try {
+    const dashboard = await updateDiscordBotSettings(env, session.user_id, body);
+    return dashboard
+      ? json(dashboard)
+      : apiError(403, "discord_dev_required",
+        "The linked Discord account must currently have the Dev role.");
+  } catch (error) {
+    if (error instanceof DiscordSettingsError) {
+      return apiError(400, error.code, error.message);
+    }
+    console.error("Unable to update Discord bot settings", error);
+    return apiError(502, "discord_unavailable",
+      "Discord bot settings could not be updated.");
+  }
+}
+
+async function syncDiscordBotAnnouncements(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) {
+    return apiError(401, "authentication_required",
+      "Sign in to synchronize plugin announcements.");
+  }
+  if (!env.DISCORD_BOT_TOKEN || !env.DISCORD_GUILD_ID) {
+    return apiError(503, "discord_bot_unavailable", "The Discord bot is not configured.");
+  }
+  try {
+    const dashboard = await discordBotDashboard(env, session.user_id);
+    if (!dashboard) {
+      return apiError(403, "discord_dev_required",
+        "The linked Discord account must currently have the Dev role.");
+    }
+    return json(await syncPluginAnnouncements(env, session.user_id));
+  } catch (error) {
+    console.error("Unable to synchronize Discord announcements", error);
+    return apiError(502, "discord_unavailable",
+      "Discord announcements could not be synchronized.");
+  }
 }
 
 async function clientEntitlements(request, env) {
@@ -585,46 +676,6 @@ async function reviewPluginSubmission(request, env, submissionId) {
       "The submission was already reviewed or does not exist.");
   }
   return json({ ok: true, status: decision });
-}
-
-async function discordAnnouncementSettings(request, env) {
-  const session = await requireCapability(request, env, "plugin_dev");
-  if (!session) {
-    return apiError(403, "plugin_developer_required",
-      "A verified website and Discord Plugin Dev role is required.");
-  }
-  return json(await announcementSettings(env));
-}
-
-async function updateDiscordAnnouncementSettings(request, env) {
-  const session = await requireCapability(request, env, "plugin_dev");
-  if (!session) {
-    return apiError(403, "plugin_developer_required",
-      "A verified website and Discord Plugin Dev role is required.");
-  }
-  const body = await readJson(request);
-  const channelId = normalizeDiscordChannelId(body?.channelId);
-  if (!channelId || typeof body?.enabled !== "boolean") {
-    return apiError(400, "invalid_announcement_settings",
-      "Enter a Discord text-channel ID and enabled state.");
-  }
-  const setting = await saveAnnouncementSettings(
-    env, session.user_id, channelId, body.enabled
-  );
-  if (!setting) {
-    return apiError(400, "invalid_discord_channel",
-      "The bot cannot access that text channel in the configured KLite server.");
-  }
-  return json({ setting });
-}
-
-async function syncDiscordAnnouncements(request, env) {
-  const session = await requireCapability(request, env, "plugin_dev");
-  if (!session) {
-    return apiError(403, "plugin_developer_required",
-      "A verified website and Discord Plugin Dev role is required.");
-  }
-  return json(await syncPluginAnnouncements(env, session.user_id));
 }
 
 async function requireCapability(request, env, capability) {

@@ -113,32 +113,121 @@
         <h3>Your submissions</h3>
         <div id="submission-list" class="submission-list"></div>
       </div>
-      <section class="announcement-dashboard" aria-labelledby="announcement-title">
+    </section>
+
+    <section id="discord-bot-dashboard" class="account-panel bot-dashboard" aria-labelledby="discord-bot-title" hidden>
+      <div class="bot-dashboard-heading">
         <div>
-          <p class="eyebrow">Discord bot</p>
-          <h3 id="announcement-title">Marketplace announcements</h3>
-          <p>Automatically announce newly available plugins and later version updates in a configured KLite Discord channel.</p>
+          <p class="eyebrow">Discord Dev administration</p>
+          <h2 id="discord-bot-title">Discord bot dashboard</h2>
+          <p>Live bot, server, role, channel, command, and marketplace announcement settings.</p>
         </div>
-        <form id="announcement-form" class="announcement-form">
+        <span id="discord-bot-access" class="access-owned">Checking Dev role...</span>
+      </div>
+
+      <div id="discord-bot-status-grid" class="bot-status-grid">
+        <article class="account-card">
+          <span class="account-label">Bot account</span>
+          <strong id="discord-bot-identity">Loading...</strong>
+          <p id="discord-bot-id" class="account-note"></p>
+        </article>
+        <article class="account-card">
+          <span class="account-label">Discord server</span>
+          <strong id="discord-guild-name">Loading...</strong>
+          <p id="discord-guild-status" class="account-note"></p>
+        </article>
+        <article class="account-card">
+          <span class="account-label">Linked accounts</span>
+          <strong id="discord-linked-count">0</strong>
+          <p id="discord-session-count" class="account-note"></p>
+        </article>
+        <article class="account-card">
+          <span class="account-label">Bot commands</span>
+          <strong id="discord-command-count">0</strong>
+          <p id="discord-announcement-count" class="account-note"></p>
+        </article>
+      </div>
+
+      <form id="discord-bot-settings-form" class="bot-settings-form">
+        <div class="bot-settings-group">
+          <div>
+            <h3>Role settings</h3>
+            <p class="account-note">Dashboard authorization is always verified against the selected Discord role named Dev.</p>
+          </div>
           <label class="form-field">
-            <span>Discord channel ID</span>
-            <input id="announcement-channel-id" type="text" inputmode="numeric" pattern="[0-9]{17,20}" maxlength="20" required>
+            <span>Dashboard Dev role</span>
+            <select id="discord-dev-role" required></select>
+          </label>
+          <label class="form-field">
+            <span>Plugin Dev role</span>
+            <select id="discord-plugin-dev-role"></select>
+          </label>
+          <label class="form-field">
+            <span>Marketplace reviewer role</span>
+            <select id="discord-reviewer-role"></select>
+          </label>
+          <label class="form-field">
+            <span>Default member role</span>
+            <select id="discord-member-role"></select>
+          </label>
+        </div>
+
+        <div class="bot-settings-group">
+          <div>
+            <h3>Channel settings</h3>
+            <p class="account-note">Only text and announcement channels from the configured server are accepted.</p>
+          </div>
+          <label class="form-field">
+            <span>Plugin announcements</span>
+            <select id="announcement-channel-id"></select>
+          </label>
+          <label class="form-field">
+            <span>Bot audit log</span>
+            <select id="discord-audit-channel"></select>
+          </label>
+          <label class="form-field">
+            <span>Member welcome channel</span>
+            <select id="discord-welcome-channel"></select>
+          </label>
+        </div>
+
+        <div class="bot-settings-group bot-settings-toggles">
+          <h3>Behaviour</h3>
+          <label class="toggle-field">
+            <input id="discord-bot-enabled" type="checkbox">
+            <span>Bot automation enabled</span>
           </label>
           <label class="toggle-field">
             <input id="announcement-enabled" type="checkbox">
-            <span>Automatic announcements enabled</span>
+            <span>Marketplace announcements enabled</span>
           </label>
-          <div class="review-actions">
-            <button class="button button-primary" type="submit">Save channel</button>
-            <button id="announcement-sync" class="button button-secondary" type="button">Check for updates now</button>
-          </div>
-          <p id="announcement-status" class="form-error" role="status" aria-live="polite"></p>
-        </form>
-        <div>
-          <h4>Recent announcements</h4>
-          <div id="announcement-history" class="submission-list"></div>
+          <label class="toggle-field">
+            <input id="discord-auto-member-role" type="checkbox">
+            <span>Automatically assign the default member role</span>
+          </label>
         </div>
-      </section>
+
+        <div class="review-actions bot-settings-actions">
+          <button class="button button-primary" type="submit">Save bot settings</button>
+          <button id="announcement-sync" class="button button-secondary" type="button">Check plugin updates now</button>
+        </div>
+        <p id="announcement-status" class="form-error" role="status" aria-live="polite"></p>
+      </form>
+
+      <div class="bot-detail-grid">
+        <section>
+          <h3>Registered commands</h3>
+          <div id="discord-command-list" class="submission-list"></div>
+        </section>
+        <section>
+          <h3>Server roles</h3>
+          <div id="discord-role-list" class="submission-list bot-scroll-list"></div>
+        </section>
+        <section class="bot-detail-wide">
+          <h3>Recent announcements</h3>
+          <div id="announcement-history" class="submission-list"></div>
+        </section>
+      </div>
     </section>
 
     <section id="review-dashboard" class="account-panel developer-dashboard" aria-labelledby="review-title" hidden>
