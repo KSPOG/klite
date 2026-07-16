@@ -2,3 +2,9 @@ PASSWORD_PEPPER=replace-with-a-long-random-secret
 DISCORD_CLIENT_SECRET=replace-with-discord-oauth-client-secret
 DISCORD_PUBLIC_KEY=replace-with-discord-application-public-key
 DISCORD_BOT_TOKEN=replace-with-discord-bot-token
+DISCORD_CLIENT_ID=replace-with-discord-application-id
+DISCORD_APPLICATION_ID=replace-with-discord-application-id
+DISCORD_GUILD_ID=replace-with-designated-discord-server-id
+SITE_OWNER_USERNAME=KSP
+# Optional stronger owner pinning after querying the KSP user ID from D1:
+# SITE_OWNER_USER_ID=replace-with-ksp-user-id
