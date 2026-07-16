@@ -17,6 +17,11 @@ const passwordResetStatus = document.querySelector("#password-reset-status");
 const passwordResetSubmit = document.querySelector("#password-reset-submit");
 const passwordResetTitle = document.querySelector("#password-reset-title");
 const passwordResetDescription = document.querySelector("#password-reset-description");
+const passwordResetOwnerKeyField = document.createElement("label");
+passwordResetOwnerKeyField.className = "form-field";
+passwordResetOwnerKeyField.innerHTML = '<span>Owner recovery key <small>(KLite owner only)</small></span><input id="password-reset-owner-key" type="password" autocomplete="off">';
+passwordResetEmailField.after(passwordResetOwnerKeyField);
+const passwordResetOwnerKey = passwordResetOwnerKeyField.querySelector("input");
 
 let latestDiscordDashboard = null;
 let ownerDashboard = null;
@@ -293,6 +298,7 @@ function openPasswordResetStart() {
   passwordResetEmailField.hidden = false;
   passwordResetEmail.required = true;
   passwordResetNewField.hidden = true;
+  passwordResetOwnerKeyField.hidden = false;
   passwordResetNewPassword.required = false;
   passwordResetTitle.textContent = "Reset password";
   passwordResetDescription.textContent = "Enter your marketplace email. Recovery is verified through the Discord account previously linked to it.";
@@ -308,9 +314,10 @@ function openPasswordResetComplete(token) {
   passwordResetEmailField.hidden = true;
   passwordResetEmail.required = false;
   passwordResetNewField.hidden = false;
+  passwordResetOwnerKeyField.hidden = true;
   passwordResetNewPassword.required = true;
   passwordResetTitle.textContent = "Choose a new password";
-  passwordResetDescription.textContent = "Discord verification succeeded. Enter a new password with at least 12 characters.";
+  passwordResetDescription.textContent = "Identity verification succeeded. Enter a new password with at least 12 characters.";
   passwordResetSubmit.textContent = "Update password";
   passwordResetStatus.textContent = "";
   passwordResetDialog.showModal();
@@ -339,8 +346,12 @@ passwordResetForm.addEventListener("submit", async (event) => {
     } else {
       const result = await api("/api/auth/reset/start", {
         method: "POST",
-        body: JSON.stringify({ email: passwordResetEmail.value })
+        body: JSON.stringify({ email: passwordResetEmail.value, recoveryKey: passwordResetOwnerKey.value || undefined })
       });
+      if (result.resetToken) {
+        openPasswordResetComplete(result.resetToken);
+        return;
+      }
       if (result.authorizeUrl) {
         window.location.assign(result.authorizeUrl);
         return;
