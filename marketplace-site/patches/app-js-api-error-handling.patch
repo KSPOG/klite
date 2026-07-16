@@ -1,0 +1,63 @@
+--- a/marketplace-site/public/app.js
++++ b/marketplace-site/public/app.js
+@@
+ async function api(path, options = {}) {
+-  const response = await fetch(path, {
+-    credentials: "same-origin",
+-    ...options,
+-    headers: {
+-      ...(options.body ? { "content-type": "application/json" } : {}),
+-      ...options.headers
+-    }
+-  });
+-  const payload = await response.json().catch(() => ({}));
++  let response;
++  try {
++    response = await fetch(path, {
++      credentials: "same-origin",
++      ...options,
++      headers: {
++        ...(options.body ? { "content-type": "application/json" } : {}),
++        ...options.headers
++      }
++    });
++  } catch (cause) {
++    const error = new Error(
++      "Unable to reach the KLite API. Verify that the Cloudflare Worker is deployed and that this site is using the Worker or its custom domain."
++    );
++    error.status = 0;
++    error.cause = cause;
++    throw error;
++  }
++
++  const responseText = await response.text();
++  let payload = {};
++  if (responseText) {
++    try {
++      payload = JSON.parse(responseText);
++    } catch {
++      // Cloudflare may return HTML for a missing Worker route or deployment error.
++    }
++  }
++
+   if (!response.ok) {
+-    const error = new Error(payload.error?.message || "The request could not be completed.");
++    let message = payload.error?.message;
++    if (!message) {
++      if (response.status === 404) {
++        message = "The marketplace API route was not found. Deploy the Cloudflare Worker, not only the static Pages site.";
++      } else if (response.status >= 500) {
++        message = `The marketplace API failed with HTTP ${response.status}. Check the Worker logs, D1 binding, database migrations, and PASSWORD_PEPPER secret.`;
++      } else {
++        message = `The request failed with HTTP ${response.status}.`;
++      }
++    }
++
++    const error = new Error(message);
+     error.status = response.status;
++    error.payload = payload;
+     throw error;
+   }
++
+   return payload;
+ }

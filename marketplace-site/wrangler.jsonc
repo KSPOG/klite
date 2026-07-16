@@ -3,6 +3,7 @@
   "name": "klite-marketplace",
   "main": "./worker/index.js",
   "compatibility_date": "2026-07-16",
+  "workers_dev": true,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
@@ -30,5 +31,8 @@
     "DISCORD_CLIENT_ID": "REPLACE_WITH_DISCORD_APPLICATION_ID",
     "DISCORD_GUILD_ID": "REPLACE_WITH_KLITE_DISCORD_SERVER_ID",
     "DISCORD_PLUGIN_DEV_ROLE_ID": "REPLACE_WITH_PLUGIN_DEV_ROLE_ID"
+  },
+  "observability": {
+    "enabled": true
   }
 }
