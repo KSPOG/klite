@@ -47,6 +47,15 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteInputSnapshot> inputSnapshot();
 
+	CompletableFuture<KLiteInputDragSnapshot> inputDragSnapshot();
+
+	CompletableFuture<Boolean> keyPressed(int keyCode);
+
+	CompletableFuture<KLiteInteractionResult> setDraggedOnWidget(
+		@Component int componentId);
+
+	CompletableFuture<KLiteInteractionResult> clearDraggedOnWidget();
+
 	CompletableFuture<KLiteDisplaySnapshot> displaySnapshot();
 
 	CompletableFuture<KLiteInteractionResult> setStretchedEnabled(boolean enabled);

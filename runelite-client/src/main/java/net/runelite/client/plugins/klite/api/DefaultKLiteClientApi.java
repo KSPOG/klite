@@ -284,6 +284,69 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInputDragSnapshot> inputDragSnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			Widget dragged = client.getDraggedWidget();
+			Widget draggedOn = client.getDraggedOnWidget();
+			return new KLiteInputDragSnapshot(
+				client.getMouseCurrentButton(),
+				client.isDraggingWidget(),
+				client.getDragTime(),
+				dragged == null ? null : widgetSnapshot(dragged),
+				draggedOn == null ? null : widgetSnapshot(draggedOn));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Boolean> keyPressed(int keyCode)
+	{
+		return threadGateway.submit(() -> client.isKeyPressed(keyCode));
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setDraggedOnWidget(int componentId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (componentId < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Dragged-on widget component id must be non-negative");
+			}
+			Widget widget = client.getWidget(componentId);
+			if (widget == null)
+			{
+				return KLiteInteractionResult.targetNotFound(
+					"Dragged-on widget is unavailable");
+			}
+			if (client.getDraggedOnWidget() == widget)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Dragged-on widget is already set");
+			}
+			client.setDraggedOnWidget(widget);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> clearDraggedOnWidget()
+	{
+		return threadGateway.submit(() ->
+		{
+			if (client.getDraggedOnWidget() == null)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"No dragged-on widget is set");
+			}
+			client.setDraggedOnWidget(null);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<KLiteDisplaySnapshot> displaySnapshot()
 	{
 		return threadGateway.submit(() ->
