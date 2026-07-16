@@ -40,16 +40,29 @@ async function startPasswordReset(request, env, url) {
     .bind(identityHash, nowSeconds()).run();
 
   const account = await env.DB.prepare(
-    `SELECT users.id, discord_accounts.discord_id
+    `SELECT users.id, users.username, discord_accounts.discord_id
      FROM users LEFT JOIN discord_accounts ON discord_accounts.user_id = users.id
      WHERE users.email = ?`
   ).bind(email).first();
+
+  const recoveryKey = typeof body?.recoveryKey === "string" ? body.recoveryKey : "";
+  if (account && isSiteOwnerAccount(account, env) && recoveryKey) {
+    if (!await recoveryKeyMatches(recoveryKey, env.SITE_OWNER_RECOVERY_KEY)) {
+      return apiError(403, "invalid_owner_recovery_key", "The owner recovery key is incorrect.");
+    }
+    const resetToken = await issueResetToken(env, account.id);
+    return json({
+      started: true,
+      resetToken,
+      message: "Owner recovery verified. Choose a new password."
+    });
+  }
 
   if (!account?.discord_id) {
     return json({
       started: true,
       authorizeUrl: null,
-      message: "Password recovery requires a Discord account that was previously linked to this marketplace account."
+      message: "Password recovery requires a previously linked Discord account. The KLite owner may instead use the configured owner recovery key."
     });
   }
 
@@ -121,15 +134,38 @@ async function completeDiscordVerification(url, env) {
     return failure("discord_account_mismatch");
   }
 
+  const resetToken = await issueResetToken(env, pending.user_id);
+  return redirectReset(env, `token=${encodeURIComponent(resetToken)}`);
+}
+
+async function issueResetToken(env, userId) {
   const resetToken = randomToken(32);
   const resetTokenHash = await sha256(resetToken);
   const expiresAt = nowSeconds() + RESET_TOKEN_SECONDS;
   await env.DB.prepare("DELETE FROM password_reset_tokens WHERE user_id = ? OR expires_at <= ?")
-    .bind(pending.user_id, nowSeconds()).run();
+    .bind(userId, nowSeconds()).run();
   await env.DB.prepare(
     "INSERT INTO password_reset_tokens (token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)"
-  ).bind(resetTokenHash, pending.user_id, expiresAt, nowSeconds()).run();
-  return redirectReset(env, `token=${encodeURIComponent(resetToken)}`);
+  ).bind(resetTokenHash, userId, expiresAt, nowSeconds()).run();
+  return resetToken;
+}
+
+function isSiteOwnerAccount(account, env) {
+  const configuredId = typeof env.SITE_OWNER_USER_ID === "string" ? env.SITE_OWNER_USER_ID.trim() : "";
+  if (configuredId && account.id === configuredId) return true;
+  const configuredUsername = typeof env.SITE_OWNER_USERNAME === "string" && env.SITE_OWNER_USERNAME.trim()
+    ? env.SITE_OWNER_USERNAME.trim() : "KSP";
+  return String(account.username || "").toLowerCase() === configuredUsername.toLowerCase();
+}
+
+async function recoveryKeyMatches(provided, expected) {
+  if (typeof expected !== "string" || expected.length < 16 || typeof provided !== "string") return false;
+  const [left, right] = await Promise.all([sha256(provided), sha256(expected)]);
+  let difference = left.length ^ right.length;
+  for (let index = 0; index < Math.min(left.length, right.length); index += 1) {
+    difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+  return difference === 0;
 }
 
 async function completePasswordReset(request, env) {
