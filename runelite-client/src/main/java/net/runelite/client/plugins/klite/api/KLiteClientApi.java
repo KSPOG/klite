@@ -11,7 +11,10 @@ import java.util.concurrent.CompletableFuture;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Prayer;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.api.annotations.Component;
+import net.runelite.api.annotations.Interface;
 import net.runelite.api.annotations.Varbit;
 import net.runelite.api.annotations.VarCInt;
 import net.runelite.api.annotations.VarCStr;
@@ -23,11 +26,113 @@ public interface KLiteClientApi
 {
 	CompletableFuture<KLiteClientSnapshot> snapshot();
 
+	CompletableFuture<KLiteLoginSnapshot> loginSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setLoginUsername(String username);
+
+	CompletableFuture<KLiteInteractionResult> setLoginPassword(String password);
+
+	CompletableFuture<KLiteInteractionResult> setLoginOtp(String otp);
+
 	CompletableFuture<KLiteRuntimeSnapshot> runtimeSnapshot();
+
+	CompletableFuture<Integer> idleTimeout();
+
+	CompletableFuture<KLiteInteractionResult> setIdleTimeout(int ticks);
+
+	CompletableFuture<KLiteMinimapSnapshot> minimapSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setMinimapZoomEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setMinimapZoom(double pixelsPerTile);
+
+	CompletableFuture<KLiteInputSnapshot> inputSnapshot();
+
+	CompletableFuture<KLiteInputDragSnapshot> inputDragSnapshot();
+
+	CompletableFuture<Boolean> keyPressed(int keyCode);
+
+	CompletableFuture<KLiteInteractionResult> setDraggedOnWidget(
+		@Component int componentId);
+
+	CompletableFuture<KLiteInteractionResult> clearDraggedOnWidget();
+
+	CompletableFuture<KLiteDisplaySnapshot> displaySnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setStretchedEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setStretchedFast(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setStretchedIntegerScaling(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setStretchedKeepAspectRatio(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setScalingFactor(int factor);
+
+	CompletableFuture<KLiteInteractionResult> invalidateStretching(boolean resize);
+
+	CompletableFuture<Integer> musicVolume();
+
+	CompletableFuture<KLiteInteractionResult> setMusicVolume(int volume);
+
+	CompletableFuture<KLiteInteractionResult> playSoundEffect(int soundId);
+
+	CompletableFuture<KLiteInteractionResult> playSoundEffectAtVolume(int soundId, int volume);
+
+	CompletableFuture<KLiteInteractionResult> playAreaSoundEffect(
+		int soundId, int x, int y, int range);
+
+	CompletableFuture<KLiteInteractionResult> playAreaSoundEffect(
+		int soundId, int x, int y, int range, int delay);
 
 	CompletableFuture<KLiteCameraSnapshot> cameraSnapshot();
 
+	CompletableFuture<KLiteAdvancedCameraSnapshot> advancedCameraSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setCameraShakeDisabled(boolean disabled);
+
+	CompletableFuture<KLiteFreeCameraSnapshot> freeCameraSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setFreeCameraEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setFreeCameraFocalPoint(float x, float y, float z);
+
+	CompletableFuture<KLiteInteractionResult> setFreeCameraSpeed(int speed);
+
+	CompletableFuture<KLiteInteractionResult> setCameraSpeed(float speed);
+
+	CompletableFuture<KLiteInteractionResult> setCameraMouseButtonMask(int mask);
+
+	CompletableFuture<KLiteInteractionResult> setCameraPitchRelaxerEnabled(boolean enabled);
+
+	CompletableFuture<KLiteInteractionResult> setInvertYaw(boolean inverted);
+
+	CompletableFuture<KLiteInteractionResult> setInvertPitch(boolean inverted);
+
+	CompletableFuture<List<KLitePlayerMenuOption>> playerMenuOptions();
+
+	CompletableFuture<Optional<KLiteWorldMapSnapshot>> worldMapSnapshot();
+
+	CompletableFuture<Boolean> worldMapContains(WorldPoint location);
+
+	CompletableFuture<KLiteInteractionResult> setWorldMapPositionTarget(
+		WorldPoint location);
+
 	CompletableFuture<Optional<WorldPoint>> destination();
+
+	CompletableFuture<Optional<KLiteWorldViewSnapshot>> worldView(int id);
+
+	CompletableFuture<Optional<KLiteWorldViewSnapshot>> worldViewAt(WorldPoint location);
+
+	CompletableFuture<Optional<KLiteHintArrowSnapshot>> hintArrow();
+
+	CompletableFuture<KLiteInteractionResult> setHintArrow(WorldPoint point);
+
+	CompletableFuture<KLiteInteractionResult> setHintArrowNpc(int index);
+
+	CompletableFuture<KLiteInteractionResult> setHintArrowPlayer(int id);
+
+	CompletableFuture<KLiteInteractionResult> clearHintArrow();
 
 	CompletableFuture<KLiteInteractionResult> setCameraYawTarget(int yaw);
 
@@ -35,15 +140,43 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteInteractionResult> openWorldHopper();
 
+	CompletableFuture<List<KLiteWorldSnapshot>> worlds();
+
+	CompletableFuture<Optional<KLiteWorldSnapshot>> world(int worldId);
+
+	CompletableFuture<KLiteInteractionResult> hopToWorld(int worldId);
+
 	CompletableFuture<List<KLiteFriendSnapshot>> friends();
 
 	CompletableFuture<Boolean> isFriend(String name, boolean mustBeLoggedIn);
+
+	CompletableFuture<List<KLiteIgnoreSnapshot>> ignores();
+
+	CompletableFuture<Boolean> isIgnored(String name);
+
+	CompletableFuture<Optional<KLiteFriendsChatSnapshot>> friendsChat();
+
+	CompletableFuture<Optional<KLiteFriendsChatMemberSnapshot>> friendsChatMember(String name);
+
+	CompletableFuture<Optional<KLiteClanChannelSnapshot>> clanChannel(KLiteClanType type);
+
+	CompletableFuture<Optional<KLiteClanSettingsSnapshot>> clanSettings(KLiteClanType type);
+
+	CompletableFuture<Optional<KLiteClanChannelMemberSnapshot>> clanChannelMember(
+		KLiteClanType type, String name);
+
+	CompletableFuture<Optional<KLiteClanMemberSnapshot>> clanMember(KLiteClanType type, String name);
 
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages();
 
 	CompletableFuture<List<KLiteChatMessageSnapshot>> chatMessages(ChatMessageType type);
 
 	CompletableFuture<Optional<KLiteChatMessageSnapshot>> chatMessage(int id);
+
+	CompletableFuture<KLiteInteractionResult> addLocalChatMessage(
+		ChatMessageType type, String name, String message, String sender, boolean postEvent);
+
+	CompletableFuture<KLiteInteractionResult> refreshChat();
 
 	CompletableFuture<KLiteCombatSnapshot> combatSnapshot();
 
@@ -60,6 +193,17 @@ public interface KLiteClientApi
 	CompletableFuture<List<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffers();
 
 	CompletableFuture<Optional<KLiteGrandExchangeOfferSnapshot>> grandExchangeOffer(int slot);
+
+	CompletableFuture<Optional<KLiteItemContainerSnapshot>> itemContainer(int containerId);
+
+	CompletableFuture<Optional<KLiteItemStack>> itemContainerItem(int containerId, int slot);
+
+	CompletableFuture<Long> itemContainerCount(int containerId, int itemId);
+
+	CompletableFuture<Boolean> itemContainerContains(int containerId, int itemId);
+
+	CompletableFuture<Optional<Integer>> firstItemContainerSlot(
+		int containerId, int itemId);
 
 	CompletableFuture<List<KLiteItemStack>> inventory();
 
@@ -92,9 +236,15 @@ public interface KLiteClientApi
 
 	CompletableFuture<List<KLiteSkillSnapshot>> skills();
 
+	CompletableFuture<KLiteSkillTotalsSnapshot> skillTotals();
+
+	CompletableFuture<Optional<QuestState>> questState(Quest quest);
+
 	CompletableFuture<List<KLitePlayerSnapshot>> players();
 
 	CompletableFuture<List<KLiteNpcSnapshot>> npcs();
+
+	CompletableFuture<Optional<KLiteNpcSnapshot>> follower();
 
 	CompletableFuture<List<KLiteGroundItemSnapshot>> groundItems();
 
@@ -128,7 +278,12 @@ public interface KLiteClientApi
 
 	CompletableFuture<Boolean> hasLineOfSightTo(WorldPoint location);
 
+	CompletableFuture<KLiteInterfaceSnapshot> interfaceSnapshot();
+
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(@Component int componentId);
+
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(
+		@Interface int groupId, int childId);
 
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> widgetChild(
 		@Component int componentId, int childIndex);
@@ -136,6 +291,31 @@ public interface KLiteClientApi
 	CompletableFuture<List<KLiteWidgetSnapshot>> widgetChildren(@Component int componentId);
 
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> selectedWidget();
+
+	CompletableFuture<Boolean> widgetTargetSelected();
+
+	CompletableFuture<KLiteInteractionResult> clearWidgetTarget();
+
+	CompletableFuture<Optional<WorldPoint>> selectedSceneTile();
+
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> focusedInputWidget();
+
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> scriptActiveWidget();
+
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> scriptDotWidget();
+
+	CompletableFuture<Optional<KLiteWidgetConfigSnapshot>> widgetConfig(
+		@Component int componentId);
+
+	CompletableFuture<List<KLiteInterfaceNodeSnapshot>> interfaceNodes();
+
+	CompletableFuture<KLiteInteractionResult> openInterface(
+		@Component int componentId, @Interface int interfaceId, int modalMode);
+
+	CompletableFuture<KLiteInteractionResult> closeInterface(
+		@Component int componentId, boolean unload);
+
+	CompletableFuture<KLiteInteractionResult> setAllWidgetsTargetable(boolean targetable);
 
 	CompletableFuture<Boolean> isBankOpen();
 
@@ -223,6 +403,26 @@ public interface KLiteClientApi
 	CompletableFuture<KLiteInteractionResult> chooseDialogOption(int index);
 
 	CompletableFuture<KLiteInteractionResult> continueDialog();
+
+	CompletableFuture<KLiteMenuSnapshot> menuSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setMenuScroll(int scroll);
+
+	CompletableFuture<KLiteInteractionResult> interactMenuEntry(int index);
+
+	CompletableFuture<KLiteInteractionResult> runScript(Object... arguments);
+
+	CompletableFuture<KLiteCrossWorldMessageSnapshot> crossWorldMessageSnapshot();
+
+	CompletableFuture<Integer> expandedMapLoading();
+
+	CompletableFuture<KLiteInteractionResult> setExpandedMapLoading(int chunks);
+
+	CompletableFuture<KLiteInteractionResult> setUnlockedFps(boolean unlocked);
+
+	CompletableFuture<KLiteInteractionResult> setUnlockedFpsTarget(int fps);
+
+	CompletableFuture<KLiteInteractionResult> setLowMemoryMode(boolean lowMemory);
 
 	CompletableFuture<Void> menuAction(KLiteMenuActionRequest request);
 
