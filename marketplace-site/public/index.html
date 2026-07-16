@@ -10,20 +10,26 @@
   <link rel="manifest" href="site.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="filters.css">
+  <link rel="stylesheet" href="admin.css">
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="/" aria-label="KLite marketplace home">
       <img src="assets/klite-marketplace.png" alt="" width="48" height="48">
-      <span>
-        <strong>KLite</strong>
-        <small>Plugin Marketplace</small>
-      </span>
+      <span><strong>KLite</strong><small>Plugin Marketplace</small></span>
     </a>
     <div class="account-actions" aria-label="Account actions">
       <button id="sign-in-button" class="button button-secondary" type="button">Sign in</button>
       <button id="register-button" class="button button-primary" type="button">Register</button>
-      <button id="account-button" class="button button-secondary" type="button" hidden>Account</button>
+      <a id="api-button" class="button button-secondary" href="/api/" hidden>API</a>
+      <div id="account-menu-wrapper" class="account-menu-wrapper" hidden>
+        <button id="account-button" class="button button-secondary account-name-button" type="button" hidden>Account</button>
+        <div id="account-menu" class="account-menu" hidden>
+          <button id="account-menu-account" type="button">Account</button>
+          <a href="/api/">API reference</a>
+          <button id="account-menu-logout" class="danger-link" type="button">Log out</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -32,9 +38,7 @@
       <div class="hero-copy">
         <p class="eyebrow">Reviewed extensions for KLite</p>
         <h1 id="hero-title">Extend your client with confidence.</h1>
-        <p class="hero-description">
-          Discover plugins reviewed and published for the KLite client. The catalog is being prepared for its first releases.
-        </p>
+        <p class="hero-description">Discover plugins reviewed and published for the KLite client. The catalog is being prepared for its first releases.</p>
       </div>
       <img class="hero-mark" src="assets/klite-marketplace.png" alt="KLite shield logo" width="280" height="280">
     </section>
@@ -65,15 +69,15 @@
       <button id="sign-out-button" class="button button-danger" type="button">Sign out</button>
     </section>
 
-    <section id="api-reference" class="account-panel api-reference" aria-labelledby="api-reference-title" hidden>
+    <section id="api-reference" class="account-panel api-reference relocated-api" aria-labelledby="api-reference-title" hidden>
       <div>
-        <p class="eyebrow">Authenticated developer reference</p>
+        <p class="eyebrow">API reference moved</p>
         <h2 id="api-reference-title">KLite client and automation API</h2>
-        <p>The complete public client, automation, and web-walker API. Marketplace internals are intentionally excluded.</p>
+        <p>The API reference now has its own page.</p>
       </div>
-      <label class="form-field api-search">
+      <label class="form-field api-search" hidden>
         <span>Search types and methods</span>
-        <input id="api-reference-search" type="search" placeholder="inventory, walker, snapshot..." autocomplete="off">
+        <input id="api-reference-search" type="search" autocomplete="off">
       </label>
       <p id="api-reference-summary" class="account-note"></p>
       <div id="api-reference-content" class="api-reference-content"></div>
@@ -86,127 +90,56 @@
         <p>Submit source code for review. Approval is required before a plugin can enter the marketplace.</p>
       </div>
       <form id="submission-form" class="submission-form">
-        <label class="form-field">
-          <span>Plugin ID</span>
-          <input id="submission-plugin-id" type="text" pattern="[a-z0-9][a-z0-9-]{2,63}" maxlength="64" placeholder="my-plugin" required>
-        </label>
-        <label class="form-field">
-          <span>Display name</span>
-          <input id="submission-name" type="text" minlength="3" maxlength="80" required>
-        </label>
-        <label class="form-field">
-          <span>Version</span>
-          <input id="submission-version" type="text" maxlength="64" placeholder="1.0.0" required>
-        </label>
-        <label class="form-field submission-wide">
-          <span>HTTPS source URL</span>
-          <input id="submission-source-url" type="url" maxlength="500" placeholder="https://github.com/owner/plugin" required>
-        </label>
-        <label class="form-field submission-wide">
-          <span>Review description</span>
-          <textarea id="submission-description" minlength="30" maxlength="2000" rows="5" required></textarea>
-        </label>
+        <label class="form-field"><span>Plugin ID</span><input id="submission-plugin-id" type="text" pattern="[a-z0-9][a-z0-9-]{2,63}" maxlength="64" placeholder="my-plugin" required></label>
+        <label class="form-field"><span>Display name</span><input id="submission-name" type="text" minlength="3" maxlength="80" required></label>
+        <label class="form-field"><span>Version</span><input id="submission-version" type="text" maxlength="64" placeholder="1.0.0" required></label>
+        <label class="form-field submission-wide"><span>HTTPS source URL</span><input id="submission-source-url" type="url" maxlength="500" placeholder="https://github.com/owner/plugin" required></label>
+        <label class="form-field submission-wide"><span>Review description</span><textarea id="submission-description" minlength="30" maxlength="2000" rows="5" required></textarea></label>
         <p id="submission-error" class="form-error submission-wide" role="alert"></p>
         <button class="button button-primary" type="submit">Submit for review</button>
       </form>
-      <div>
-        <h3>Your submissions</h3>
-        <div id="submission-list" class="submission-list"></div>
-      </div>
+      <div><h3>Your submissions</h3><div id="submission-list" class="submission-list"></div></div>
     </section>
 
     <section id="discord-bot-dashboard" class="account-panel bot-dashboard" aria-labelledby="discord-bot-title" hidden>
       <div class="bot-dashboard-heading">
         <div>
-          <p class="eyebrow">Discord Dev administration</p>
+          <p class="eyebrow">Discord administration</p>
           <h2 id="discord-bot-title">Discord bot dashboard</h2>
-          <p>Live bot, server, role, channel, command, and marketplace announcement settings.</p>
+          <p>Install the bot in its designated server, verify the installation, and configure its roles, channels, commands, and marketplace automation.</p>
         </div>
-        <span id="discord-bot-access" class="access-owned">Checking Dev role...</span>
+        <span id="discord-bot-access" class="access-owned">Checking access...</span>
       </div>
 
+      <div id="discord-bootstrap-slot"></div>
+
       <div id="discord-bot-status-grid" class="bot-status-grid">
-        <article class="account-card">
-          <span class="account-label">Bot account</span>
-          <strong id="discord-bot-identity">Loading...</strong>
-          <p id="discord-bot-id" class="account-note"></p>
-        </article>
-        <article class="account-card">
-          <span class="account-label">Discord server</span>
-          <strong id="discord-guild-name">Loading...</strong>
-          <p id="discord-guild-status" class="account-note"></p>
-        </article>
-        <article class="account-card">
-          <span class="account-label">Linked accounts</span>
-          <strong id="discord-linked-count">0</strong>
-          <p id="discord-session-count" class="account-note"></p>
-        </article>
-        <article class="account-card">
-          <span class="account-label">Bot commands</span>
-          <strong id="discord-command-count">0</strong>
-          <p id="discord-announcement-count" class="account-note"></p>
-        </article>
+        <article class="account-card"><span class="account-label">Bot account</span><strong id="discord-bot-identity">Loading...</strong><p id="discord-bot-id" class="account-note"></p></article>
+        <article class="account-card"><span class="account-label">Discord server</span><strong id="discord-guild-name">Loading...</strong><p id="discord-guild-status" class="account-note"></p></article>
+        <article class="account-card"><span class="account-label">Linked accounts</span><strong id="discord-linked-count">0</strong><p id="discord-session-count" class="account-note"></p></article>
+        <article class="account-card"><span class="account-label">Bot commands</span><strong id="discord-command-count">0</strong><p id="discord-announcement-count" class="account-note"></p></article>
       </div>
 
       <form id="discord-bot-settings-form" class="bot-settings-form">
         <div class="bot-settings-group">
-          <div>
-            <h3>Role settings</h3>
-            <p class="account-note">Dashboard authorization is always verified against the selected Discord role named Dev.</p>
-          </div>
-          <label class="form-field">
-            <span>Dashboard Dev role</span>
-            <select id="discord-dev-role" required></select>
-          </label>
-          <label class="form-field">
-            <span>Plugin Dev role</span>
-            <select id="discord-plugin-dev-role"></select>
-          </label>
-          <label class="form-field">
-            <span>Marketplace reviewer role</span>
-            <select id="discord-reviewer-role"></select>
-          </label>
-          <label class="form-field">
-            <span>Default member role</span>
-            <select id="discord-member-role"></select>
-          </label>
+          <div><h3>Role settings</h3><p class="account-note">The site owner always retains access. Additional administrators are verified against the selected Discord role.</p></div>
+          <label class="form-field"><span>Dashboard administrator role</span><select id="discord-dev-role" required></select></label>
+          <label class="form-field"><span>Plugin Dev role</span><select id="discord-plugin-dev-role"></select></label>
+          <label class="form-field"><span>Marketplace reviewer role</span><select id="discord-reviewer-role"></select></label>
+          <label class="form-field"><span>Default member role</span><select id="discord-member-role"></select></label>
         </div>
-
         <div class="bot-settings-group">
-          <div>
-            <h3>Channel settings</h3>
-            <p class="account-note">Only text and announcement channels from the configured server are accepted.</p>
-          </div>
-          <label class="form-field">
-            <span>Plugin announcements</span>
-            <select id="announcement-channel-id"></select>
-          </label>
-          <label class="form-field">
-            <span>Bot audit log</span>
-            <select id="discord-audit-channel"></select>
-          </label>
-          <label class="form-field">
-            <span>Member welcome channel</span>
-            <select id="discord-welcome-channel"></select>
-          </label>
+          <div><h3>Channel settings</h3><p class="account-note">Only text and announcement channels from the designated server are accepted.</p></div>
+          <label class="form-field"><span>Plugin announcements</span><select id="announcement-channel-id"></select></label>
+          <label class="form-field"><span>Bot audit log</span><select id="discord-audit-channel"></select></label>
+          <label class="form-field"><span>Member welcome channel</span><select id="discord-welcome-channel"></select></label>
         </div>
-
         <div class="bot-settings-group bot-settings-toggles">
           <h3>Behaviour</h3>
-          <label class="toggle-field">
-            <input id="discord-bot-enabled" type="checkbox">
-            <span>Bot automation enabled</span>
-          </label>
-          <label class="toggle-field">
-            <input id="announcement-enabled" type="checkbox">
-            <span>Marketplace announcements enabled</span>
-          </label>
-          <label class="toggle-field">
-            <input id="discord-auto-member-role" type="checkbox">
-            <span>Automatically assign the default member role</span>
-          </label>
+          <label class="toggle-field"><input id="discord-bot-enabled" type="checkbox"><span>Bot automation enabled</span></label>
+          <label class="toggle-field"><input id="announcement-enabled" type="checkbox"><span>Marketplace announcements enabled</span></label>
+          <label class="toggle-field"><input id="discord-auto-member-role" type="checkbox"><span>Automatically assign the default member role</span></label>
         </div>
-
         <div class="review-actions bot-settings-actions">
           <button class="button button-primary" type="submit">Save bot settings</button>
           <button id="announcement-sync" class="button button-secondary" type="button">Check plugin updates now</button>
@@ -215,104 +148,57 @@
       </form>
 
       <div class="bot-detail-grid">
-        <section>
-          <h3>Registered commands</h3>
-          <div id="discord-command-list" class="submission-list"></div>
-        </section>
-        <section>
-          <h3>Server roles</h3>
-          <div id="discord-role-list" class="submission-list bot-scroll-list"></div>
-        </section>
-        <section class="bot-detail-wide">
-          <h3>Recent announcements</h3>
-          <div id="announcement-history" class="submission-list"></div>
-        </section>
+        <section><h3>Registered commands</h3><div id="discord-command-list" class="submission-list"></div></section>
+        <section><h3>Server roles</h3><div id="discord-role-list" class="submission-list bot-scroll-list"></div></section>
+        <section class="bot-detail-wide"><h3>Recent announcements</h3><div id="announcement-history" class="submission-list"></div></section>
       </div>
     </section>
 
     <section id="review-dashboard" class="account-panel developer-dashboard" aria-labelledby="review-title" hidden>
-      <div>
-        <p class="eyebrow">Marketplace review</p>
-        <h2 id="review-title">Review queue</h2>
-        <p>Approval records the review decision; publishing remains a separate controlled step.</p>
-      </div>
+      <div><p class="eyebrow">Marketplace review</p><h2 id="review-title">Plugin approval queue</h2><p>Reviewers selected by the KLite owner can approve, reject, or request changes. Approval records the decision; publishing remains separate.</p></div>
       <div id="review-list" class="submission-list"></div>
     </section>
 
     <section class="catalog" aria-labelledby="catalog-title">
-      <div class="catalog-heading">
-        <div>
-          <p class="eyebrow">Catalog</p>
-          <h2 id="catalog-title">Available plugins</h2>
-        </div>
-      </div>
-
+      <div class="catalog-heading"><div><p class="eyebrow">Catalog</p><h2 id="catalog-title">Available plugins</h2></div></div>
       <form class="catalog-controls" role="search">
-        <label class="search-field">
-          <span class="sr-only">Search plugins</span>
-          <input id="plugin-search" type="search" placeholder="Search plugins" autocomplete="off">
-        </label>
-        <label class="filter-field">
-          <span>Category</span>
-          <select id="category-filter">
-            <option value="">All</option>
-          </select>
-        </label>
-        <label class="filter-field">
-          <span>Type</span>
-          <select id="type-filter">
-            <option value="">All</option>
-          </select>
-        </label>
-        <label class="filter-field">
-          <span>Order</span>
-          <select id="order-filter">
-            <option value="trending-day">Trending today</option>
-            <option value="trending-week">Trending this week</option>
-            <option value="trending-month">Trending this month</option>
-            <option value="recently-updated">Recently updated</option>
-            <option value="recently-released">Recently released</option>
-            <option value="name">Name</option>
-          </select>
-        </label>
+        <label class="search-field"><span class="sr-only">Search plugins</span><input id="plugin-search" type="search" placeholder="Search plugins" autocomplete="off"></label>
+        <label class="filter-field"><span>Category</span><select id="category-filter"><option value="">All</option></select></label>
+        <label class="filter-field"><span>Type</span><select id="type-filter"><option value="">All</option></select></label>
+        <label class="filter-field"><span>Order</span><select id="order-filter"><option value="trending-day">Trending today</option><option value="trending-week">Trending this week</option><option value="trending-month">Trending this month</option><option value="recently-updated">Recently updated</option><option value="recently-released">Recently released</option><option value="name">Name</option></select></label>
       </form>
-
       <div id="catalog-status" class="status" role="status">Loading catalog...</div>
       <div id="plugin-grid" class="plugin-grid" aria-live="polite"></div>
     </section>
   </main>
 
-  <footer>
-    <p>KLite is an independent RuneLite-based client project.</p>
-    <p>Only install plugins you trust.</p>
+  <footer><p>KLite is an independent RuneLite-based client project.</p><p>Only install plugins you trust.</p></footer>
 
-  </footer>
   <dialog id="auth-dialog" class="auth-dialog">
     <form id="auth-form" class="auth-form">
-      <div class="dialog-heading">
-        <div>
-          <p id="auth-eyebrow" class="eyebrow">Welcome back</p>
-          <h2 id="auth-title">Sign in</h2>
-        </div>
-        <button id="auth-close" class="dialog-close" type="button" aria-label="Close">&times;</button>
-      </div>
-      <label id="username-field" class="form-field" hidden>
-        <span>Username</span>
-        <input id="auth-username" name="username" type="text" minlength="3" maxlength="24" pattern="[A-Za-z0-9_-]+" autocomplete="username">
-      </label>
-      <label class="form-field">
-        <span>Email</span>
-        <input id="auth-email" name="email" type="email" maxlength="254" autocomplete="email" required>
-      </label>
-      <label class="form-field">
-        <span>Password</span>
-        <input id="auth-password" name="password" type="password" minlength="12" maxlength="128" autocomplete="current-password" required>
-      </label>
+      <div class="dialog-heading"><div><p id="auth-eyebrow" class="eyebrow">Welcome back</p><h2 id="auth-title">Sign in</h2></div><button id="auth-close" class="dialog-close" type="button" aria-label="Close">&times;</button></div>
+      <label id="username-field" class="form-field" hidden><span>Username</span><input id="auth-username" name="username" type="text" minlength="3" maxlength="24" pattern="[A-Za-z0-9_-]+" autocomplete="username"></label>
+      <label class="form-field"><span>Email</span><input id="auth-email" name="email" type="email" maxlength="254" autocomplete="email" required></label>
+      <label class="form-field"><span>Password</span><input id="auth-password" name="password" type="password" minlength="12" maxlength="128" autocomplete="current-password" required></label>
+      <button id="forgot-password-button" class="text-button" type="button">Reset password</button>
       <p id="auth-error" class="form-error" role="alert"></p>
       <button id="auth-submit" class="button button-primary button-wide" type="submit">Sign in</button>
     </form>
   </dialog>
 
+  <dialog id="password-reset-dialog" class="auth-dialog">
+    <form id="password-reset-form" class="auth-form">
+      <div class="dialog-heading"><div><p class="eyebrow">Account recovery</p><h2 id="password-reset-title">Reset password</h2></div><button id="password-reset-close" class="dialog-close" type="button" aria-label="Close">&times;</button></div>
+      <p id="password-reset-description">Enter your marketplace email. Recovery is verified through the Discord account previously linked to it.</p>
+      <label id="password-reset-email-field" class="form-field"><span>Email</span><input id="password-reset-email" type="email" maxlength="254" autocomplete="email"></label>
+      <label id="password-reset-new-field" class="form-field" hidden><span>New password</span><input id="password-reset-new-password" type="password" minlength="12" maxlength="128" autocomplete="new-password"></label>
+      <input id="password-reset-token" type="hidden">
+      <p id="password-reset-status" class="form-error" role="status" aria-live="polite"></p>
+      <button id="password-reset-submit" class="button button-primary button-wide" type="submit">Continue with Discord</button>
+    </form>
+  </dialog>
+
   <script src="app.js" defer></script>
+  <script src="enhancements.js" defer></script>
 </body>
 </html>
