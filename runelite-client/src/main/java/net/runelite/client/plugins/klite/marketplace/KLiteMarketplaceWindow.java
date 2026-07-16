@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -45,11 +46,9 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
 /**
- * Standalone viewer for the public KLite plugin catalog.
+ * Standalone browser and runtime controller for the KLite plugin catalog.
  *
- * <p>The window reads validated metadata only. Downloading and executing
- * marketplace artifacts remains disabled until a signed distribution format
- * is implemented.</p>
+ * <p>Runnable artifacts are verified and held in memory only.</p>
  */
 @Singleton
 public class KLiteMarketplaceWindow
@@ -61,6 +60,7 @@ public class KLiteMarketplaceWindow
 
 	private final KLiteMarketplaceClient marketplaceClient;
 	private final KLiteAccountService accountService;
+	private final KLiteStreamedPluginService streamedPluginService;
 	private List<KLiteMarketplacePlugin> plugins = Collections.emptyList();
 
 	@Nullable
@@ -77,10 +77,12 @@ public class KLiteMarketplaceWindow
 
 	@Inject
 	KLiteMarketplaceWindow(KLiteMarketplaceClient marketplaceClient,
-		KLiteAccountService accountService)
+		KLiteAccountService accountService,
+		KLiteStreamedPluginService streamedPluginService)
 	{
 		this.marketplaceClient = marketplaceClient;
 		this.accountService = accountService;
+		this.streamedPluginService = streamedPluginService;
 	}
 
 	public void open()
@@ -408,10 +410,47 @@ public class KLiteMarketplaceWindow
 			? entitled ? "Owned"
 				: accountService.currentAccount().isPresent() ? "Locked" : "Sign in required"
 			: formatStatus(plugin.getStatus());
+		boolean running = streamedPluginService.isRunning(plugin.getId());
+		boolean pluginLoading = streamedPluginService.isLoading(plugin.getId());
 		JLabel status = new JLabel(statusText);
-		status.setForeground(entitled || "bundled".equals(plugin.getStatus())
+		status.setForeground(running || entitled || "bundled".equals(plugin.getStatus())
 			? ColorScheme.PROGRESS_COMPLETE_COLOR : ColorScheme.LIGHT_GRAY_COLOR);
-		heading.add(status, BorderLayout.EAST);
+		JPanel controls = new JPanel();
+		controls.setOpaque(false);
+		controls.add(status);
+		if ("available".equals(plugin.getStatus()))
+		{
+			JButton action = new JButton(running ? "Stop" : pluginLoading ? "Loading..." : "Run");
+			action.setEnabled(!pluginLoading && (!paid || entitled));
+			action.setToolTipText(paid && !entitled
+				? "Sign in with an entitled account to run this plugin"
+				: "Runs from verified memory without installing a JAR");
+			action.addActionListener(event ->
+			{
+				action.setEnabled(false);
+				action.setText(running ? "Stopping..." : "Loading...");
+				CompletableFuture<Void> operation = running
+					? streamedPluginService.stop(plugin.getId())
+					: streamedPluginService.run(plugin);
+				operation.whenComplete((ignored, error) -> SwingUtilities.invokeLater(() ->
+				{
+					if (error == null)
+					{
+						footer.setText(running ? plugin.getName() + " stopped; memory released"
+							: plugin.getName() + " is running from memory");
+					}
+					else
+					{
+						Throwable cause = error.getCause() == null ? error : error.getCause();
+						footer.setText("Could not " + (running ? "stop " : "run ")
+							+ plugin.getName() + ": " + cause.getMessage());
+					}
+					renderCatalog();
+				}));
+			});
+			controls.add(action);
+		}
+		heading.add(controls, BorderLayout.EAST);
 		card.add(heading, BorderLayout.NORTH);
 
 		BufferedImage fallbackImage = ImageUtil.resizeImage(BRAND_IMAGE, 56, 56, true);

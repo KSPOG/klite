@@ -50,6 +50,10 @@ async function route(request, env, url) {
   if (request.method === "GET" && url.pathname === "/api/client/entitlements") {
     return clientEntitlements(request, env);
   }
+  const artifactMatch = url.pathname.match(/^\/api\/client\/plugins\/([a-z0-9][a-z0-9-]{0,63})\/artifact$/);
+  if (artifactMatch && request.method === "GET") {
+    return pluginArtifact(request, env, artifactMatch[1]);
+  }
   if (url.pathname === "/api/developer/submissions" && request.method === "GET") {
     return developerSubmissions(request, env);
   }
@@ -322,6 +326,60 @@ async function clientEntitlements(request, env) {
   return json({
     account: await accountPayload(env, session.user_id),
     entitlements: await entitlements(env, session.user_id)
+  });
+}
+
+export async function pluginArtifact(request, env, pluginId) {
+  const version = normalizeVersion(new URL(request.url).searchParams.get("version"));
+  if (!version) {
+    return apiError(400, "invalid_version", "A valid plugin version is required.");
+  }
+  const artifact = await env.DB.prepare(
+    `SELECT version, object_key, sha256, size, access_type
+     FROM plugin_artifacts
+     WHERE plugin_id = ? AND version = ? AND revoked_at IS NULL`
+  ).bind(pluginId, version).first();
+  if (!artifact) {
+    return apiError(404, "artifact_not_found", "This plugin is not available.");
+  }
+
+  if (artifact.access_type === "Supporter" || artifact.access_type === "Premium") {
+    const session = await requireSession(request, env, "client");
+    if (!session) {
+      return apiError(401, "client_authentication_required",
+        "Sign in from the KLite client to run this plugin.");
+    }
+    const entitlement = await env.DB.prepare(
+      `SELECT 1 AS allowed FROM plugin_entitlements
+       WHERE user_id = ? AND plugin_id = ? AND revoked_at IS NULL
+         AND (expires_at IS NULL OR expires_at > ?)`
+    ).bind(session.user_id, pluginId, nowSeconds()).first();
+    if (!entitlement?.allowed) {
+      return apiError(403, "entitlement_required",
+        "Your account is not entitled to run this plugin.");
+    }
+  }
+
+  const object = await env.PLUGIN_ARTIFACTS.get(artifact.object_key);
+  if (!object) {
+    console.error("Published plugin artifact is missing", pluginId, artifact.version);
+    return apiError(503, "artifact_unavailable", "The plugin artifact is temporarily unavailable.");
+  }
+  if (object.size !== artifact.size) {
+    console.error("Published plugin artifact size mismatch", pluginId, artifact.version);
+    return apiError(503, "artifact_invalid", "The plugin artifact failed server validation.");
+  }
+
+  return new Response(object.body, {
+    status: 200,
+    headers: {
+      "content-type": "application/java-archive",
+      "content-length": String(artifact.size),
+      "cache-control": "private, no-store",
+      "x-content-type-options": "nosniff",
+      "x-klite-plugin-version": artifact.version,
+      "x-klite-plugin-sha256": artifact.sha256
+    }
   });
 }
 

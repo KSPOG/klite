@@ -15,9 +15,11 @@ account code, migrations, and deployment configuration are not web-accessible.
   `sideloaded-plugins` directory.
 - A shared catalog in `public/plugins.json` for the website and client.
 
-The service does not yet download or execute paid plugin artifacts. Installation
-must remain disabled until the catalog has signed artifact URLs, checksums,
-compatibility ranges, and review metadata.
+- Click-to-run plugins streamed from private object storage into bounded client
+  memory, with no manual download or persistent JAR installation.
+The Worker enforces paid entitlements before returning a private artifact. The
+client verifies its exact byte length and SHA-256 before loading only declared
+entrypoints, then releases the artifact on Stop or client restart.
 
 ## Local setup
 

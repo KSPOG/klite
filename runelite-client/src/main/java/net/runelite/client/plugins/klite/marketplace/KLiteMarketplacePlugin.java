@@ -39,6 +39,7 @@ public final class KLiteMarketplacePlugin
 	private String type;
 	private String access;
 	private String status;
+	private KLiteMarketplaceArtifact artifact;
 	private String homepageUrl;
 	private String iconPath;
 	private String releasedAt;
@@ -70,6 +71,11 @@ public final class KLiteMarketplacePlugin
 	public String getStatus()
 	{
 		return status;
+	}
+
+	public KLiteMarketplaceArtifact getArtifact()
+	{
+		return artifact;
 	}
 
 	public String getHomepageUrl()
@@ -156,6 +162,18 @@ public final class KLiteMarketplacePlugin
 			throw new IllegalArgumentException("Invalid marketplace plugin status: " + id);
 		}
 		status = status.toLowerCase(Locale.ROOT);
+		if ("available".equals(status))
+		{
+			if (artifact == null)
+			{
+				throw new IllegalArgumentException("Available marketplace plugin requires an artifact: " + id);
+			}
+			artifact.validate(id, descriptor.getVersion());
+		}
+		else if (artifact != null)
+		{
+			throw new IllegalArgumentException("Only available marketplace plugins may define artifacts: " + id);
+		}
 		validateHttpsUrl(homepageUrl);
 		validateTimestamp(releasedAt, "release");
 		validateTimestamp(updatedAt, "update");
