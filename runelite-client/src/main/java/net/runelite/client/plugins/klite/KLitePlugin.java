@@ -8,9 +8,13 @@ package net.runelite.client.plugins.klite;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
+import net.runelite.api.events.AccountHashChanged;
+import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.klite.api.DefaultKLiteClientApi;
@@ -19,6 +23,7 @@ import net.runelite.client.plugins.klite.automation.AutomationManager;
 import net.runelite.client.plugins.klite.marketplace.KLiteMarketplaceWindow;
 import net.runelite.client.plugins.klite.marketplace.KLitePluginPanel;
 import net.runelite.client.plugins.klite.walker.DefaultWebWalker;
+import net.runelite.client.plugins.klite.walker.WebWalkBankCache;
 import net.runelite.client.plugins.klite.walker.WebWalker;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
@@ -48,6 +53,9 @@ public class KLitePlugin extends Plugin
 
 	@Inject
 	private DefaultWebWalker webWalker;
+
+	@Inject
+	private WebWalkBankCache bankCache;
 
 	@Inject
 	private ClientToolbar clientToolbar;
@@ -87,11 +95,33 @@ public class KLitePlugin extends Plugin
 		}
 	}
 
+	@Subscribe
+	public void onItemContainerChanged(ItemContainerChanged event)
+	{
+		if (event.getContainerId() == InventoryID.BANK)
+		{
+			bankCache.update(event.getItemContainer());
+		}
+	}
+
+	@Subscribe
+	public void onAccountHashChanged(AccountHashChanged event)
+	{
+		bankCache.onAccountChanged();
+	}
+
+	@Subscribe
+	public void onRuneScapeProfileChanged(RuneScapeProfileChanged event)
+	{
+		bankCache.onAccountChanged();
+	}
+
 	@Override
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
 		automationManager.setEnabled(config.enableAutomation());
+		bankCache.onAccountChanged();
 
 		BufferedImage sourceIcon = ImageUtil.loadImageResource(
 			KLitePlugin.class, "marketplace/klite_marketplace.png");
@@ -113,6 +143,7 @@ public class KLitePlugin extends Plugin
 		marketplaceWindow.close();
 		automationManager.setEnabled(false);
 		webWalker.shutdown();
+		bankCache.clearMemory();
 		overlayManager.remove(overlay);
 	}
 }
