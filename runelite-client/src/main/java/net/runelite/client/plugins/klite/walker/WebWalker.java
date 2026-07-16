@@ -20,4 +20,6 @@ public interface WebWalker
 	CompletableFuture<Void> clear();
 
 	WebWalkResult status();
+
+	WebWalkBankSnapshot bankSnapshot();
 }

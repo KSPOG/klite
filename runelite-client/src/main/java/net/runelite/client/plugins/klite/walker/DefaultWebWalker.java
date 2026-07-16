@@ -43,6 +43,7 @@ public class DefaultWebWalker implements WebWalker
 	private final Client client;
 	private final KLiteThreadGateway threadGateway;
 	private final GroundPathfinder pathfinder;
+	private final WebWalkBankCache bankCache;
 	private final ExecutorService pathExecutor;
 
 	private volatile WebWalkResult status = new WebWalkResult(
@@ -61,18 +62,20 @@ public class DefaultWebWalker implements WebWalker
 	private long lastProgressAt;
 
 	@Inject
-	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway, GroundPathfinder pathfinder)
+	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway, GroundPathfinder pathfinder,
+		WebWalkBankCache bankCache)
 	{
-		this(client, threadGateway, pathfinder, Executors.newSingleThreadExecutor(
+		this(client, threadGateway, pathfinder, bankCache, Executors.newSingleThreadExecutor(
 			new ThreadFactoryBuilder().setDaemon(true).setNameFormat("klite-pathfinder-%d").build()));
 	}
 
 	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway,
-		GroundPathfinder pathfinder, ExecutorService pathExecutor)
+		GroundPathfinder pathfinder, WebWalkBankCache bankCache, ExecutorService pathExecutor)
 	{
 		this.client = client;
 		this.threadGateway = threadGateway;
 		this.pathfinder = pathfinder;
+		this.bankCache = bankCache;
 		this.pathExecutor = pathExecutor;
 	}
 
@@ -103,6 +106,12 @@ public class DefaultWebWalker implements WebWalker
 	public WebWalkResult status()
 	{
 		return status;
+	}
+
+	@Override
+	public WebWalkBankSnapshot bankSnapshot()
+	{
+		return bankCache.snapshot();
 	}
 
 	public void shutdown()
