@@ -65,6 +65,20 @@
       <button id="sign-out-button" class="button button-danger" type="button">Sign out</button>
     </section>
 
+    <section id="api-reference" class="account-panel api-reference" aria-labelledby="api-reference-title" hidden>
+      <div>
+        <p class="eyebrow">Authenticated developer reference</p>
+        <h2 id="api-reference-title">KLite client and automation API</h2>
+        <p>The complete public client, automation, and web-walker API. Marketplace internals are intentionally excluded.</p>
+      </div>
+      <label class="form-field api-search">
+        <span>Search types and methods</span>
+        <input id="api-reference-search" type="search" placeholder="inventory, walker, snapshot..." autocomplete="off">
+      </label>
+      <p id="api-reference-summary" class="account-note"></p>
+      <div id="api-reference-content" class="api-reference-content"></div>
+    </section>
+
     <section id="developer-dashboard" class="account-panel developer-dashboard" aria-labelledby="developer-title" hidden>
       <div>
         <p class="eyebrow">Plugin developer</p>
@@ -99,6 +113,32 @@
         <h3>Your submissions</h3>
         <div id="submission-list" class="submission-list"></div>
       </div>
+      <section class="announcement-dashboard" aria-labelledby="announcement-title">
+        <div>
+          <p class="eyebrow">Discord bot</p>
+          <h3 id="announcement-title">Marketplace announcements</h3>
+          <p>Automatically announce newly available plugins and later version updates in a configured KLite Discord channel.</p>
+        </div>
+        <form id="announcement-form" class="announcement-form">
+          <label class="form-field">
+            <span>Discord channel ID</span>
+            <input id="announcement-channel-id" type="text" inputmode="numeric" pattern="[0-9]{17,20}" maxlength="20" required>
+          </label>
+          <label class="toggle-field">
+            <input id="announcement-enabled" type="checkbox">
+            <span>Automatic announcements enabled</span>
+          </label>
+          <div class="review-actions">
+            <button class="button button-primary" type="submit">Save channel</button>
+            <button id="announcement-sync" class="button button-secondary" type="button">Check for updates now</button>
+          </div>
+          <p id="announcement-status" class="form-error" role="status" aria-live="polite"></p>
+        </form>
+        <div>
+          <h4>Recent announcements</h4>
+          <div id="announcement-history" class="submission-list"></div>
+        </div>
+      </section>
     </section>
 
     <section id="review-dashboard" class="account-panel developer-dashboard" aria-labelledby="review-title" hidden>

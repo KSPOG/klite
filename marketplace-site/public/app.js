@@ -39,6 +39,16 @@ const submissionError = document.querySelector("#submission-error");
 const submissionList = document.querySelector("#submission-list");
 const reviewDashboard = document.querySelector("#review-dashboard");
 const reviewList = document.querySelector("#review-list");
+const apiReference = document.querySelector("#api-reference");
+const apiReferenceSearch = document.querySelector("#api-reference-search");
+const apiReferenceSummary = document.querySelector("#api-reference-summary");
+const apiReferenceContent = document.querySelector("#api-reference-content");
+const announcementForm = document.querySelector("#announcement-form");
+const announcementChannelId = document.querySelector("#announcement-channel-id");
+const announcementEnabled = document.querySelector("#announcement-enabled");
+const announcementSync = document.querySelector("#announcement-sync");
+const announcementStatus = document.querySelector("#announcement-status");
+const announcementHistory = document.querySelector("#announcement-history");
 
 const statusLabels = {
   bundled: "Bundled with KLite",
@@ -243,6 +253,7 @@ function renderSignedOut() {
   renderPlugins();
   developerDashboard.hidden = true;
   reviewDashboard.hidden = true;
+  apiReference.hidden = true;
 }
 
 function renderAccount(payload) {
@@ -278,13 +289,121 @@ function renderAccount(payload) {
     : websiteRoles.has("plugin_dev") ? "Relink Discord to verify the Plugin Dev server role." : "";
   developerDashboard.hidden = !capabilities.has("plugin_dev");
   reviewDashboard.hidden = !capabilities.has("marketplace_review");
+  apiReference.hidden = false;
+  loadApiReference();
   if (!developerDashboard.hidden) {
     loadDeveloperSubmissions();
+    loadAnnouncementSettings();
   }
   if (!reviewDashboard.hidden) {
     loadReviewSubmissions();
   }
   renderPlugins();
+}
+
+let apiReferencePayload = null;
+
+async function loadApiReference() {
+  if (apiReferencePayload) {
+    renderApiReference();
+    return;
+  }
+  apiReferenceContent.textContent = "Loading API reference...";
+  try {
+    apiReferencePayload = await api("/api/docs");
+    apiReferenceSummary.textContent = `${apiReferencePayload.typeCount} public types and `
+      + `${apiReferencePayload.methodCount} callable signatures. Marketplace APIs are excluded.`;
+    renderApiReference();
+  } catch (error) {
+    apiReferenceContent.textContent = error.message;
+  }
+}
+
+function renderApiReference() {
+  if (!apiReferencePayload) {
+    return;
+  }
+  const query = apiReferenceSearch.value.trim().toLowerCase();
+  apiReferenceContent.replaceChildren();
+  let visibleTypes = 0;
+  for (const section of apiReferencePayload.sections || []) {
+    const matchingTypes = section.types.filter((type) => [
+      type.name, type.packageName, type.description, ...type.signatures
+    ].join(" ").toLowerCase().includes(query));
+    if (!matchingTypes.length) {
+      continue;
+    }
+    const heading = document.createElement("h3");
+    heading.textContent = section.name;
+    apiReferenceContent.append(heading);
+    for (const type of matchingTypes) {
+      visibleTypes += 1;
+      const details = document.createElement("details");
+      details.className = "api-type";
+      const summary = document.createElement("summary");
+      const name = document.createElement("strong");
+      name.textContent = type.name;
+      const kind = document.createElement("span");
+      kind.textContent = type.kind;
+      summary.append(name, kind);
+      const packageName = document.createElement("code");
+      packageName.textContent = type.packageName;
+      details.append(summary, packageName);
+      if (type.description) {
+        const description = document.createElement("p");
+        description.textContent = type.description;
+        details.append(description);
+      }
+      const signatures = document.createElement("ul");
+      signatures.className = "api-signatures";
+      for (const signature of type.signatures) {
+        const item = document.createElement("li");
+        const code = document.createElement("code");
+        code.textContent = signature;
+        item.append(code);
+        signatures.append(item);
+      }
+      if (type.signatures.length) {
+        details.append(signatures);
+      }
+      apiReferenceContent.append(details);
+    }
+  }
+  if (!visibleTypes) {
+    apiReferenceContent.textContent = "No API types match your search.";
+  }
+}
+
+function renderAnnouncementSettings(payload) {
+  const setting = payload.setting;
+  announcementChannelId.value = setting?.channelId || "";
+  announcementEnabled.checked = setting?.enabled ?? false;
+  announcementHistory.replaceChildren();
+  for (const entry of payload.history || []) {
+    const card = document.createElement("article");
+    card.className = "submission-card";
+    const title = document.createElement("strong");
+    title.textContent = `${entry.eventType === "new" ? "New" : "Updated"}: `
+      + `${entry.pluginId} ${entry.version}`;
+    const metadata = document.createElement("p");
+    metadata.className = "submission-meta";
+    metadata.textContent = `Channel ${entry.channelId} - `
+      + new Date(entry.announcedAt * 1000).toLocaleString();
+    card.append(title, metadata);
+    announcementHistory.append(card);
+  }
+  if (!announcementHistory.childElementCount) {
+    announcementHistory.textContent = "No marketplace announcements have been posted yet.";
+  }
+}
+
+async function loadAnnouncementSettings() {
+  announcementStatus.textContent = "";
+  try {
+    renderAnnouncementSettings(await api("/api/developer/announcements"));
+  } catch (error) {
+    announcementStatus.textContent = error.message;
+  }
 }
 
 async function loadAccount() {
@@ -440,6 +559,47 @@ submissionForm.addEventListener("submit", async (event) => {
     submit.disabled = false;
   }
 });
+
+apiReferenceSearch.addEventListener("input", renderApiReference);
+
+announcementForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const submit = announcementForm.querySelector("button[type='submit']");
+  submit.disabled = true;
+  announcementStatus.textContent = "Validating the bot's channel access...";
+  try {
+    const payload = await api("/api/developer/announcements", {
+      method: "PUT",
+      body: JSON.stringify({
+        channelId: announcementChannelId.value,
+        enabled: announcementEnabled.checked
+      })
+    });
+    announcementStatus.textContent = `Saved #${payload.setting.channelName}.`;
+    await loadAnnouncementSettings();
+  } catch (error) {
+    announcementStatus.textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+announcementSync.addEventListener("click", async () => {
+  announcementSync.disabled = true;
+  announcementStatus.textContent = "Checking the published catalog...";
+  try {
+    const result = await api("/api/developer/announcements/sync", { method: "POST" });
+    announcementStatus.textContent = result.skipped === "disabled"
+      ? "Automatic announcements are disabled."
+      : `${result.announced} announcement${result.announced === 1 ? "" : "s"} posted.`;
+    await loadAnnouncementSettings();
+  } catch (error) {
+    announcementStatus.textContent = error.message;
+  } finally {
+    announcementSync.disabled = false;
+  }
+});
+
 signInButton.addEventListener("click", () => openAuth("login"));
 registerButton.addEventListener("click", () => openAuth("register"));
 authClose.addEventListener("click", () => authDialog.close());

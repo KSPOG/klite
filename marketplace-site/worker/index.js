@@ -1,3 +1,11 @@
+import { API_REFERENCE } from "./api-reference.generated.js";
+import {
+  announcementSettings,
+  normalizeDiscordChannelId,
+  saveAnnouncementSettings,
+  syncPluginAnnouncements
+} from "./announcements.js";
+
 const encoder = new TextEncoder();
 const PASSWORD_ITERATIONS = 600_000;
 const WEB_SESSION_SECONDS = 7 * 24 * 60 * 60;
@@ -19,6 +27,9 @@ export default {
       console.error("Unhandled marketplace API error", error);
       return apiError(500, "internal_error", "The request could not be completed.");
     }
+  },
+  async scheduled(controller, env, context) {
+    context.waitUntil(syncPluginAnnouncements(env, null));
   }
 };
 
@@ -34,6 +45,9 @@ async function route(request, env, url) {
   }
   if (request.method === "GET" && url.pathname === "/api/account") {
     return account(request, env);
+  }
+  if (request.method === "GET" && url.pathname === "/api/docs") {
+    return apiDocumentation(request, env);
   }
   if (request.method === "POST" && url.pathname === "/api/discord/link/start") {
     return discordLinkStart(request, env);
@@ -59,6 +73,15 @@ async function route(request, env, url) {
   }
   if (url.pathname === "/api/developer/submissions" && request.method === "POST") {
     return createPluginSubmission(request, env);
+  }
+  if (url.pathname === "/api/developer/announcements" && request.method === "GET") {
+    return discordAnnouncementSettings(request, env);
+  }
+  if (url.pathname === "/api/developer/announcements" && request.method === "PUT") {
+    return updateDiscordAnnouncementSettings(request, env);
+  }
+  if (url.pathname === "/api/developer/announcements/sync" && request.method === "POST") {
+    return syncDiscordAnnouncements(request, env);
   }
   if (url.pathname === "/api/review/submissions" && request.method === "GET") {
     return reviewSubmissions(request, env);
@@ -161,6 +184,14 @@ async function account(request, env) {
     account: await accountPayload(env, session.user_id),
     entitlements: await entitlements(env, session.user_id)
   });
+}
+
+async function apiDocumentation(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) {
+    return apiError(401, "authentication_required", "Sign in to view the KLite API reference.");
+  }
+  return json(API_REFERENCE);
 }
 
 async function discordLinkStart(request, env) {
@@ -554,6 +585,46 @@ async function reviewPluginSubmission(request, env, submissionId) {
       "The submission was already reviewed or does not exist.");
   }
   return json({ ok: true, status: decision });
+}
+
+async function discordAnnouncementSettings(request, env) {
+  const session = await requireCapability(request, env, "plugin_dev");
+  if (!session) {
+    return apiError(403, "plugin_developer_required",
+      "A verified website and Discord Plugin Dev role is required.");
+  }
+  return json(await announcementSettings(env));
+}
+
+async function updateDiscordAnnouncementSettings(request, env) {
+  const session = await requireCapability(request, env, "plugin_dev");
+  if (!session) {
+    return apiError(403, "plugin_developer_required",
+      "A verified website and Discord Plugin Dev role is required.");
+  }
+  const body = await readJson(request);
+  const channelId = normalizeDiscordChannelId(body?.channelId);
+  if (!channelId || typeof body?.enabled !== "boolean") {
+    return apiError(400, "invalid_announcement_settings",
+      "Enter a Discord text-channel ID and enabled state.");
+  }
+  const setting = await saveAnnouncementSettings(
+    env, session.user_id, channelId, body.enabled
+  );
+  if (!setting) {
+    return apiError(400, "invalid_discord_channel",
+      "The bot cannot access that text channel in the configured KLite server.");
+  }
+  return json({ setting });
+}
+
+async function syncDiscordAnnouncements(request, env) {
+  const session = await requireCapability(request, env, "plugin_dev");
+  if (!session) {
+    return apiError(403, "plugin_developer_required",
+      "A verified website and Discord Plugin Dev role is required.");
+  }
+  return json(await syncPluginAnnouncements(env, session.user_id));
 }
 
 async function requireCapability(request, env, capability) {

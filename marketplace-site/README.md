@@ -11,12 +11,16 @@ account code, migrations, and deployment configuration are not web-accessible.
 - Client sign-in with memory-only tokens and server-authoritative paid-plugin
   entitlements.
 - A dual-role Plugin Dev capability, submission dashboard, and reviewer queue.
+- An authenticated, generated client/automation/web-walker API reference that
+  deliberately excludes marketplace internals.
+- Plugin Dev-only Discord announcement settings with scheduled new-release and
+  version-update posts to a validated server channel.
 - Capability-gated client hot reload for jars built into the local
   `sideloaded-plugins` directory.
 - A shared catalog in `public/plugins.json` for the website and client.
-
 - Click-to-run plugins streamed from private object storage into bounded client
   memory, with no manual download or persistent JAR installation.
+
 The Worker enforces paid entitlements before returning a private artifact. The
 client verifies its exact byte length and SHA-256 before loading only declared
 entrypoints, then releases the artifact on Stop or client restart.
@@ -52,15 +56,17 @@ Create a Discord application and configure these endpoints using the value of
 Set `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`, and `DISCORD_PLUGIN_DEV_ROLE_ID` in
 `wrangler.jsonc`. OAuth requests `guilds.members.read` so the backend can verify
 the server role without trusting browser or client claims. Store
-`DISCORD_CLIENT_SECRET` and `DISCORD_PUBLIC_KEY` as Worker secrets. Register the
-global slash commands from a trusted terminal with `DISCORD_APPLICATION_ID` and
-`DISCORD_BOT_TOKEN` set:
+`DISCORD_CLIENT_SECRET`, `DISCORD_PUBLIC_KEY`, and `DISCORD_BOT_TOKEN` as Worker
+secrets. Register the global slash commands from a trusted terminal with
+`DISCORD_APPLICATION_ID` and `DISCORD_BOT_TOKEN` set:
 
 ```powershell
 npm run discord:commands
 ```
 
-The Worker does not store or need the bot token at runtime.
+The Worker uses the bot token only server-side to validate the configured text
+channel and post marketplace announcement embeds. The token is never returned
+to the browser or stored in D1.
 
 ## Production deployment
 
@@ -70,6 +76,7 @@ Use a random password pepper that is independent of the database:
 npx wrangler secret put PASSWORD_PEPPER
 npx wrangler secret put DISCORD_CLIENT_SECRET
 npx wrangler secret put DISCORD_PUBLIC_KEY
+npx wrangler secret put DISCORD_BOT_TOKEN
 npm run db:migrate:remote
 npm run deploy
 ```
