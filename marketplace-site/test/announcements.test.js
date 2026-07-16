@@ -61,6 +61,7 @@ test("generated authenticated reference excludes marketplace internals", () => {
 test("announces a new available plugin once and persists its version", async () => {
   let state = null;
   const log = [];
+  let botEnabled = 1;
   const statements = [];
   const env = {
     PUBLIC_ORIGIN: "https://klite.example",
@@ -104,7 +105,9 @@ test("announces a new available plugin once and persists its version", async () 
               }
             };
           },
-          first: async () => ({ channel_id: "12345678901234567", enabled: 1 })
+          first: async () => sql.includes("discord_bot_settings")
+            ? { bot_enabled: botEnabled }
+            : { channel_id: "12345678901234567", enabled: 1 }
         };
       }
     }
@@ -119,6 +122,9 @@ test("announces a new available plugin once and persists its version", async () 
       { announced: 1, available: 1 });
     assert.deepEqual(await syncPluginAnnouncements(env, "developer-id"),
       { announced: 0, available: 1 });
+    botEnabled = 0;
+    assert.deepEqual(await syncPluginAnnouncements(env, "developer-id"),
+      { announced: 0, skipped: "bot_disabled" });
   } finally {
     globalThis.fetch = originalFetch;
   }

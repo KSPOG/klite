@@ -44,6 +44,16 @@ export async function saveAnnouncementSettings(env, userId, channelId, enabled) 
 }
 
 export async function syncPluginAnnouncements(env, announcedBy) {
+  try {
+    const botSettings = await env.DB.prepare(
+      "SELECT bot_enabled FROM discord_bot_settings WHERE id = 1"
+    ).first();
+    if (botSettings && botSettings.bot_enabled !== 1) {
+      return { announced: 0, skipped: "bot_disabled" };
+    }
+  } catch {
+    // Migration 0005 may not have been applied during a rolling deployment.
+  }
   const setting = await env.DB.prepare(
     "SELECT channel_id, enabled FROM discord_announcement_settings WHERE id = 1"
   ).first();

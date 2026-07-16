@@ -684,3 +684,106 @@ footer p {
     flex-direction: column;
   }
 }
+
+.bot-dashboard {
+  display: grid;
+  gap: 2rem;
+}
+
+.bot-dashboard-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.bot-status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.bot-status-grid .account-card {
+  min-height: 0;
+}
+
+.bot-settings-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.bot-settings-group {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.bot-settings-group h3,
+.bot-detail-grid h3 {
+  margin-top: 0;
+}
+
+.bot-settings-toggles,
+.bot-settings-actions,
+.bot-settings-form > .form-error {
+  grid-column: 1 / -1;
+}
+
+.bot-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.bot-detail-wide {
+  grid-column: 1 / -1;
+}
+
+.bot-scroll-list {
+  max-height: 28rem;
+  overflow: auto;
+}
+
+.form-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  color: var(--text);
+  background: #0b1018;
+  font: inherit;
+}
+
+.form-field select:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgb(22 216 255 / 12%);
+}
+
+@media (max-width: 960px) {
+  .bot-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .bot-dashboard-heading {
+    flex-direction: column;
+  }
+
+  .bot-status-grid,
+  .bot-settings-form,
+  .bot-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bot-detail-wide {
+    grid-column: auto;
+  }
+}

@@ -43,7 +43,27 @@ const apiReference = document.querySelector("#api-reference");
 const apiReferenceSearch = document.querySelector("#api-reference-search");
 const apiReferenceSummary = document.querySelector("#api-reference-summary");
 const apiReferenceContent = document.querySelector("#api-reference-content");
-const announcementForm = document.querySelector("#announcement-form");
+const discordBotDashboard = document.querySelector("#discord-bot-dashboard");
+const discordBotAccess = document.querySelector("#discord-bot-access");
+const discordBotIdentity = document.querySelector("#discord-bot-identity");
+const discordBotId = document.querySelector("#discord-bot-id");
+const discordGuildName = document.querySelector("#discord-guild-name");
+const discordGuildStatus = document.querySelector("#discord-guild-status");
+const discordLinkedCount = document.querySelector("#discord-linked-count");
+const discordSessionCount = document.querySelector("#discord-session-count");
+const discordCommandCount = document.querySelector("#discord-command-count");
+const discordAnnouncementCount = document.querySelector("#discord-announcement-count");
+const discordBotSettingsForm = document.querySelector("#discord-bot-settings-form");
+const discordDevRole = document.querySelector("#discord-dev-role");
+const discordPluginDevRole = document.querySelector("#discord-plugin-dev-role");
+const discordReviewerRole = document.querySelector("#discord-reviewer-role");
+const discordMemberRole = document.querySelector("#discord-member-role");
+const discordAuditChannel = document.querySelector("#discord-audit-channel");
+const discordWelcomeChannel = document.querySelector("#discord-welcome-channel");
+const discordBotEnabled = document.querySelector("#discord-bot-enabled");
+const discordAutoMemberRole = document.querySelector("#discord-auto-member-role");
+const discordCommandList = document.querySelector("#discord-command-list");
+const discordRoleList = document.querySelector("#discord-role-list");
 const announcementChannelId = document.querySelector("#announcement-channel-id");
 const announcementEnabled = document.querySelector("#announcement-enabled");
 const announcementSync = document.querySelector("#announcement-sync");
@@ -254,6 +274,7 @@ function renderSignedOut() {
   developerDashboard.hidden = true;
   reviewDashboard.hidden = true;
   apiReference.hidden = true;
+  discordBotDashboard.hidden = true;
 }
 
 function renderAccount(payload) {
@@ -293,12 +314,15 @@ function renderAccount(payload) {
   loadApiReference();
   if (!developerDashboard.hidden) {
     loadDeveloperSubmissions();
-    loadAnnouncementSettings();
   }
   if (!reviewDashboard.hidden) {
     loadReviewSubmissions();
   }
   renderPlugins();
+  discordBotDashboard.hidden = true;
+  if (currentAccount.discord) {
+    loadDiscordBotDashboard();
+  }
 }
 
 let apiReferencePayload = null;
@@ -374,12 +398,92 @@ function renderApiReference() {
   }
 }
 
-function renderAnnouncementSettings(payload) {
-  const setting = payload.setting;
-  announcementChannelId.value = setting?.channelId || "";
-  announcementEnabled.checked = setting?.enabled ?? false;
+function populateDiscordSelect(select, items, selected, emptyLabel) {
+  select.replaceChildren();
+  if (emptyLabel) {
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = emptyLabel;
+    select.append(empty);
+  }
+  for (const item of items) {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = item.name;
+    option.selected = item.id === selected;
+    select.append(option);
+  }
+}
+
+function renderDiscordBotDashboard(payload) {
+  const settings = payload.settings;
+  discordBotDashboard.hidden = false;
+  discordBotAccess.textContent = `Verified through Discord role ${payload.access.devRoleName}`;
+  discordBotIdentity.textContent = payload.bot.globalName || payload.bot.username;
+  discordBotId.textContent = `@bot ID ${payload.bot.id} / joined `
+    + (payload.bot.joinedAt ? new Date(payload.bot.joinedAt).toLocaleDateString() : "unknown");
+  discordGuildName.textContent = payload.guild.name;
+  discordGuildStatus.textContent = `${payload.guild.memberCount ?? "Unknown"} members / `
+    + `${payload.guild.presenceCount ?? "Unknown"} online / server ID ${payload.guild.id}`;
+  discordLinkedCount.textContent = String(payload.stats.linkedAccounts);
+  discordSessionCount.textContent = `${payload.stats.activeSessions} active website/client sessions`;
+  discordCommandCount.textContent = String(payload.commands.length);
+  discordAnnouncementCount.textContent =
+    `${payload.stats.announcementsSent} marketplace announcements sent`;
+
+  const roles = payload.roles.filter((role) => role.name !== "@everyone");
+  populateDiscordSelect(discordDevRole,
+    roles.filter((role) => role.name === "Dev"), settings.devRoleId, null);
+  populateDiscordSelect(discordPluginDevRole, roles,
+    settings.pluginDevRoleId, "Not configured");
+  populateDiscordSelect(discordReviewerRole, roles,
+    settings.marketplaceReviewerRoleId, "Not configured");
+  populateDiscordSelect(discordMemberRole, roles.filter((role) => !role.managed),
+    settings.memberRoleId, "Not configured");
+  populateDiscordSelect(announcementChannelId, payload.channels,
+    settings.announcementChannelId, "Not configured");
+  populateDiscordSelect(discordAuditChannel, payload.channels,
+    settings.auditChannelId, "Not configured");
+  populateDiscordSelect(discordWelcomeChannel, payload.channels,
+    settings.welcomeChannelId, "Not configured");
+  discordBotEnabled.checked = settings.botEnabled;
+  announcementEnabled.checked = settings.announcementsEnabled;
+  discordAutoMemberRole.checked = settings.autoAssignMemberRole;
+
+  discordCommandList.replaceChildren();
+  for (const command of payload.commands) {
+    const card = document.createElement("article");
+    card.className = "submission-card";
+    const title = document.createElement("strong");
+    title.textContent = `/${command.name}`;
+    const description = document.createElement("p");
+    description.textContent = command.description || "No description";
+    const metadata = document.createElement("p");
+    metadata.className = "submission-meta";
+    metadata.textContent = `ID ${command.id} / version ${command.version}`;
+    card.append(title, description, metadata);
+    discordCommandList.append(card);
+  }
+  if (!discordCommandList.childElementCount) {
+    discordCommandList.textContent = "No guild commands are registered.";
+  }
+
+  discordRoleList.replaceChildren();
+  for (const role of payload.roles) {
+    const card = document.createElement("article");
+    card.className = "submission-card";
+    const title = document.createElement("strong");
+    title.textContent = role.name;
+    const metadata = document.createElement("p");
+    metadata.className = "submission-meta";
+    metadata.textContent = `ID ${role.id} / position ${role.position} / `
+      + `permissions ${role.permissions}${role.managed ? " / managed" : ""}`;
+    card.append(title, metadata);
+    discordRoleList.append(card);
+  }
+
   announcementHistory.replaceChildren();
-  for (const entry of payload.history || []) {
+  for (const entry of payload.announcementHistory || []) {
     const card = document.createElement("article");
     card.className = "submission-card";
     const title = document.createElement("strong");
@@ -395,14 +499,19 @@ function renderAnnouncementSettings(payload) {
   if (!announcementHistory.childElementCount) {
     announcementHistory.textContent = "No marketplace announcements have been posted yet.";
   }
+  announcementStatus.textContent = settings.updatedAt
+    ? `Settings last updated ${new Date(settings.updatedAt * 1000).toLocaleString()}.`
+    : "Bot settings are using the Discord Dev-role bootstrap defaults.";
 }
 
-async function loadAnnouncementSettings() {
-  announcementStatus.textContent = "";
+async function loadDiscordBotDashboard() {
   try {
-    renderAnnouncementSettings(await api("/api/developer/announcements"));
+    renderDiscordBotDashboard(await api("/api/discord-bot/dashboard"));
   } catch (error) {
-    announcementStatus.textContent = error.message;
+    discordBotDashboard.hidden = true;
+    if (![401, 403].includes(error.status)) {
+      console.error("Unable to load Discord bot dashboard", error);
+    }
   }
 }
 
@@ -562,21 +671,29 @@ submissionForm.addEventListener("submit", async (event) => {
 
 apiReferenceSearch.addEventListener("input", renderApiReference);
 
-announcementForm.addEventListener("submit", async (event) => {
+discordBotSettingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const submit = announcementForm.querySelector("button[type='submit']");
+  const submit = discordBotSettingsForm.querySelector("button[type='submit']");
   submit.disabled = true;
-  announcementStatus.textContent = "Validating the bot's channel access...";
+  announcementStatus.textContent = "Validating Discord roles, channels, and bot access...";
   try {
-    const payload = await api("/api/developer/announcements", {
+    const payload = await api("/api/discord-bot/settings", {
       method: "PUT",
       body: JSON.stringify({
-        channelId: announcementChannelId.value,
-        enabled: announcementEnabled.checked
+        devRoleId: discordDevRole.value,
+        pluginDevRoleId: discordPluginDevRole.value || null,
+        marketplaceReviewerRoleId: discordReviewerRole.value || null,
+        memberRoleId: discordMemberRole.value || null,
+        announcementChannelId: announcementChannelId.value || null,
+        auditChannelId: discordAuditChannel.value || null,
+        welcomeChannelId: discordWelcomeChannel.value || null,
+        botEnabled: discordBotEnabled.checked,
+        announcementsEnabled: announcementEnabled.checked,
+        autoAssignMemberRole: discordAutoMemberRole.checked
       })
     });
-    announcementStatus.textContent = `Saved #${payload.setting.channelName}.`;
-    await loadAnnouncementSettings();
+    renderDiscordBotDashboard(payload);
+    announcementStatus.textContent = "Discord bot settings saved.";
   } catch (error) {
     announcementStatus.textContent = error.message;
   } finally {
@@ -588,11 +705,14 @@ announcementSync.addEventListener("click", async () => {
   announcementSync.disabled = true;
   announcementStatus.textContent = "Checking the published catalog...";
   try {
-    const result = await api("/api/developer/announcements/sync", { method: "POST" });
-    announcementStatus.textContent = result.skipped === "disabled"
-      ? "Automatic announcements are disabled."
-      : `${result.announced} announcement${result.announced === 1 ? "" : "s"} posted.`;
-    await loadAnnouncementSettings();
+    const result = await api(
+      "/api/discord-bot/announcements/sync", { method: "POST" });
+    announcementStatus.textContent = result.skipped === "bot_disabled"
+      ? "Discord bot automation is disabled."
+      : result.skipped === "disabled"
+        ? "Marketplace announcements are disabled."
+        : `${result.announced} announcement${result.announced === 1 ? "" : "s"} posted.`;
+    await loadDiscordBotDashboard();
   } catch (error) {
     announcementStatus.textContent = error.message;
   } finally {
