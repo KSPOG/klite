@@ -13,6 +13,7 @@ import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Prayer;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
+import net.runelite.api.Skill;
 import net.runelite.api.annotations.Component;
 import net.runelite.api.annotations.Interface;
 import net.runelite.api.annotations.Varbit;
@@ -36,6 +37,14 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteRuntimeSnapshot> runtimeSnapshot();
 
+	CompletableFuture<KLiteClientMetadataSnapshot> clientMetadataSnapshot();
+
+	CompletableFuture<KLitePresentationSnapshot> presentationSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setSkyboxColor(int rgb);
+
+	CompletableFuture<KLiteInteractionResult> setDraw2DMask(int mask);
+
 	CompletableFuture<Integer> idleTimeout();
 
 	CompletableFuture<KLiteInteractionResult> setIdleTimeout(int ticks);
@@ -49,6 +58,8 @@ public interface KLiteClientApi
 	CompletableFuture<KLiteInputSnapshot> inputSnapshot();
 
 	CompletableFuture<KLiteInputDragSnapshot> inputDragSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setInventoryDragDelay(int delay);
 
 	CompletableFuture<Boolean> keyPressed(int keyCode);
 
@@ -72,6 +83,8 @@ public interface KLiteClientApi
 	CompletableFuture<KLiteInteractionResult> invalidateStretching(boolean resize);
 
 	CompletableFuture<Integer> musicVolume();
+
+	CompletableFuture<List<KLiteMidiRequestSnapshot>> activeMidiRequests();
 
 	CompletableFuture<KLiteInteractionResult> setMusicVolume(int volume);
 
@@ -341,9 +354,35 @@ public interface KLiteClientApi
 
 	CompletableFuture<String> varcString(@VarCStr int varcId);
 
+	CompletableFuture<KLiteInteractionResult> setVarbit(@Varbit int varbitId, int value);
+
+	CompletableFuture<KLiteInteractionResult> queueChangedVarp(@Varp int varpId);
+
+	CompletableFuture<KLiteInteractionResult> queueChangedSkill(Skill skill);
+
 	CompletableFuture<Void> setVarcInt(@VarCInt int varcId, int value);
 
 	CompletableFuture<Void> setVarcString(@VarCStr int varcId, String value);
+
+	CompletableFuture<Optional<KLiteEnumSnapshot>> enumDefinition(int enumId);
+
+	CompletableFuture<Optional<Integer>> structIntParam(int structId, int paramId);
+
+	CompletableFuture<Optional<Long>> structLongParam(int structId, int paramId);
+
+	CompletableFuture<Optional<String>> structStringParam(int structId, int paramId);
+
+	CompletableFuture<Optional<Integer>> mapElementCategory(int mapElementId);
+
+	CompletableFuture<Optional<Integer>> databaseRowTable(int rowId);
+
+	CompletableFuture<List<Object>> databaseField(
+		int rowId, int column, int tupleIndex);
+
+	CompletableFuture<List<Integer>> databaseRows(int tableId);
+
+	CompletableFuture<List<Integer>> databaseRowsByValue(
+		int tableId, int column, int tupleIndex, Object value);
 
 	CompletableFuture<KLiteInteractionResult> interactInventoryItem(int slot, String option);
 

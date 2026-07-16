@@ -6,8 +6,12 @@
 package net.runelite.client.plugins.klite.api;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +27,7 @@ import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.Deque;
 import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.EnumComposition;
 import net.runelite.api.Friend;
 import net.runelite.api.FriendContainer;
 import net.runelite.api.FriendsChatManager;
@@ -40,6 +45,7 @@ import net.runelite.api.Menu;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.MessageNode;
+import net.runelite.api.MidiRequest;
 import net.runelite.api.NameableContainer;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
@@ -52,6 +58,7 @@ import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.Scene;
 import net.runelite.api.Skill;
+import net.runelite.api.StructComposition;
 import net.runelite.api.Tile;
 import net.runelite.api.TileItem;
 import net.runelite.api.TileObject;
@@ -71,9 +78,11 @@ import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.gameval.VarPlayerID;
+import net.runelite.api.dbtable.DBRowConfig;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetConfigNode;
 import net.runelite.api.widgets.WidgetModalMode;
+import net.runelite.api.worldmap.MapElementConfig;
 import net.runelite.api.worldmap.WorldMap;
 import net.runelite.api.worldmap.WorldMapData;
 
@@ -216,6 +225,63 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteClientMetadataSnapshot> clientMetadataSnapshot()
+	{
+		return threadGateway.submit(() -> new KLiteClientMetadataSnapshot(
+			client.getBuildID(),
+			client.getEnvironment(),
+			client.getRevision(),
+			client.getItemCount(),
+			client.isGpu()));
+	}
+
+	@Override
+	public CompletableFuture<KLitePresentationSnapshot> presentationSnapshot()
+	{
+		return threadGateway.submit(() -> new KLitePresentationSnapshot(
+			client.getSkyboxColor(),
+			client.getDraw2DMask(),
+			client.get3dZoom(),
+			client.getCenterX(),
+			client.getCenterY()));
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setSkyboxColor(int rgb)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (rgb < 0 || rgb > 0xFFFFFF)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Skybox color must be a 24-bit RGB value");
+			}
+			if (client.getSkyboxColor() == rgb)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Skybox color already matches the request");
+			}
+			client.setSkyboxColor(rgb);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setDraw2DMask(int mask)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (client.getDraw2DMask() == mask)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"2D draw mask already matches the request");
+			}
+			client.setDraw2DMask(mask);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<Integer> idleTimeout()
 	{
 		return threadGateway.submit(client::getIdleTimeout);
@@ -302,6 +368,21 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 				client.getDragTime(),
 				dragged == null ? null : widgetSnapshot(dragged),
 				draggedOn == null ? null : widgetSnapshot(draggedOn));
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setInventoryDragDelay(int delay)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (delay < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Inventory drag delay must be non-negative");
+			}
+			client.setInventoryDragDelay(delay);
+			return KLiteInteractionResult.dispatched();
 		});
 	}
 
@@ -451,6 +532,30 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	public CompletableFuture<Integer> musicVolume()
 	{
 		return threadGateway.submit(client::getMusicVolume);
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteMidiRequestSnapshot>> activeMidiRequests()
+	{
+		return threadGateway.submit(() ->
+		{
+			List<MidiRequest> requests = client.getActiveMidiRequests();
+			if (requests == null)
+			{
+				return ImmutableList.of();
+			}
+			ImmutableList.Builder<KLiteMidiRequestSnapshot> snapshots =
+				ImmutableList.builder();
+			for (MidiRequest request : requests)
+			{
+				if (request != null)
+				{
+					snapshots.add(new KLiteMidiRequestSnapshot(
+						request.getArchiveId(), request.isJingle()));
+				}
+			}
+			return snapshots.build();
+		});
 	}
 
 	@Override
@@ -2150,6 +2255,56 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInteractionResult> setVarbit(int varbitId, int value)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (varbitId < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Varbit id must be non-negative");
+			}
+			if (client.getVarbitValue(varbitId) == value)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Varbit already matches the request");
+			}
+			client.setVarbit(varbitId, value);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> queueChangedVarp(int varpId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (varpId < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Varp id must be non-negative");
+			}
+			client.queueChangedVarp(varpId);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> queueChangedSkill(Skill skill)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (skill == null)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Skill must not be null");
+			}
+			client.queueChangedSkill(skill);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<Void> setVarcInt(int varcId, int value)
 	{
 		return threadGateway.execute(() -> client.setVarcIntValue(varcId, value));
@@ -2159,6 +2314,138 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	public CompletableFuture<Void> setVarcString(int varcId, String value)
 	{
 		return threadGateway.execute(() -> client.setVarcStrValue(varcId, value));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteEnumSnapshot>> enumDefinition(int enumId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (enumId < 0)
+			{
+				return Optional.empty();
+			}
+			EnumComposition definition = client.getEnum(enumId);
+			return definition == null
+				? Optional.empty()
+				: Optional.of(enumSnapshot(enumId, definition));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<Integer>> structIntParam(
+		int structId, int paramId)
+	{
+		return threadGateway.submit(() ->
+		{
+			StructComposition struct = validStruct(structId, paramId);
+			return struct == null
+				? Optional.empty() : Optional.of(struct.getIntValue(paramId));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<Long>> structLongParam(
+		int structId, int paramId)
+	{
+		return threadGateway.submit(() ->
+		{
+			StructComposition struct = validStruct(structId, paramId);
+			return struct == null
+				? Optional.empty() : Optional.of(struct.getLongValue(paramId));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<String>> structStringParam(
+		int structId, int paramId)
+	{
+		return threadGateway.submit(() ->
+		{
+			StructComposition struct = validStruct(structId, paramId);
+			return struct == null
+				? Optional.empty() : Optional.ofNullable(struct.getStringValue(paramId));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<Integer>> mapElementCategory(int mapElementId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (mapElementId < 0)
+			{
+				return Optional.empty();
+			}
+			MapElementConfig config = client.getMapElementConfig(mapElementId);
+			return config == null
+				? Optional.empty() : Optional.of(config.getCategory());
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<Integer>> databaseRowTable(int rowId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (rowId < 0)
+			{
+				return Optional.empty();
+			}
+			DBRowConfig row = client.getDBRowConfig(rowId);
+			return row == null ? Optional.empty() : Optional.of(row.getTableID());
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<Object>> databaseField(
+		int rowId, int column, int tupleIndex)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (rowId < 0 || column < 0 || tupleIndex < 0)
+			{
+				return ImmutableList.of();
+			}
+			Object[] values = client.getDBTableField(rowId, column, tupleIndex);
+			if (values == null)
+			{
+				return ImmutableList.of();
+			}
+			for (Object value : values)
+			{
+				if (!isDetachedDatabaseValue(value))
+				{
+					throw new IllegalStateException(
+						"Database field contains a non-detachable value");
+				}
+			}
+			return Collections.unmodifiableList(Arrays.asList(values.clone()));
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<Integer>> databaseRows(int tableId)
+	{
+		return threadGateway.submit(() -> tableId < 0
+			? ImmutableList.of()
+			: immutableIntegers(client.getDBTableRows(tableId)));
+	}
+
+	@Override
+	public CompletableFuture<List<Integer>> databaseRowsByValue(
+		int tableId, int column, int tupleIndex, Object value)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (tableId < 0 || column < 0 || tupleIndex < 0
+				|| !isDetachedDatabaseValue(value))
+			{
+				return ImmutableList.of();
+			}
+			return immutableIntegers(client.getDBRowsByValue(
+				tableId, column, tupleIndex, value));
+		});
 	}
 
 	@Override
@@ -3505,6 +3792,56 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			worldView.getSizeY(),
 			worldView.isInstance(),
 			mapRegions.build());
+	}
+
+	private static KLiteEnumSnapshot enumSnapshot(
+		int enumId, EnumComposition definition)
+	{
+		int[] keys = definition.getKeys();
+		int[] integerValues = definition.getIntVals();
+		long[] longValues = definition.getLongVals();
+		return new KLiteEnumSnapshot(
+			enumId,
+			definition.size(),
+			keys == null ? ImmutableList.of() : ImmutableList.copyOf(Ints.asList(keys)),
+			integerValues == null
+				? ImmutableList.of() : ImmutableList.copyOf(Ints.asList(integerValues)),
+			longValues == null
+				? ImmutableList.of() : ImmutableList.copyOf(Longs.asList(longValues)),
+			immutableStrings(definition.getStringVals()));
+	}
+
+	private static List<String> immutableStrings(@Nullable String[] values)
+	{
+		return values == null
+			? ImmutableList.of()
+			: Collections.unmodifiableList(Arrays.asList(values.clone()));
+	}
+
+	private static List<Integer> immutableIntegers(@Nullable List<Integer> values)
+	{
+		return values == null ? ImmutableList.of() : ImmutableList.copyOf(values);
+	}
+
+	private static boolean isDetachedDatabaseValue(@Nullable Object value)
+	{
+		return value == null
+			|| value instanceof String
+			|| value instanceof Integer
+			|| value instanceof Long
+			|| value instanceof Short
+			|| value instanceof Byte
+			|| value instanceof Boolean
+			|| value instanceof Character
+			|| value instanceof Double
+			|| value instanceof Float;
+	}
+
+	@Nullable
+	private StructComposition validStruct(int structId, int paramId)
+	{
+		return structId < 0 || paramId < 0
+			? null : client.getStructComposition(structId);
 	}
 
 	private static KLiteInterfaceNodeSnapshot interfaceNodeSnapshot(WidgetNode node)
