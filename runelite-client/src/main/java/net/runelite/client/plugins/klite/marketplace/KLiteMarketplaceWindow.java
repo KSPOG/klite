@@ -60,6 +60,7 @@ public class KLiteMarketplaceWindow
 		KLiteMarketplaceWindow.class, "klite_marketplace.png");
 
 	private final KLiteMarketplaceClient marketplaceClient;
+	private final KLiteAccountService accountService;
 	private List<KLiteMarketplacePlugin> plugins = Collections.emptyList();
 
 	@Nullable
@@ -75,9 +76,11 @@ public class KLiteMarketplaceWindow
 	private boolean updatingFilters;
 
 	@Inject
-	KLiteMarketplaceWindow(KLiteMarketplaceClient marketplaceClient)
+	KLiteMarketplaceWindow(KLiteMarketplaceClient marketplaceClient,
+		KLiteAccountService accountService)
 	{
 		this.marketplaceClient = marketplaceClient;
+		this.accountService = accountService;
 	}
 
 	public void open()
@@ -399,8 +402,14 @@ public class KLiteMarketplaceWindow
 		name.setFont(name.getFont().deriveFont(Font.BOLD, 16f));
 		heading.add(name, BorderLayout.WEST);
 
-		JLabel status = new JLabel(formatStatus(plugin.getStatus()));
-		status.setForeground("bundled".equals(plugin.getStatus())
+		boolean paid = "Premium".equals(plugin.getType()) || "Supporter".equals(plugin.getType());
+		boolean entitled = paid && accountService.hasEntitlement(plugin.getId());
+		String statusText = paid
+			? entitled ? "Owned"
+				: accountService.currentAccount().isPresent() ? "Locked" : "Sign in required"
+			: formatStatus(plugin.getStatus());
+		JLabel status = new JLabel(statusText);
+		status.setForeground(entitled || "bundled".equals(plugin.getStatus())
 			? ColorScheme.PROGRESS_COMPLETE_COLOR : ColorScheme.LIGHT_GRAY_COLOR);
 		heading.add(status, BorderLayout.EAST);
 		card.add(heading, BorderLayout.NORTH);

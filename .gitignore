@@ -37,3 +37,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Marketplace local runtime ###
+marketplace-site/.dev.vars
+marketplace-site/node_modules/
+marketplace-site/.wrangler/

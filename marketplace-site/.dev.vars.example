@@ -1,0 +1,3 @@
+PASSWORD_PEPPER=replace-with-a-long-random-secret
+DISCORD_CLIENT_SECRET=replace-with-discord-oauth-client-secret
+DISCORD_PUBLIC_KEY=replace-with-discord-application-public-key
