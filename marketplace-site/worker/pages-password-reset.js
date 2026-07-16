@@ -22,10 +22,6 @@ async function startPasswordReset(request, env, url) {
   if (!email) {
     return apiError(400, "invalid_email", "Enter the email address for the account.");
   }
-  if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
-    return apiError(503, "password_reset_unavailable",
-      "Password reset is unavailable until Discord OAuth is configured.");
-  }
 
   const cutoff = nowSeconds() - 15 * 60;
   const identityHash = await sha256(`password-reset\0${request.headers.get("cf-connecting-ip") || "unknown"}\0${email}`);
@@ -64,6 +60,11 @@ async function startPasswordReset(request, env, url) {
       authorizeUrl: null,
       message: "Password recovery requires a previously linked Discord account. The KLite owner may instead use the configured owner recovery key."
     });
+  }
+
+  if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
+    return apiError(503, "password_reset_unavailable",
+      "Password reset through Discord is unavailable until Discord OAuth is configured.");
   }
 
   const state = randomToken(32);
