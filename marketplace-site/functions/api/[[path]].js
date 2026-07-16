@@ -1,5 +1,7 @@
 import marketplaceWorker from "../../worker/index.js";
 import { handlePagesAuth } from "../../worker/pages-auth.js";
+import { handlePasswordReset } from "../../worker/pages-password-reset.js";
+import { handleControlPlane } from "../../worker/pages-control-plane.js";
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -14,12 +16,6 @@ function apiError(status, code, message) {
   });
 }
 
-/**
- * Cloudflare Pages Function adapter for the existing marketplace Worker.
- *
- * The Pages project is connected to GitHub, so /api/* must be routed through
- * the functions directory. Static files continue to come from public/.
- */
 export async function onRequest(context) {
   const { request } = context;
   const requestUrl = new URL(request.url);
@@ -44,25 +40,28 @@ export async function onRequest(context) {
     );
   }
 
-  // PUBLIC_ORIGIN is safe to derive for the Pages deployment when the dashboard
-  // variable has not been configured yet. Explicit dashboard configuration still
-  // takes precedence, including custom domains.
   const env = {
     ...context.env,
     PUBLIC_ORIGIN: context.env.PUBLIC_ORIGIN || requestUrl.origin
   };
 
   try {
+    const resetResponse = await handlePasswordReset(request, env, requestUrl);
+    if (resetResponse) {
+      return resetResponse;
+    }
+
     const authResponse = await handlePagesAuth(request, env, requestUrl);
     if (authResponse) {
       return authResponse;
     }
 
-    const response = await marketplaceWorker.fetch(request, env);
+    const controlPlaneResponse = await handleControlPlane(request, env, requestUrl);
+    if (controlPlaneResponse) {
+      return controlPlaneResponse;
+    }
 
-    // The Worker intentionally hides unhandled exceptions behind a generic 500.
-    // Convert that response into an actionable deployment diagnostic so the
-    // existing frontend can display the real configuration problem.
+    const response = await marketplaceWorker.fetch(request, env);
     if (response.status >= 500) {
       const payload = await response.clone().json().catch(() => null);
       if (payload?.error?.code === "internal_error") {
@@ -73,7 +72,6 @@ export async function onRequest(context) {
         );
       }
     }
-
     return response;
   } catch (error) {
     console.error("Unhandled KLite Pages Function error", error);
