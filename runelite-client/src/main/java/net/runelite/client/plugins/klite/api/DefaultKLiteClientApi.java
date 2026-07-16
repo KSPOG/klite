@@ -1682,6 +1682,28 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInterfaceSnapshot> interfaceSnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			ImmutableList.Builder<KLiteWidgetSnapshot> roots = ImmutableList.builder();
+			Widget[] widgets = client.getWidgetRoots();
+			if (widgets != null)
+			{
+				for (Widget widget : widgets)
+				{
+					if (widget != null)
+					{
+						roots.add(widgetSnapshot(widget));
+					}
+				}
+			}
+			return new KLiteInterfaceSnapshot(
+				client.getTopLevelInterfaceId(), roots.build());
+		});
+	}
+
+	@Override
 	public CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(int componentId)
 	{
 		return threadGateway.submit(() -> componentId < 0

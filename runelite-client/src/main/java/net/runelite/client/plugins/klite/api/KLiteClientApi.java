@@ -267,6 +267,8 @@ public interface KLiteClientApi
 
 	CompletableFuture<Boolean> hasLineOfSightTo(WorldPoint location);
 
+	CompletableFuture<KLiteInterfaceSnapshot> interfaceSnapshot();
+
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(@Component int componentId);
 
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> widgetChild(
