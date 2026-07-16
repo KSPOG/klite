@@ -16,6 +16,12 @@
       "migrations_dir": "migrations"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "PLUGIN_ARTIFACTS",
+      "bucket_name": "klite-plugin-artifacts"
+    }
+  ],
   "vars": {
     "PUBLIC_ORIGIN": "https://klite-marketplace.pages.dev",
     "DISCORD_CLIENT_ID": "REPLACE_WITH_DISCORD_APPLICATION_ID",

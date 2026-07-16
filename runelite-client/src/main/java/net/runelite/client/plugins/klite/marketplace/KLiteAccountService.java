@@ -66,6 +66,24 @@ public class KLiteAccountService
 		return current != null && current.hasEntitlement(pluginId);
 	}
 
+	Request marketplaceGet(String relativePath)
+	{
+		String currentToken = token;
+		HttpUrl url = apiUrl.resolve(relativePath);
+		if (url == null)
+		{
+			throw new IllegalArgumentException("Invalid marketplace API path");
+		}
+		Request.Builder request = new Request.Builder()
+			.url(url)
+			.get();
+		if (currentToken != null)
+		{
+			request.header("Authorization", "Bearer " + currentToken);
+		}
+		return request.build();
+	}
+
 	public CompletableFuture<KLiteAccountState> login(String email, char[] password)
 	{
 		if (email == null || email.isBlank() || password == null || password.length == 0)

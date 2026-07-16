@@ -11,6 +11,7 @@ const {
   normalizePluginId,
   normalizeSourceUrl,
   normalizeVersion,
+  pluginArtifact,
   validatePassword,
   verifyDiscordRequest,
   verifyPassword
@@ -64,4 +65,69 @@ test("rejects unsigned and stale Discord interactions", async () => {
     }
   });
   assert.equal(await verifyDiscordRequest(stale, "{}", "00".repeat(32)), false);
+});
+
+test("streams free plugin artifacts from private object storage", async () => {
+  const bytes = new Uint8Array([0x50, 0x4b, 3, 4]);
+  const artifact = {
+    version: "1.0.0",
+    object_key: "test-plugin/1.0.0.jar",
+    sha256: "ab".repeat(32),
+    size: bytes.length,
+    access_type: "Free"
+  };
+  const env = {
+    DB: {
+      prepare() {
+        return {
+          bind() {
+            return { first: async () => artifact };
+          }
+        };
+      }
+    },
+    PLUGIN_ARTIFACTS: {
+      get: async (key) => key === artifact.object_key
+        ? { body: bytes, size: bytes.length }
+        : null
+    }
+  };
+
+  const response = await pluginArtifact(
+    new Request("https://example.com/api/client/plugins/test-plugin/artifact?version=1.0.0"),
+    env,
+    "test-plugin"
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-type"), "application/java-archive");
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.deepEqual(new Uint8Array(await response.arrayBuffer()), bytes);
+});
+
+test("requires a client login before serving paid plugin artifacts", async () => {
+  const artifact = {
+    version: "1.0.0",
+    object_key: "paid/1.0.0.jar",
+    sha256: "cd".repeat(32),
+    size: 4,
+    access_type: "Premium"
+  };
+  const env = {
+    DB: {
+      prepare() {
+        return {
+          bind() {
+            return { first: async () => artifact };
+          }
+        };
+      }
+    }
+  };
+  const response = await pluginArtifact(
+    new Request("https://example.com/api/client/plugins/paid/artifact?version=1.0.0"),
+    env,
+    "paid"
+  );
+  assert.equal(response.status, 401);
 });
