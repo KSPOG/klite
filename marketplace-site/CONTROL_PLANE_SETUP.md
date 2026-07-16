@@ -15,6 +15,7 @@ Configure these under **Workers & Pages → klite-marketplace → Settings → V
 - `DISCORD_GUILD_ID` — the only server the dashboard invitation may target
 - `PUBLIC_ORIGIN` — `https://klite-marketplace.pages.dev`
 - `SITE_OWNER_USERNAME` — defaults to `KSP`
+- `SITE_OWNER_RECOVERY_KEY` — separate random secret used only for owner password recovery
 - `SITE_OWNER_USER_ID` — optional stronger owner pinning after the account ID is known
 
 Redeploy after changing Pages variables.
@@ -42,4 +43,6 @@ Accounts with `marketplace_reviewer` see the plugin approval queue and can appro
 
 ## Password reset
 
-Password reset is verified through the Discord identity previously linked to the marketplace account. It does not reveal or recover the old password. Completing a reset invalidates all existing website/client sessions for that account.
+Normal password reset is verified through the Discord identity previously linked to the marketplace account. The KLite owner can instead enter `SITE_OWNER_RECOVERY_KEY` in the reset dialog when Discord was never linked. The recovery key must be different from `PASSWORD_PEPPER` and should be at least 16 random characters.
+
+Password recovery never reveals the old password. Completing a reset invalidates all existing website/client sessions for that account.
