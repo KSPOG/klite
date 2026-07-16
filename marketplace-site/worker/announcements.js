@@ -146,7 +146,7 @@ export function buildDiscordAnnouncement(env, plugin, eventType) {
   const version = normalizeDiscordText(descriptor.version, 64) || "unknown";
   const authors = Array.isArray(descriptor.authors) ? descriptor.authors.join(", ") : "Unknown";
   const categories = Array.isArray(plugin.categories) ? plugin.categories.join(", ") : "Other";
-  const tags = Array.isArray(plugin.tags) ? plugin.tags.join(", ") : "None";
+  const tags = Array.isArray(descriptor.tags) ? descriptor.tags.join(", ") : "None";
   const embed = {
     title: eventType === "new" ? `New plugin: ${name}` : `Plugin updated: ${name}`,
     description: normalizeDiscordText(descriptor.description, 4_096)
