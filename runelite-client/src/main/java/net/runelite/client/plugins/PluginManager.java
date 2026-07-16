@@ -49,9 +49,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -69,6 +71,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ExternalPluginsChanged;
 import net.runelite.client.events.PluginChanged;
 import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.task.Schedule;
@@ -96,6 +99,7 @@ public class PluginManager
 	private final Provider<GameEventManager> sceneTileManager;
 	private final List<Plugin> plugins = new CopyOnWriteArrayList<>();
 	private final List<Plugin> activePlugins = new CopyOnWriteArrayList<>();
+	private final Map<File, SideloadedPluginSet> sideloadedPlugins = new HashMap<>();
 
 	@Inject
 	@VisibleForTesting
@@ -272,40 +276,131 @@ public class PluginManager
 
 	public void loadSideLoadPlugins()
 	{
-		if (!developerMode)
+		if (developerMode)
 		{
-			return;
+			reloadSideLoadPlugins(false);
 		}
+	}
 
-		File[] files = SIDELOADED_PLUGINS.listFiles();
+	/** Reloads local developer jars and starts the newly loaded plugin instances. */
+	public void reloadSideLoadPlugins()
+	{
+		reloadSideLoadPlugins(true);
+	}
+
+	private synchronized void reloadSideLoadPlugins(boolean startPlugins)
+	{
+		for (SideloadedPluginSet pluginSet : sideloadedPlugins.values())
+		{
+			try
+			{
+				SwingUtilities.invokeAndWait(() ->
+				{
+					for (Plugin plugin : pluginSet.plugins)
+					{
+						try
+						{
+							stopPlugin(plugin);
+						}
+						catch (PluginInstantiationException ex)
+						{
+							log.warn("Unable to stop side-loaded plugin {}", plugin.getClass(), ex);
+						}
+					}
+				});
+			}
+			catch (InterruptedException ex)
+			{
+				Thread.currentThread().interrupt();
+				return;
+			}
+			catch (InvocationTargetException ex)
+			{
+				log.warn("Unable to stop side-loaded plugins", ex.getCause());
+			}
+			pluginSet.plugins.forEach(this::remove);
+			closeClassLoader(pluginSet.classLoader);
+		}
+		sideloadedPlugins.clear();
+
+		File[] files = SIDELOADED_PLUGINS.listFiles((directory, name) -> name.endsWith(".jar"));
 		if (files == null)
 		{
 			return;
 		}
-
-		for (File f : files)
+		for (File file : files)
 		{
-			if (f.getName().endsWith(".jar"))
+			log.info("Side-loading plugin {}", file);
+			PluginClassLoader classLoader = null;
+			try
 			{
-				log.info("Side-loading plugin {}", f);
-
-				try
+				classLoader = new PluginClassLoader(file, getClass().getClassLoader());
+				List<Class<?>> classes = ClassPath.from(classLoader).getAllClasses().stream()
+					.map(ClassInfo::load).collect(Collectors.toList());
+				List<Plugin> loaded = loadPlugins(classes, null);
+				sideloadedPlugins.put(file, new SideloadedPluginSet(classLoader, loaded));
+				if (startPlugins)
 				{
-					ClassLoader classLoader = new PluginClassLoader(f, getClass().getClassLoader());
-
-					List<Class<?>> plugins = ClassPath.from(classLoader)
-						.getAllClasses()
-						.stream()
-						.map(ClassInfo::load)
-						.collect(Collectors.toList());
-
-					loadPlugins(plugins, null);
-				}
-				catch (PluginInstantiationException | IOException ex)
-				{
-					log.error("error sideloading plugin", ex);
+					loadDefaultPluginConfiguration(loaded);
+					SwingUtilities.invokeAndWait(() ->
+					{
+						for (Plugin plugin : loaded)
+						{
+							try
+							{
+								startPlugin(plugin);
+							}
+							catch (PluginInstantiationException ex)
+							{
+								log.warn("Unable to start side-loaded plugin {}", plugin.getClass(), ex);
+							}
+						}
+					});
 				}
 			}
+			catch (PluginInstantiationException | IOException | InvocationTargetException ex)
+			{
+				log.error("Error side-loading plugin {}", file, ex);
+				closeClassLoader(classLoader);
+			}
+			catch (InterruptedException ex)
+			{
+				Thread.currentThread().interrupt();
+				closeClassLoader(classLoader);
+				return;
+			}
+		}
+		if (startPlugins)
+		{
+			eventBus.post(new ExternalPluginsChanged());
+		}
+	}
+
+	private static void closeClassLoader(PluginClassLoader classLoader)
+	{
+		if (classLoader == null)
+		{
+			return;
+		}
+		try
+		{
+			classLoader.close();
+		}
+		catch (IOException ignored)
+		{
+			// Best effort after an unload or failed load.
+		}
+	}
+
+	private static final class SideloadedPluginSet
+	{
+		private final PluginClassLoader classLoader;
+		private final List<Plugin> plugins;
+
+		private SideloadedPluginSet(PluginClassLoader classLoader, List<Plugin> plugins)
+		{
+			this.classLoader = classLoader;
+			this.plugins = plugins;
 		}
 	}
 

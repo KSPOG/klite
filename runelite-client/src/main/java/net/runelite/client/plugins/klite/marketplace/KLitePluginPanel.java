@@ -33,12 +33,16 @@ public class KLitePluginPanel extends PluginPanel
 		KLitePluginPanel.class, "klite_marketplace.png");
 
 	@Inject
-	KLitePluginPanel(KLiteMarketplaceWindow marketplaceWindow)
+	KLitePluginPanel(KLiteMarketplaceWindow marketplaceWindow, KLiteAccountPanel accountPanel)
 	{
 		setLayout(new BorderLayout(0, 16));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		add(createHeader(), BorderLayout.NORTH);
-		add(createEmptyPluginList(), BorderLayout.CENTER);
+		JPanel content = new JPanel(new BorderLayout(0, 16));
+		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		content.add(accountPanel, BorderLayout.NORTH);
+		content.add(createEmptyPluginList(), BorderLayout.CENTER);
+		add(content, BorderLayout.CENTER);
 		add(createActions(marketplaceWindow), BorderLayout.SOUTH);
 	}
 
