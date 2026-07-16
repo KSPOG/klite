@@ -14,6 +14,7 @@ import net.runelite.api.Prayer;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.annotations.Component;
+import net.runelite.api.annotations.Interface;
 import net.runelite.api.annotations.Varbit;
 import net.runelite.api.annotations.VarCInt;
 import net.runelite.api.annotations.VarCStr;
@@ -86,6 +87,10 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteCameraSnapshot> cameraSnapshot();
 
+	CompletableFuture<KLiteAdvancedCameraSnapshot> advancedCameraSnapshot();
+
+	CompletableFuture<KLiteInteractionResult> setCameraShakeDisabled(boolean disabled);
+
 	CompletableFuture<KLiteFreeCameraSnapshot> freeCameraSnapshot();
 
 	CompletableFuture<KLiteInteractionResult> setFreeCameraEnabled(boolean enabled);
@@ -104,6 +109,8 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteInteractionResult> setInvertPitch(boolean inverted);
 
+	CompletableFuture<List<KLitePlayerMenuOption>> playerMenuOptions();
+
 	CompletableFuture<Optional<KLiteWorldMapSnapshot>> worldMapSnapshot();
 
 	CompletableFuture<Boolean> worldMapContains(WorldPoint location);
@@ -112,6 +119,10 @@ public interface KLiteClientApi
 		WorldPoint location);
 
 	CompletableFuture<Optional<WorldPoint>> destination();
+
+	CompletableFuture<Optional<KLiteWorldViewSnapshot>> worldView(int id);
+
+	CompletableFuture<Optional<KLiteWorldViewSnapshot>> worldViewAt(WorldPoint location);
 
 	CompletableFuture<Optional<KLiteHintArrowSnapshot>> hintArrow();
 
@@ -271,6 +282,9 @@ public interface KLiteClientApi
 
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(@Component int componentId);
 
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(
+		@Interface int groupId, int childId);
+
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> widgetChild(
 		@Component int componentId, int childIndex);
 
@@ -285,6 +299,23 @@ public interface KLiteClientApi
 	CompletableFuture<Optional<WorldPoint>> selectedSceneTile();
 
 	CompletableFuture<Optional<KLiteWidgetSnapshot>> focusedInputWidget();
+
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> scriptActiveWidget();
+
+	CompletableFuture<Optional<KLiteWidgetSnapshot>> scriptDotWidget();
+
+	CompletableFuture<Optional<KLiteWidgetConfigSnapshot>> widgetConfig(
+		@Component int componentId);
+
+	CompletableFuture<List<KLiteInterfaceNodeSnapshot>> interfaceNodes();
+
+	CompletableFuture<KLiteInteractionResult> openInterface(
+		@Component int componentId, @Interface int interfaceId, int modalMode);
+
+	CompletableFuture<KLiteInteractionResult> closeInterface(
+		@Component int componentId, boolean unload);
+
+	CompletableFuture<KLiteInteractionResult> setAllWidgetsTargetable(boolean targetable);
 
 	CompletableFuture<Boolean> isBankOpen();
 
@@ -375,9 +406,23 @@ public interface KLiteClientApi
 
 	CompletableFuture<KLiteMenuSnapshot> menuSnapshot();
 
+	CompletableFuture<KLiteInteractionResult> setMenuScroll(int scroll);
+
 	CompletableFuture<KLiteInteractionResult> interactMenuEntry(int index);
 
 	CompletableFuture<KLiteInteractionResult> runScript(Object... arguments);
+
+	CompletableFuture<KLiteCrossWorldMessageSnapshot> crossWorldMessageSnapshot();
+
+	CompletableFuture<Integer> expandedMapLoading();
+
+	CompletableFuture<KLiteInteractionResult> setExpandedMapLoading(int chunks);
+
+	CompletableFuture<KLiteInteractionResult> setUnlockedFps(boolean unlocked);
+
+	CompletableFuture<KLiteInteractionResult> setUnlockedFpsTarget(int fps);
+
+	CompletableFuture<KLiteInteractionResult> setLowMemoryMode(boolean lowMemory);
 
 	CompletableFuture<Void> menuAction(KLiteMenuActionRequest request);
 

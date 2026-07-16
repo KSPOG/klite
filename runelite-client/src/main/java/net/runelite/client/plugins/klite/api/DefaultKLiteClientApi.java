@@ -8,6 +8,7 @@ package net.runelite.client.plugins.klite.api;
 import com.google.common.collect.ImmutableList;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Actor;
+import net.runelite.api.CameraFocusableEntity;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.Deque;
@@ -28,6 +30,7 @@ import net.runelite.api.FriendsChatMember;
 import net.runelite.api.GameState;
 import net.runelite.api.GraphicsObject;
 import net.runelite.api.GrandExchangeOffer;
+import net.runelite.api.HashTable;
 import net.runelite.api.HintArrowType;
 import net.runelite.api.Ignore;
 import net.runelite.api.Item;
@@ -54,6 +57,7 @@ import net.runelite.api.TileItem;
 import net.runelite.api.TileObject;
 import net.runelite.api.World;
 import net.runelite.api.WorldView;
+import net.runelite.api.WidgetNode;
 import net.runelite.api.clan.ClanChannel;
 import net.runelite.api.clan.ClanChannelMember;
 import net.runelite.api.clan.ClanID;
@@ -68,6 +72,8 @@ import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetConfigNode;
+import net.runelite.api.widgets.WidgetModalMode;
 import net.runelite.api.worldmap.WorldMap;
 import net.runelite.api.worldmap.WorldMapData;
 
@@ -524,6 +530,46 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteAdvancedCameraSnapshot> advancedCameraSnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			CameraFocusableEntity entity = client.getCameraFocusEntity();
+			LocalPoint focus = entity == null ? null : entity.getCameraFocus();
+			WorldView worldView = entity == null ? null : entity.getWorldView();
+			Optional<KLiteCameraFocusSnapshot> focusSnapshot = focus == null
+				? Optional.empty()
+				: Optional.of(new KLiteCameraFocusSnapshot(
+					worldView == null ? -1 : worldView.getId(),
+					focus.getX(),
+					focus.getY()));
+			return new KLiteAdvancedCameraSnapshot(
+				client.getCameraFpX(),
+				client.getCameraFpY(),
+				client.getCameraFpZ(),
+				client.getCameraFpPitch(),
+				client.getCameraFpYaw(),
+				client.isCameraShakeDisabled(),
+				focusSnapshot);
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setCameraShakeDisabled(boolean disabled)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (client.isCameraShakeDisabled() == disabled)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Camera shake state already matches the request");
+			}
+			client.setCameraShakeDisabled(disabled);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<KLiteFreeCameraSnapshot> freeCameraSnapshot()
 	{
 		return threadGateway.submit(() ->
@@ -609,6 +655,35 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		{
 			LocalPoint destination = client.getLocalDestinationLocation();
 			return destination == null ? Optional.empty() : Optional.of(WorldPoint.fromLocalInstance(client, destination));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteWorldViewSnapshot>> worldView(int id)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (id < -1)
+			{
+				return Optional.empty();
+			}
+			return Optional.ofNullable(client.getWorldView(id))
+				.map(DefaultKLiteClientApi::worldViewSnapshot);
+		});
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteWorldViewSnapshot>> worldViewAt(
+		WorldPoint location)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (location == null)
+			{
+				return Optional.empty();
+			}
+			return Optional.ofNullable(client.findWorldViewFromWorldPoint(location))
+				.map(DefaultKLiteClientApi::worldViewSnapshot);
 		});
 	}
 
@@ -860,6 +935,37 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 		{
 			client.setInvertPitch(inverted);
 			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLitePlayerMenuOption>> playerMenuOptions()
+	{
+		return threadGateway.submit(() ->
+		{
+			String[] options = client.getPlayerOptions();
+			int[] actionIds = client.getPlayerMenuTypes();
+			boolean[] priorities = client.getPlayerOptionsPriorities();
+			if (options == null)
+			{
+				return ImmutableList.of();
+			}
+
+			ImmutableList.Builder<KLitePlayerMenuOption> snapshots = ImmutableList.builder();
+			for (int index = 0; index < options.length; index++)
+			{
+				int actionId = actionIds != null && index < actionIds.length
+					? actionIds[index] : -1;
+				boolean priority = priorities != null && index < priorities.length
+					&& priorities[index];
+				snapshots.add(new KLitePlayerMenuOption(
+					index,
+					options[index],
+					MenuAction.of(actionId),
+					actionId,
+					priority));
+			}
+			return snapshots.build();
 		});
 	}
 
@@ -1713,6 +1819,21 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<Optional<KLiteWidgetSnapshot>> widget(
+		int groupId, int childId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (groupId < 0 || childId < 0)
+			{
+				return Optional.empty();
+			}
+			return Optional.ofNullable(client.getWidget(groupId, childId))
+				.map(DefaultKLiteClientApi::widgetSnapshot);
+		});
+	}
+
+	@Override
 	public CompletableFuture<Optional<KLiteWidgetSnapshot>> widgetChild(
 		int componentId, int childIndex)
 	{
@@ -1800,6 +1921,138 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	{
 		return threadGateway.submit(() -> Optional.ofNullable(client.getFocusedInputFieldWidget())
 			.map(DefaultKLiteClientApi::widgetSnapshot));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteWidgetSnapshot>> scriptActiveWidget()
+	{
+		return threadGateway.submit(() -> Optional.ofNullable(client.getScriptActiveWidget())
+			.map(DefaultKLiteClientApi::widgetSnapshot));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteWidgetSnapshot>> scriptDotWidget()
+	{
+		return threadGateway.submit(() -> Optional.ofNullable(client.getScriptDotWidget())
+			.map(DefaultKLiteClientApi::widgetSnapshot));
+	}
+
+	@Override
+	public CompletableFuture<Optional<KLiteWidgetConfigSnapshot>> widgetConfig(
+		int componentId)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (componentId < 0)
+			{
+				return Optional.empty();
+			}
+			Widget widget = client.getWidget(componentId);
+			WidgetConfigNode config = widget == null ? null : client.getWidgetConfig(widget);
+			return config == null
+				? Optional.empty()
+				: Optional.of(new KLiteWidgetConfigSnapshot(
+					config.getClickMask(), config.getOpMask()));
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<KLiteInterfaceNodeSnapshot>> interfaceNodes()
+	{
+		return threadGateway.submit(() ->
+		{
+			HashTable<WidgetNode> table = client.getComponentTable();
+			if (table == null)
+			{
+				return ImmutableList.of();
+			}
+			ImmutableList.Builder<KLiteInterfaceNodeSnapshot> snapshots =
+				ImmutableList.builder();
+			for (WidgetNode node : table)
+			{
+				if (node != null)
+				{
+					snapshots.add(interfaceNodeSnapshot(node));
+				}
+			}
+			return ImmutableList.sortedCopyOf(
+				Comparator.comparingInt(KLiteInterfaceNodeSnapshot::getComponentId),
+				snapshots.build());
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> openInterface(
+		int componentId, int interfaceId, int modalMode)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (componentId < 0 || interfaceId < 0 || !isSupportedModalMode(modalMode))
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Component and interface ids must be non-negative and modal mode must be supported");
+			}
+			HashTable<WidgetNode> table = client.getComponentTable();
+			WidgetNode current = table == null ? null : table.get(componentId);
+			if (current != null && current.getId() == interfaceId
+				&& current.getModalMode() == modalMode)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Interface is already open on this component");
+			}
+			try
+			{
+				client.openInterface(componentId, interfaceId, modalMode);
+				return KLiteInteractionResult.dispatched();
+			}
+			catch (IllegalStateException ex)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Interface could not be opened: " + nullToEmpty(ex.getMessage()));
+			}
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> closeInterface(
+		int componentId, boolean unload)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (componentId < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Component id must be non-negative");
+			}
+			HashTable<WidgetNode> table = client.getComponentTable();
+			WidgetNode node = table == null ? null : table.get(componentId);
+			if (node == null)
+			{
+				return KLiteInteractionResult.targetNotFound(
+					"No interface is attached to component " + componentId);
+			}
+			try
+			{
+				client.closeInterface(node, unload);
+				return KLiteInteractionResult.dispatched();
+			}
+			catch (IllegalArgumentException ex)
+			{
+				return KLiteInteractionResult.targetNotFound(
+					"Interface is no longer attached to the component");
+			}
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setAllWidgetsTargetable(
+		boolean targetable)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.setAllWidgetsAreOpTargetable(targetable);
+			return KLiteInteractionResult.dispatched();
+		});
 	}
 
 	@Override
@@ -2408,6 +2661,26 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 	}
 
 	@Override
+	public CompletableFuture<KLiteInteractionResult> setMenuScroll(int scroll)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (scroll < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Menu scroll must be non-negative");
+			}
+			if (client.getMenuScroll() == scroll)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Menu scroll already matches the request");
+			}
+			client.setMenuScroll(scroll);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
 	public CompletableFuture<KLiteInteractionResult> interactMenuEntry(int index)
 	{
 		return threadGateway.submit(() ->
@@ -2447,6 +2720,86 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 					"Client script arguments must include a script identifier");
 			}
 			client.runScript(copiedArguments);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteCrossWorldMessageSnapshot> crossWorldMessageSnapshot()
+	{
+		return threadGateway.submit(() ->
+		{
+			ImmutableList.Builder<Long> ids = ImmutableList.builder();
+			long[] messageIds = client.getCrossWorldMessageIds();
+			if (messageIds != null)
+			{
+				for (long messageId : messageIds)
+				{
+					ids.add(messageId);
+				}
+			}
+			return new KLiteCrossWorldMessageSnapshot(
+				ids.build(), client.getCrossWorldMessageIdsIndex());
+		});
+	}
+
+	@Override
+	public CompletableFuture<Integer> expandedMapLoading()
+	{
+		return threadGateway.submit(client::getExpandedMapLoading);
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setExpandedMapLoading(int chunks)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (chunks < 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Expanded map loading must be non-negative");
+			}
+			if (client.getExpandedMapLoading() == chunks)
+			{
+				return KLiteInteractionResult.noActionRequired(
+					"Expanded map loading already matches the request");
+			}
+			client.setExpandedMapLoading(chunks);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setUnlockedFps(boolean unlocked)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.setUnlockedFps(unlocked);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setUnlockedFpsTarget(int fps)
+	{
+		return threadGateway.submit(() ->
+		{
+			if (fps <= 0)
+			{
+				return KLiteInteractionResult.invalidRequest(
+					"Unlocked FPS target must be positive");
+			}
+			client.setUnlockedFpsTarget(fps);
+			return KLiteInteractionResult.dispatched();
+		});
+	}
+
+	@Override
+	public CompletableFuture<KLiteInteractionResult> setLowMemoryMode(boolean lowMemory)
+	{
+		return threadGateway.submit(() ->
+		{
+			client.changeMemoryMode(lowMemory);
 			return KLiteInteractionResult.dispatched();
 		});
 	}
@@ -3130,6 +3483,43 @@ public class DefaultKLiteClientApi implements KLiteClientApi
 			bounds.height,
 			actions.build());
 	}
+
+	private static KLiteWorldViewSnapshot worldViewSnapshot(WorldView worldView)
+	{
+		ImmutableList.Builder<Integer> mapRegions = ImmutableList.builder();
+		int[] regions = worldView.getMapRegions();
+		if (regions != null)
+		{
+			for (int region : regions)
+			{
+				mapRegions.add(region);
+			}
+		}
+		return new KLiteWorldViewSnapshot(
+			worldView.getId(),
+			worldView.isTopLevel(),
+			worldView.getPlane(),
+			worldView.getBaseX(),
+			worldView.getBaseY(),
+			worldView.getSizeX(),
+			worldView.getSizeY(),
+			worldView.isInstance(),
+			mapRegions.build());
+	}
+
+	private static KLiteInterfaceNodeSnapshot interfaceNodeSnapshot(WidgetNode node)
+	{
+		return new KLiteInterfaceNodeSnapshot(
+			(int) node.getHash(), node.getId(), node.getModalMode());
+	}
+
+	private static boolean isSupportedModalMode(int modalMode)
+	{
+		return modalMode == WidgetModalMode.MODAL_NOCLICKTHROUGH
+			|| modalMode == WidgetModalMode.NON_MODAL
+			|| modalMode == WidgetModalMode.MODAL_CLICKTHROUGH;
+	}
+
 	private static MenuAction itemMenuAction(int actionIndex)
 	{
 		return actionIndex < 3 ? MenuAction.CC_OP : MenuAction.CC_OP_LOW_PRIORITY;
