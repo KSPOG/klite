@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b11">
+  <title>KLite API Reference</title>
+  <link rel="icon" type="image/png" href="../assets/klite-marketplace.png">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../admin.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="KLite marketplace home">
+      <img src="../assets/klite-marketplace.png" alt="" width="48" height="48">
+      <span><strong>KLite</strong><small>API Reference</small></span>
+    </a>
+    <div class="account-actions">
+      <a class="button button-secondary" href="/">Marketplace</a>
+      <button id="api-logout" class="button button-danger" type="button" hidden>Log out</button>
+    </div>
+  </header>
+
+  <main class="api-page-main">
+    <section class="account-panel api-reference-page">
+      <div class="api-page-header">
+        <div>
+          <p class="eyebrow">Authenticated developer reference</p>
+          <h1>KLite client and automation API</h1>
+          <p id="api-account-status">Checking your marketplace session...</p>
+        </div>
+      </div>
+      <label class="form-field api-search">
+        <span>Search types and methods</span>
+        <input id="api-search" type="search" placeholder="inventory, walker, snapshot..." autocomplete="off">
+      </label>
+      <p id="api-summary" class="account-note"></p>
+      <div id="api-content" class="api-reference-content"></div>
+    </section>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
