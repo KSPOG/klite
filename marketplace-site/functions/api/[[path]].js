@@ -1,4 +1,5 @@
 import marketplaceWorker from "../../worker/index.js";
+import { handlePagesAuth } from "../../worker/pages-auth.js";
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -52,6 +53,11 @@ export async function onRequest(context) {
   };
 
   try {
+    const authResponse = await handlePagesAuth(request, env, requestUrl);
+    if (authResponse) {
+      return authResponse;
+    }
+
     const response = await marketplaceWorker.fetch(request, env);
 
     // The Worker intentionally hides unhandled exceptions behind a generic 500.
@@ -63,7 +69,7 @@ export async function onRequest(context) {
         return apiError(
           500,
           "marketplace_backend_error",
-          "The marketplace backend failed. Verify that all D1 migrations were applied and that the DB and PASSWORD_PEPPER Pages bindings are configured. Check the Pages Function logs for the underlying exception."
+          "The marketplace backend failed. Check the Pages Function logs for the underlying exception."
         );
       }
     }
@@ -74,7 +80,7 @@ export async function onRequest(context) {
     return apiError(
       500,
       "pages_function_error",
-      "The marketplace Pages Function failed. Check the Cloudflare Pages Function logs and project bindings."
+      "The marketplace Pages Function failed. Check the Cloudflare Pages Function logs for the underlying exception."
     );
   }
 }
