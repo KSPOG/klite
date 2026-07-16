@@ -25,6 +25,7 @@ test("builds complete Discord embeds without mentions", () => {
         description: "A reviewed plugin.",
         version: "2.0.0",
         minClientVersion: "1.0.0",
+        tags: ["automation", "example"],
         authors: ["Developer"]
       },
       categories: ["Other"],
@@ -44,6 +45,8 @@ test("builds complete Discord embeds without mentions", () => {
     "https://klite.example/assets/plugins/test-plugin.png");
   assert.equal(payload.embeds[0].fields[0].value, "2.0.0");
   assert.equal(payload.embeds[0].fields[1].value, "Premium");
+  assert.equal(payload.embeds[0].fields.find((field) => field.name === "Tags").value,
+    "automation, example");
 });
 
 test("generated authenticated reference excludes marketplace internals", () => {

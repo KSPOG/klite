@@ -31,6 +31,8 @@ include("jshell")
 project(":jshell").projectDir = file("./runelite-jshell")
 include("client")
 project(":client").projectDir = file("./runelite-client")
+include("copper-tin-miner")
+project(":copper-tin-miner").projectDir = file("./examples/klite-copper-tin-miner")
 apply(from = "./common.settings.gradle.kts")
 
 includeBuild("cache")
