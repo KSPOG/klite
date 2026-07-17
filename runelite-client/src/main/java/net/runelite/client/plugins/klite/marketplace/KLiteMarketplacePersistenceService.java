@@ -105,8 +105,12 @@ public final class KLiteMarketplacePersistenceService
 		}
 
 		String accountKey = accountKey(account.get().getEmail());
-		if (accountKey.equals(activeAccountKey) && restoring)
+		if (accountKey.equals(activeAccountKey))
 		{
+			if (!restoring)
+			{
+				saveCurrentState();
+			}
 			return;
 		}
 
