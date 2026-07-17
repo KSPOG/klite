@@ -46,6 +46,24 @@ public class GroundPathfinderTest
 	}
 
 	@Test
+	public void reachesWalkableTileInsideArrivalRadiusWhenCenterIsBlocked()
+	{
+		TestMap map = new TestMap(0, 0, 10, 10);
+		WorldPoint destination = point(7, 7);
+		map.block(destination.getX(), destination.getY());
+		GroundPathfinder pathfinder = new GroundPathfinder(map);
+
+		PathSearchResult exact = pathfinder.find(point(1, 1), destination);
+		PathSearchResult radius = pathfinder.find(point(1, 1), destination, 2);
+
+		assertFalse(exact.isReached());
+		assertTrue(radius.isReached());
+		WorldPoint reached = radius.getPath().get(radius.getPath().size() - 1);
+		assertFalse(map.isBlocked(reached));
+		assertTrue(reached.distanceTo(destination) <= 2);
+	}
+
+	@Test
 	public void rejectsDifferentPlanes()
 	{
 		GroundPathfinder pathfinder = new GroundPathfinder(new TestMap(0, 0, 10, 10));
