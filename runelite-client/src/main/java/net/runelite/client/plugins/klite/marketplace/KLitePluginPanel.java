@@ -40,6 +40,7 @@ import javax.swing.WindowConstants;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.config.PluginConfigurationNavigator;
 import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
+import net.runelite.client.plugins.klite.update.KLiteUpdateService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
@@ -54,6 +55,7 @@ public class KLitePluginPanel extends PluginPanel
 	private final KLiteStreamedPluginService streamedPluginService;
 	private final PluginConfigurationNavigator configurationNavigator;
 	private final KLiteClientLogBuffer clientLogBuffer;
+	private final KLiteUpdateService updateService;
 	private final JPanel pluginList = new JPanel();
 	private final JLabel operationStatus = new JLabel(" ");
 
@@ -62,11 +64,13 @@ public class KLitePluginPanel extends PluginPanel
 		KLiteAccountPanel accountPanel,
 		KLiteStreamedPluginService streamedPluginService,
 		PluginConfigurationNavigator configurationNavigator,
-		KLiteClientLogBuffer clientLogBuffer)
+		KLiteClientLogBuffer clientLogBuffer,
+		KLiteUpdateService updateService)
 	{
 		this.streamedPluginService = streamedPluginService;
 		this.configurationNavigator = configurationNavigator;
 		this.clientLogBuffer = clientLogBuffer;
+		this.updateService = updateService;
 
 		setLayout(new BorderLayout(0, 12));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -126,16 +130,24 @@ public class KLitePluginPanel extends PluginPanel
 		operationStatus.setHorizontalAlignment(SwingConstants.CENTER);
 		wrapper.add(operationStatus, BorderLayout.NORTH);
 
-		JPanel actions = new JPanel(new GridLayout(1, 2, 6, 0));
+		JPanel actions = new JPanel(new GridLayout(2, 1, 0, 6));
 		actions.setOpaque(false);
 		JButton marketplaceButton = new JButton("Open Marketplace");
 		marketplaceButton.addActionListener(event -> marketplaceWindow.open());
 		actions.add(marketplaceButton);
 
+		JPanel utilities = new JPanel(new GridLayout(1, 2, 6, 0));
+		utilities.setOpaque(false);
+		JButton updateButton = new JButton("Check Updates");
+		updateButton.setToolTipText("Check for a verified KLite Windows client update");
+		updateButton.addActionListener(event -> updateService.checkForUpdates(this, true));
+		utilities.add(updateButton);
+
 		JButton logsButton = new JButton("KLite Logs");
 		logsButton.setToolTipText("Open marketplace and client/plugin runtime diagnostics");
 		logsButton.addActionListener(event -> openLogWindow());
-		actions.add(logsButton);
+		utilities.add(logsButton);
+		actions.add(utilities);
 		wrapper.add(actions, BorderLayout.CENTER);
 		return wrapper;
 	}
