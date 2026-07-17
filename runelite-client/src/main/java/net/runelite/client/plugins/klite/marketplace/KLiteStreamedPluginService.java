@@ -8,12 +8,15 @@ package net.runelite.client.plugins.klite.marketplace;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
@@ -23,7 +26,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginInstantiationException;
 import net.runelite.client.plugins.PluginManager;
 
-/** Owns the fetch, in-memory load, and unload lifecycle of marketplace plugins. */
+/** Owns the fetch, in-memory load, enable, disable, and unload lifecycle of marketplace plugins. */
 @Singleton
 class KLiteStreamedPluginService
 {
@@ -32,6 +35,7 @@ class KLiteStreamedPluginService
 	private final EventBus eventBus;
 	private final Map<String, LoadedPluginSet> loadedPlugins = new HashMap<>();
 	private final Set<String> loadingPlugins = new HashSet<>();
+	private final List<Runnable> changeListeners = new CopyOnWriteArrayList<>();
 
 	@Inject
 	KLiteStreamedPluginService(KLiteMarketplaceArtifactClient artifactClient,
@@ -42,9 +46,15 @@ class KLiteStreamedPluginService
 		this.eventBus = eventBus;
 	}
 
-	synchronized boolean isRunning(String pluginId)
+	synchronized boolean isLoaded(String pluginId)
 	{
 		return loadedPlugins.containsKey(pluginId);
+	}
+
+	synchronized boolean isRunning(String pluginId)
+	{
+		LoadedPluginSet pluginSet = loadedPlugins.get(pluginId);
+		return pluginSet != null && pluginSet.plugins.stream().anyMatch(pluginManager::isPluginActive);
 	}
 
 	synchronized boolean isLoading(String pluginId)
@@ -52,29 +62,75 @@ class KLiteStreamedPluginService
 		return loadingPlugins.contains(pluginId);
 	}
 
-	CompletableFuture<Void> run(KLiteMarketplacePlugin marketplacePlugin)
+	synchronized List<LoadedMarketplacePlugin> loadedMarketplacePlugins()
+	{
+		List<LoadedMarketplacePlugin> result = new ArrayList<>();
+		for (LoadedPluginSet pluginSet : loadedPlugins.values())
+		{
+			result.add(new LoadedMarketplacePlugin(pluginSet.marketplacePlugin,
+				pluginSet.plugins, pluginSet.plugins.stream().anyMatch(pluginManager::isPluginActive),
+				pluginSet.plugins.stream().anyMatch(plugin -> pluginManager.getPluginConfigProxy(plugin) != null)));
+		}
+		result.sort(Comparator.comparing(item -> item.marketplacePlugin.getName(),
+			String.CASE_INSENSITIVE_ORDER));
+		return Collections.unmodifiableList(result);
+	}
+
+	void addChangeListener(Runnable listener)
+	{
+		changeListeners.add(listener);
+	}
+
+	CompletableFuture<Void> load(KLiteMarketplacePlugin marketplacePlugin)
 	{
 		synchronized (this)
 		{
 			if (loadedPlugins.containsKey(marketplacePlugin.getId())
 				|| !loadingPlugins.add(marketplacePlugin.getId()))
 			{
-				return failedFuture(new IllegalStateException("Plugin is already running or loading"));
+				return failedFuture(new IllegalStateException("Plugin is already loaded or loading"));
 			}
 		}
 
 		return artifactClient.fetch(marketplacePlugin)
-			.thenAccept(bytes -> load(marketplacePlugin, bytes))
+			.thenAccept(bytes -> loadArtifact(marketplacePlugin, bytes))
 			.whenComplete((ignored, error) ->
 			{
 				synchronized (this)
 				{
 					loadingPlugins.remove(marketplacePlugin.getId());
 				}
+				notifyChanged();
 			});
 	}
 
+	/** Backward-compatible alias. Loading no longer starts the plugin. */
+	CompletableFuture<Void> run(KLiteMarketplacePlugin marketplacePlugin)
+	{
+		return load(marketplacePlugin);
+	}
+
+	CompletableFuture<Void> start(String pluginId)
+	{
+		LoadedPluginSet pluginSet = getLoaded(pluginId);
+		if (pluginSet == null)
+		{
+			return failedFuture(new IllegalStateException("Plugin is not loaded"));
+		}
+		return execute(() -> startOnEdt(pluginSet.plugins));
+	}
+
 	CompletableFuture<Void> stop(String pluginId)
+	{
+		LoadedPluginSet pluginSet = getLoaded(pluginId);
+		if (pluginSet == null)
+		{
+			return CompletableFuture.completedFuture(null);
+		}
+		return execute(() -> stopOnEdt(pluginSet.plugins, false));
+	}
+
+	CompletableFuture<Void> unload(String pluginId)
 	{
 		LoadedPluginSet pluginSet;
 		synchronized (this)
@@ -89,25 +145,38 @@ class KLiteStreamedPluginService
 		{
 			return CompletableFuture.completedFuture(null);
 		}
+		return execute(() -> unload(pluginSet));
+	}
+
+	private synchronized LoadedPluginSet getLoaded(String pluginId)
+	{
+		return loadedPlugins.get(pluginId);
+	}
+
+	private CompletableFuture<Void> execute(CheckedOperation operation)
+	{
 		try
 		{
-			unload(pluginSet);
+			operation.run();
+			notifyChanged();
 			return CompletableFuture.completedFuture(null);
 		}
-		catch (RuntimeException ex)
+		catch (Exception ex)
 		{
-			return failedFuture(ex);
+			notifyChanged();
+			return failedFuture(ex instanceof RuntimeException ? ex
+				: new IllegalStateException(ex.getMessage(), ex));
 		}
 	}
 
-	private void load(KLiteMarketplacePlugin marketplacePlugin, byte[] bytes)
+	private void loadArtifact(KLiteMarketplacePlugin marketplacePlugin, byte[] bytes)
 	{
 		KLiteInMemoryPluginClassLoader classLoader = null;
 		List<Plugin> plugins = new ArrayList<>();
 		try
 		{
-			classLoader = new KLiteInMemoryPluginClassLoader(
-				bytes, PluginManager.class.getClassLoader());
+			classLoader = new KLiteInMemoryPluginClassLoader(bytes,
+				PluginManager.class.getClassLoader(), marketplacePlugin.getArtifact().getEntrypoints());
 			List<Class<?>> entrypoints = new ArrayList<>();
 			for (String entrypoint : marketplacePlugin.getArtifact().getEntrypoints())
 			{
@@ -119,93 +188,75 @@ class KLiteStreamedPluginService
 				throw new PluginInstantiationException(
 					"Not every declared entrypoint is a valid plugin");
 			}
+
+			// This discovers plugin-provided Config interfaces, applies defaults, and makes
+			// them available to RuneLite's normal configuration UI before the plugin starts.
 			pluginManager.loadDefaultPluginConfiguration(plugins);
-			startOnEdt(plugins);
+			for (Plugin plugin : plugins)
+			{
+				pluginManager.setPluginEnabled(plugin, false);
+			}
 			synchronized (this)
 			{
 				loadedPlugins.put(marketplacePlugin.getId(),
-					new LoadedPluginSet(classLoader, plugins));
+					new LoadedPluginSet(marketplacePlugin, classLoader, plugins));
 			}
-			eventBus.post(new ExternalPluginsChanged());
+			notifyChanged();
 		}
 		catch (IOException | ClassNotFoundException | PluginInstantiationException ex)
 		{
 			cleanupFailedLoad(classLoader, plugins);
 			throw new IllegalStateException("Unable to load marketplace plugin", ex);
 		}
-		catch (RuntimeException ex)
+		catch (RuntimeException | LinkageError ex)
 		{
 			cleanupFailedLoad(classLoader, plugins);
-			throw ex;
+			throw new IllegalStateException("Unable to load marketplace plugin", ex);
 		}
 	}
 
 	private void startOnEdt(List<Plugin> plugins) throws PluginInstantiationException
 	{
-		try
+		runOnEdt(() ->
 		{
-			SwingUtilities.invokeAndWait(() ->
+			for (Plugin plugin : plugins)
 			{
-				for (Plugin plugin : plugins)
+				pluginManager.setPluginEnabled(plugin, true);
+				pluginManager.startPlugin(plugin);
+			}
+		});
+	}
+
+	private void stopOnEdt(List<Plugin> plugins, boolean remove) throws PluginInstantiationException
+	{
+		runOnEdt(() ->
+		{
+			for (Plugin plugin : plugins)
+			{
+				if (pluginManager.isPluginActive(plugin))
 				{
-					pluginManager.setPluginEnabled(plugin, true);
-					try
-					{
-						pluginManager.startPlugin(plugin);
-					}
-					catch (PluginInstantiationException ex)
-					{
-						throw new PluginStartRuntimeException(ex);
-					}
+					pluginManager.stopPlugin(plugin);
 				}
-			});
-		}
-		catch (InterruptedException ex)
-		{
-			Thread.currentThread().interrupt();
-			throw new PluginInstantiationException(ex);
-		}
-		catch (InvocationTargetException ex)
-		{
-			throw new PluginInstantiationException(ex);
-		}
+				pluginManager.setPluginEnabled(plugin, false);
+				if (remove)
+				{
+					pluginManager.remove(plugin);
+				}
+			}
+		});
 	}
 
 	@SuppressWarnings("PMD.UseTryWithResources") // The loader is owned by the loaded plugin set.
-	private void unload(LoadedPluginSet pluginSet)
+	private void unload(LoadedPluginSet pluginSet) throws PluginInstantiationException
 	{
 		try
 		{
-			SwingUtilities.invokeAndWait(() ->
-			{
-				for (Plugin plugin : pluginSet.plugins)
-				{
-					try
-					{
-						pluginManager.stopPlugin(plugin);
-					}
-					catch (PluginInstantiationException ignored)
-					{
-						// Continue unloading the remaining classes and resources.
-					}
-					pluginManager.setPluginEnabled(plugin, false);
-					pluginManager.remove(plugin);
-				}
-			});
-		}
-		catch (InterruptedException ex)
-		{
-			Thread.currentThread().interrupt();
-			throw new IllegalStateException("Plugin unload was interrupted", ex);
-		}
-		catch (InvocationTargetException ex)
-		{
-			throw new IllegalStateException("Unable to unload marketplace plugin", ex.getCause());
+			stopOnEdt(pluginSet.plugins, true);
 		}
 		finally
 		{
 			pluginSet.classLoader.close();
-			eventBus.post(new ExternalPluginsChanged());
+			notifyChanged();
 		}
 	}
 
@@ -213,11 +264,64 @@ class KLiteStreamedPluginService
 	{
 		if (!plugins.isEmpty())
 		{
-			unload(new LoadedPluginSet(classLoader, plugins));
+			try
+			{
+				stopOnEdt(plugins, true);
+			}
+			catch (PluginInstantiationException ignored)
+			{
+				plugins.forEach(pluginManager::remove);
+			}
 		}
-		else if (classLoader != null)
+		if (classLoader != null)
 		{
 			classLoader.close();
+		}
+	}
+
+	private void runOnEdt(PluginOperation operation) throws PluginInstantiationException
+	{
+		if (SwingUtilities.isEventDispatchThread())
+		{
+			operation.run();
+			return;
+		}
+		try
+		{
+			SwingUtilities.invokeAndWait(() ->
+			{
+				try
+				{
+					operation.run();
+				}
+				catch (PluginInstantiationException ex)
+				{
+					throw new PluginOperationRuntimeException(ex);
+				}
+			});
+		}
+		catch (InterruptedException ex)
+		{
+			Thread.currentThread().interrupt();
+			throw new PluginInstantiationException(ex);
+		}
+		catch (InvocationTargetException ex)
+		{
+			Throwable cause = ex.getCause();
+			if (cause instanceof PluginOperationRuntimeException)
+			{
+				throw new PluginInstantiationException(cause.getCause());
+			}
+			throw new PluginInstantiationException(cause);
+		}
+	}
+
+	private void notifyChanged()
+	{
+		eventBus.post(new ExternalPluginsChanged());
+		for (Runnable listener : changeListeners)
+		{
+			SwingUtilities.invokeLater(listener);
 		}
 	}
 
@@ -228,21 +332,78 @@ class KLiteStreamedPluginService
 		return future;
 	}
 
+	static final class LoadedMarketplacePlugin
+	{
+		private final KLiteMarketplacePlugin marketplacePlugin;
+		private final List<Plugin> plugins;
+		private final boolean running;
+		private final boolean configurable;
+
+		private LoadedMarketplacePlugin(KLiteMarketplacePlugin marketplacePlugin,
+			List<Plugin> plugins, boolean running, boolean configurable)
+		{
+			this.marketplacePlugin = marketplacePlugin;
+			this.plugins = Collections.unmodifiableList(new ArrayList<>(plugins));
+			this.running = running;
+			this.configurable = configurable;
+		}
+
+		KLiteMarketplacePlugin getMarketplacePlugin()
+		{
+			return marketplacePlugin;
+		}
+
+		List<Plugin> getPlugins()
+		{
+			return plugins;
+		}
+
+		Plugin getPrimaryPlugin()
+		{
+			return plugins.isEmpty() ? null : plugins.get(0);
+		}
+
+		boolean isRunning()
+		{
+			return running;
+		}
+
+		boolean isConfigurable()
+		{
+			return configurable;
+		}
+	}
+
 	private static final class LoadedPluginSet
 	{
+		private final KLiteMarketplacePlugin marketplacePlugin;
 		private final KLiteInMemoryPluginClassLoader classLoader;
 		private final List<Plugin> plugins;
 
-		private LoadedPluginSet(KLiteInMemoryPluginClassLoader classLoader, List<Plugin> plugins)
+		private LoadedPluginSet(KLiteMarketplacePlugin marketplacePlugin,
+			KLiteInMemoryPluginClassLoader classLoader, List<Plugin> plugins)
 		{
+			this.marketplacePlugin = marketplacePlugin;
 			this.classLoader = classLoader;
 			this.plugins = plugins;
 		}
 	}
 
-	private static final class PluginStartRuntimeException extends RuntimeException
+	@FunctionalInterface
+	private interface CheckedOperation
 	{
-		private PluginStartRuntimeException(Throwable cause)
+		void run() throws Exception;
+	}
+
+	@FunctionalInterface
+	private interface PluginOperation
+	{
+		void run() throws PluginInstantiationException;
+	}
+
+	private static final class PluginOperationRuntimeException extends RuntimeException
+	{
+		private PluginOperationRuntimeException(Throwable cause)
 		{
 			super(cause);
 		}
