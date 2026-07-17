@@ -161,14 +161,17 @@ public class DefaultWebWalker implements WebWalker
 			lastProgressAt = now;
 		}
 
-		if (path.isEmpty() && pendingPath == null && directWalk(current, requestedDestination))
+		// Exact destinations can be clicked directly. Radius-based destinations are
+		// routed through the pathfinder so a blocked center tile is never selected.
+		if (requestedArrivalDistance == 0 && path.isEmpty() && pendingPath == null
+			&& directWalk(current, requestedDestination))
 		{
 			return update(WebWalkState.MOVING, destination, clickTarget, 0, null);
 		}
 
 		if (pendingPath == null && path.isEmpty())
 		{
-			requestPath(current, requestedDestination);
+			requestPath(current, requestedDestination, requestedArrivalDistance);
 			return update(WebWalkState.PATHFINDING, destination, null, 0, null);
 		}
 
@@ -190,7 +193,7 @@ public class DefaultWebWalker implements WebWalker
 			clearPlan();
 			destination = requestedDestination;
 			arrivalDistance = requestedArrivalDistance;
-			requestPath(current, requestedDestination);
+			requestPath(current, requestedDestination, requestedArrivalDistance);
 			return update(WebWalkState.PATHFINDING, destination, null, 0, "Player moved away from the cached path");
 		}
 		pathIndex = closest;
@@ -235,9 +238,10 @@ public class DefaultWebWalker implements WebWalker
 		}
 	}
 
-	private void requestPath(WorldPoint start, WorldPoint target)
+	private void requestPath(WorldPoint start, WorldPoint target, int requestedArrivalDistance)
 	{
-		pendingPath = CompletableFuture.supplyAsync(() -> pathfinder.find(start, target), pathExecutor);
+		pendingPath = CompletableFuture.supplyAsync(
+			() -> pathfinder.find(start, target, requestedArrivalDistance), pathExecutor);
 	}
 
 	private boolean directWalk(WorldPoint current, WorldPoint target)
