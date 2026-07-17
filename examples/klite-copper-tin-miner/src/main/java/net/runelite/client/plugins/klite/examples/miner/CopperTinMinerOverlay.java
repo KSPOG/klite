@@ -17,6 +17,7 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 
+/** Dedicated runtime overlay for Copper and Tin Miner. */
 final class CopperTinMinerOverlay extends OverlayPanel
 {
 	private final CopperTinMinerConfig config;
@@ -45,10 +46,11 @@ final class CopperTinMinerOverlay extends OverlayPanel
 		AutomationStatus automation = automationManager.status();
 		WebWalkResult walk = webWalker.status();
 		panelComponent.getChildren().add(TitleComponent.builder()
-			.text("Copper & Tin Miner")
+			.text("Copper & Tin Miner v" + CopperTinMinerPlugin.VERSION)
 			.build());
 		addLine("Status", task.getActivity());
 		addLine("Mode", task.isBanking() ? "Banking" : "Mining");
+		addLine("Bank trigger", "Full inventory");
 		addLine("Next ore", task.getPreferredOre());
 
 		WorldPoint target = task.getTarget();
