@@ -12,9 +12,13 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.BorderFactory;
@@ -26,13 +30,16 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.JTextArea;
+import javax.swing.Timer;
 import javax.swing.WindowConstants;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.config.PluginConfigurationNavigator;
+import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
@@ -46,6 +53,7 @@ public class KLitePluginPanel extends PluginPanel
 
 	private final KLiteStreamedPluginService streamedPluginService;
 	private final PluginConfigurationNavigator configurationNavigator;
+	private final KLiteClientLogBuffer clientLogBuffer;
 	private final JPanel pluginList = new JPanel();
 	private final JLabel operationStatus = new JLabel(" ");
 
@@ -53,10 +61,12 @@ public class KLitePluginPanel extends PluginPanel
 	KLitePluginPanel(KLiteMarketplaceWindow marketplaceWindow,
 		KLiteAccountPanel accountPanel,
 		KLiteStreamedPluginService streamedPluginService,
-		PluginConfigurationNavigator configurationNavigator)
+		PluginConfigurationNavigator configurationNavigator,
+		KLiteClientLogBuffer clientLogBuffer)
 	{
 		this.streamedPluginService = streamedPluginService;
 		this.configurationNavigator = configurationNavigator;
+		this.clientLogBuffer = clientLogBuffer;
 
 		setLayout(new BorderLayout(0, 12));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -123,7 +133,7 @@ public class KLitePluginPanel extends PluginPanel
 		actions.add(marketplaceButton);
 
 		JButton logsButton = new JButton("KLite Logs");
-		logsButton.setToolTipText("Open detailed marketplace loading and plugin lifecycle diagnostics");
+		logsButton.setToolTipText("Open marketplace and client/plugin runtime diagnostics");
 		logsButton.addActionListener(event -> openLogWindow());
 		actions.add(logsButton);
 		wrapper.add(actions, BorderLayout.CENTER);
@@ -132,59 +142,70 @@ public class KLitePluginPanel extends PluginPanel
 
 	private void openLogWindow()
 	{
-		JFrame logFrame = new JFrame("KLite Marketplace Logs");
+		JFrame logFrame = new JFrame("KLite Logs");
 		logFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		logFrame.setIconImages(java.util.Arrays.asList(
-			new ImageIcon(BRAND_IMAGE).getImage()));
+		logFrame.setIconImages(Arrays.asList(new ImageIcon(BRAND_IMAGE).getImage()));
 
-		JTextArea logArea = new JTextArea(streamedPluginService.diagnosticsText());
-		logArea.setEditable(false);
-		logArea.setLineWrap(false);
-		logArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-		logArea.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		logArea.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		logArea.setCaretPosition(logArea.getDocument().getLength());
+		LogView marketplaceLogs = new LogView(
+			streamedPluginService::diagnosticsText, streamedPluginService::clearDiagnostics);
+		LogView clientLogs = new LogView(clientLogBuffer::text, clientLogBuffer::clear);
+		List<LogView> views = Arrays.asList(marketplaceLogs, clientLogs);
 
-		JScrollPane scrollPane = new JScrollPane(logArea);
-		scrollPane.setBorder(BorderFactory.createEmptyBorder());
-		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		JTabbedPane tabs = new JTabbedPane();
+		tabs.addTab("Marketplace", marketplaceLogs.getScrollPane());
+		tabs.setToolTipTextAt(0, "Artifact download, verification, loading, enable, disable, and unload events");
+		tabs.addTab("Client / Plugin Debug", clientLogs.getScrollPane());
+		tabs.setToolTipTextAt(1, "RuneLite client output plus KLite plugin and automation diagnostics");
 
 		JPanel buttons = new JPanel(new GridLayout(1, 3, 8, 0));
 		buttons.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
 		JButton refresh = new JButton("Refresh");
-		refresh.addActionListener(event ->
-		{
-			logArea.setText(streamedPluginService.diagnosticsText());
-			logArea.setCaretPosition(logArea.getDocument().getLength());
-		});
+		refresh.addActionListener(event -> selectedView(tabs, views).refresh());
 		buttons.add(refresh);
 
-		JButton copy = new JButton("Copy All");
+		JButton copy = new JButton("Copy Current Tab");
 		copy.addActionListener(event -> Toolkit.getDefaultToolkit().getSystemClipboard()
-			.setContents(new StringSelection(logArea.getText()), null));
+			.setContents(new StringSelection(selectedView(tabs, views).getText()), null));
 		buttons.add(copy);
 
-		JButton clear = new JButton("Clear");
+		JButton clear = new JButton("Clear Current Tab");
 		clear.addActionListener(event ->
 		{
-			streamedPluginService.clearDiagnostics();
-			logArea.setText(streamedPluginService.diagnosticsText());
+			LogView selected = selectedView(tabs, views);
+			selected.clear();
+			selected.refresh();
 		});
 		buttons.add(clear);
 
 		JPanel content = new JPanel(new BorderLayout());
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		content.add(scrollPane, BorderLayout.CENTER);
+		content.add(tabs, BorderLayout.CENTER);
 		content.add(buttons, BorderLayout.SOUTH);
 
+		Timer refreshTimer = new Timer(1_000, event -> selectedView(tabs, views).refresh());
+		refreshTimer.start();
+		logFrame.addWindowListener(new WindowAdapter()
+		{
+			@Override
+			public void windowClosed(WindowEvent event)
+			{
+				refreshTimer.stop();
+			}
+		});
+
 		logFrame.setContentPane(content);
-		logFrame.setMinimumSize(new Dimension(760, 480));
-		logFrame.setSize(900, 620);
+		logFrame.setMinimumSize(new Dimension(820, 500));
+		logFrame.setSize(980, 680);
 		logFrame.setLocationRelativeTo(SwingUtilities.getWindowAncestor(this));
 		logFrame.setVisible(true);
+	}
+
+	private static LogView selectedView(JTabbedPane tabs, List<LogView> views)
+	{
+		return views.get(Math.max(0, tabs.getSelectedIndex()));
 	}
 
 	private void refreshPlugins()
@@ -316,5 +337,54 @@ public class KLitePluginPanel extends PluginPanel
 		message.add(explanation);
 		container.add(message);
 		return container;
+	}
+
+	private static final class LogView
+	{
+		private final Supplier<String> textSupplier;
+		private final Runnable clearAction;
+		private final JTextArea textArea;
+		private final JScrollPane scrollPane;
+
+		private LogView(Supplier<String> textSupplier, Runnable clearAction)
+		{
+			this.textSupplier = textSupplier;
+			this.clearAction = clearAction;
+			textArea = new JTextArea();
+			textArea.setEditable(false);
+			textArea.setLineWrap(false);
+			textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+			textArea.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+			textArea.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+			scrollPane = new JScrollPane(textArea);
+			scrollPane.setBorder(BorderFactory.createEmptyBorder());
+			scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+			refresh();
+		}
+
+		private JScrollPane getScrollPane()
+		{
+			return scrollPane;
+		}
+
+		private String getText()
+		{
+			return textArea.getText();
+		}
+
+		private void clear()
+		{
+			clearAction.run();
+		}
+
+		private void refresh()
+		{
+			String latest = textSupplier.get();
+			if (!latest.equals(textArea.getText()))
+			{
+				textArea.setText(latest);
+				textArea.setCaretPosition(textArea.getDocument().getLength());
+			}
+		}
 	}
 }
