@@ -11,6 +11,7 @@ import com.sun.jna.platform.win32.Crypt32Util;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Base64;
@@ -80,8 +81,16 @@ final class KLiteAccountSessionStore
 			String encoded = Base64.getEncoder().encodeToString(protectedBytes);
 			File temporary = new File(DIRECTORY, SESSION_FILE.getName() + ".tmp");
 			Files.writeString(temporary.toPath(), encoded, StandardCharsets.UTF_8);
-			Files.move(temporary.toPath(), SESSION_FILE.toPath(),
-				StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+			try
+			{
+				Files.move(temporary.toPath(), SESSION_FILE.toPath(),
+					StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+			}
+			catch (AtomicMoveNotSupportedException exception)
+			{
+				Files.move(temporary.toPath(), SESSION_FILE.toPath(),
+					StandardCopyOption.REPLACE_EXISTING);
+			}
 		}
 		catch (IOException | RuntimeException exception)
 		{
