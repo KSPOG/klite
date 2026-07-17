@@ -10,6 +10,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -20,12 +22,15 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.JTextArea;
+import javax.swing.WindowConstants;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.config.PluginConfigurationNavigator;
 import net.runelite.client.ui.ColorScheme;
@@ -111,10 +116,75 @@ public class KLitePluginPanel extends PluginPanel
 		operationStatus.setHorizontalAlignment(SwingConstants.CENTER);
 		wrapper.add(operationStatus, BorderLayout.NORTH);
 
+		JPanel actions = new JPanel(new GridLayout(1, 2, 6, 0));
+		actions.setOpaque(false);
 		JButton marketplaceButton = new JButton("Open Marketplace");
 		marketplaceButton.addActionListener(event -> marketplaceWindow.open());
-		wrapper.add(marketplaceButton, BorderLayout.CENTER);
+		actions.add(marketplaceButton);
+
+		JButton logsButton = new JButton("KLite Logs");
+		logsButton.setToolTipText("Open detailed marketplace loading and plugin lifecycle diagnostics");
+		logsButton.addActionListener(event -> openLogWindow());
+		actions.add(logsButton);
+		wrapper.add(actions, BorderLayout.CENTER);
 		return wrapper;
+	}
+
+	private void openLogWindow()
+	{
+		JFrame logFrame = new JFrame("KLite Marketplace Logs");
+		logFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		logFrame.setIconImages(java.util.Arrays.asList(
+			new ImageIcon(BRAND_IMAGE).getImage()));
+
+		JTextArea logArea = new JTextArea(streamedPluginService.diagnosticsText());
+		logArea.setEditable(false);
+		logArea.setLineWrap(false);
+		logArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+		logArea.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		logArea.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		logArea.setCaretPosition(logArea.getDocument().getLength());
+
+		JScrollPane scrollPane = new JScrollPane(logArea);
+		scrollPane.setBorder(BorderFactory.createEmptyBorder());
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+		JPanel buttons = new JPanel(new GridLayout(1, 3, 8, 0));
+		buttons.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+		JButton refresh = new JButton("Refresh");
+		refresh.addActionListener(event ->
+		{
+			logArea.setText(streamedPluginService.diagnosticsText());
+			logArea.setCaretPosition(logArea.getDocument().getLength());
+		});
+		buttons.add(refresh);
+
+		JButton copy = new JButton("Copy All");
+		copy.addActionListener(event -> Toolkit.getDefaultToolkit().getSystemClipboard()
+			.setContents(new StringSelection(logArea.getText()), null));
+		buttons.add(copy);
+
+		JButton clear = new JButton("Clear");
+		clear.addActionListener(event ->
+		{
+			streamedPluginService.clearDiagnostics();
+			logArea.setText(streamedPluginService.diagnosticsText());
+		});
+		buttons.add(clear);
+
+		JPanel content = new JPanel(new BorderLayout());
+		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		content.add(scrollPane, BorderLayout.CENTER);
+		content.add(buttons, BorderLayout.SOUTH);
+
+		logFrame.setContentPane(content);
+		logFrame.setMinimumSize(new Dimension(760, 480));
+		logFrame.setSize(900, 620);
+		logFrame.setLocationRelativeTo(SwingUtilities.getWindowAncestor(this));
+		logFrame.setVisible(true);
 	}
 
 	private void refreshPlugins()
@@ -208,11 +278,13 @@ public class KLitePluginPanel extends PluginPanel
 			if (error == null)
 			{
 				operationStatus.setText(pluginName + " updated.");
+				operationStatus.setToolTipText(null);
 			}
 			else
 			{
-				Throwable cause = error.getCause() == null ? error : error.getCause();
-				operationStatus.setText("Unable to update " + pluginName + ": " + cause.getMessage());
+				String detail = KLiteStreamedPluginService.describe(error);
+				operationStatus.setText("Unable to update " + pluginName + ". Open KLite Logs.");
+				operationStatus.setToolTipText(detail);
 			}
 			refreshPlugins();
 		}));
