@@ -14,12 +14,10 @@ import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,11 +43,7 @@ import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
-/**
- * Standalone browser and runtime controller for the KLite plugin catalog.
- *
- * <p>Runnable artifacts are verified and held in memory only.</p>
- */
+/** Standalone browser for reviewed KLite marketplace plugins. */
 @Singleton
 public class KLiteMarketplaceWindow
 {
@@ -83,6 +77,13 @@ public class KLiteMarketplaceWindow
 		this.marketplaceClient = marketplaceClient;
 		this.accountService = accountService;
 		this.streamedPluginService = streamedPluginService;
+		streamedPluginService.addChangeListener(() ->
+		{
+			if (catalogList != null)
+			{
+				renderCatalog();
+			}
+		});
 	}
 
 	public void open()
@@ -113,7 +114,6 @@ public class KLiteMarketplaceWindow
 		{
 			frame = createFrame();
 		}
-
 		frame.setState(Frame.NORMAL);
 		frame.setVisible(true);
 		frame.toFront();
@@ -138,7 +138,6 @@ public class KLiteMarketplaceWindow
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		content.add(createHeader(), BorderLayout.NORTH);
 		content.add(createCatalogArea(), BorderLayout.CENTER);
-
 		footer = new JLabel("Catalog source: " + marketplaceClient.getCatalogUrl().host());
 		footer.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		footer.setBorder(BorderFactory.createEmptyBorder(10, 20, 14, 20));
@@ -151,7 +150,6 @@ public class KLiteMarketplaceWindow
 		JPanel header = new JPanel(new BorderLayout(18, 0));
 		header.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		header.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
-
 		BufferedImage logo = ImageUtil.resizeImage(BRAND_IMAGE, 72, 86, true);
 		header.add(new JLabel(new ImageIcon(logo)), BorderLayout.WEST);
 
@@ -161,7 +159,7 @@ public class KLiteMarketplaceWindow
 		JLabel title = new JLabel("KLite Plugin Marketplace");
 		title.setForeground(ColorScheme.TEXT_COLOR);
 		title.setFont(title.getFont().deriveFont(Font.BOLD, 25f));
-		JLabel subtitle = new JLabel("Discover reviewed extensions published for KLite.");
+		JLabel subtitle = new JLabel("Load reviewed extensions into the KLite Plugins panel.");
 		subtitle.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		copy.add(Box.createVerticalGlue());
 		copy.add(title);
@@ -215,12 +213,8 @@ public class KLiteMarketplaceWindow
 		typeFilter.addActionListener(event -> renderCatalog());
 		filters.add(typeFilter);
 		orderFilter = new JComboBox<>(new String[]{
-			"Trending today",
-			"Trending this week",
-			"Trending this month",
-			"Recently updated",
-			"Recently released",
-			"Name"
+			"Trending today", "Trending this week", "Trending this month",
+			"Recently updated", "Recently released", "Name"
 		});
 		orderFilter.addActionListener(event -> renderCatalog());
 		filters.add(orderFilter);
@@ -252,7 +246,6 @@ public class KLiteMarketplaceWindow
 		{
 			return;
 		}
-
 		loading = true;
 		search.setEnabled(false);
 		refreshButton.setEnabled(false);
@@ -270,7 +263,6 @@ public class KLiteMarketplaceWindow
 				showCatalogStatus("Unable to load the marketplace catalog. Check your connection and try again.");
 				return;
 			}
-
 			plugins = catalog.getPlugins();
 			updateFilters(catalog);
 			search.setEnabled(true);
@@ -287,19 +279,12 @@ public class KLiteMarketplaceWindow
 			? null : (String) categoryFilter.getSelectedItem();
 		String selectedType = typeFilter.getSelectedIndex() == 0
 			? null : (String) typeFilter.getSelectedItem();
-
 		categoryFilter.removeAllItems();
 		categoryFilter.addItem("All categories");
-		for (String category : catalog.getCategories())
-		{
-			categoryFilter.addItem(category);
-		}
+		catalog.getCategories().forEach(categoryFilter::addItem);
 		typeFilter.removeAllItems();
 		typeFilter.addItem("All types");
-		for (String type : catalog.getTypes())
-		{
-			typeFilter.addItem(type);
-		}
+		catalog.getTypes().forEach(typeFilter::addItem);
 		if (selectedCategory != null)
 		{
 			categoryFilter.setSelectedItem(selectedCategory);
@@ -317,7 +302,6 @@ public class KLiteMarketplaceWindow
 		{
 			return;
 		}
-
 		String query = search.getText().trim().toLowerCase(Locale.ROOT);
 		String selectedCategory = categoryFilter.getSelectedIndex() == 0
 			? null : (String) categoryFilter.getSelectedItem();
@@ -340,14 +324,12 @@ public class KLiteMarketplaceWindow
 			{
 				continue;
 			}
-
 			if (visiblePluginCount++ > 0)
 			{
 				catalogList.add(Box.createVerticalStrut(10));
 			}
 			catalogList.add(createPluginCard(plugin));
 		}
-
 		if (visiblePluginCount == 0)
 		{
 			showCatalogStatus(plugins.isEmpty()
@@ -355,7 +337,6 @@ public class KLiteMarketplaceWindow
 				: "No plugins match your search.");
 			return;
 		}
-
 		catalogList.add(Box.createVerticalGlue());
 		catalogList.revalidate();
 		catalogList.repaint();
@@ -406,44 +387,39 @@ public class KLiteMarketplaceWindow
 
 		boolean paid = "Premium".equals(plugin.getType()) || "Supporter".equals(plugin.getType());
 		boolean entitled = paid && accountService.hasEntitlement(plugin.getId());
-		String statusText = paid
-			? entitled ? "Owned"
-				: accountService.currentAccount().isPresent() ? "Locked" : "Sign in required"
-			: formatStatus(plugin.getStatus());
-		boolean running = streamedPluginService.isRunning(plugin.getId());
+		boolean loaded = streamedPluginService.isLoaded(plugin.getId());
 		boolean pluginLoading = streamedPluginService.isLoading(plugin.getId());
+		String statusText = loaded ? "Loaded" : paid
+			? entitled ? "Owned" : accountService.currentAccount().isPresent() ? "Locked" : "Sign in required"
+			: formatStatus(plugin.getStatus());
 		JLabel status = new JLabel(statusText);
-		status.setForeground(running || entitled || "bundled".equals(plugin.getStatus())
+		status.setForeground(loaded || entitled || "bundled".equals(plugin.getStatus())
 			? ColorScheme.PROGRESS_COMPLETE_COLOR : ColorScheme.LIGHT_GRAY_COLOR);
 		JPanel controls = new JPanel();
 		controls.setOpaque(false);
 		controls.add(status);
 		if ("available".equals(plugin.getStatus()))
 		{
-			JButton action = new JButton(running ? "Stop" : pluginLoading ? "Loading..." : "Run");
-			action.setEnabled(!pluginLoading && (!paid || entitled));
+			JButton action = new JButton(loaded ? "Loaded" : pluginLoading ? "Loading..." : "Load");
+			action.setEnabled(!loaded && !pluginLoading && (!paid || entitled));
 			action.setToolTipText(paid && !entitled
-				? "Sign in with an entitled account to run this plugin"
-				: "Runs from verified memory without installing a JAR");
+				? "Sign in with an entitled account to load this plugin"
+				: "Load the verified plugin into KLite Plugins without enabling it");
 			action.addActionListener(event ->
 			{
 				action.setEnabled(false);
-				action.setText(running ? "Stopping..." : "Loading...");
-				CompletableFuture<Void> operation = running
-					? streamedPluginService.stop(plugin.getId())
-					: streamedPluginService.run(plugin);
-				operation.whenComplete((ignored, error) -> SwingUtilities.invokeLater(() ->
+				action.setText("Loading...");
+				streamedPluginService.load(plugin).whenComplete((ignored, error) -> SwingUtilities.invokeLater(() ->
 				{
 					if (error == null)
 					{
-						footer.setText(running ? plugin.getName() + " stopped; memory released"
-							: plugin.getName() + " is running from memory");
+						footer.setText(plugin.getName()
+							+ " loaded into KLite Plugins. Enable it from the sidebar.");
 					}
 					else
 					{
 						Throwable cause = error.getCause() == null ? error : error.getCause();
-						footer.setText("Could not " + (running ? "stop " : "run ")
-							+ plugin.getName() + ": " + cause.getMessage());
+						footer.setText("Could not load " + plugin.getName() + ": " + cause.getMessage());
 					}
 					renderCatalog();
 				}));
@@ -511,7 +487,6 @@ public class KLiteMarketplaceWindow
 		emptyState.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		emptyState.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 		emptyState.setBackground(ColorScheme.DARK_GRAY_COLOR);
-
 		JLabel message = new JLabel(text, SwingConstants.CENTER);
 		message.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		emptyState.add(message);
