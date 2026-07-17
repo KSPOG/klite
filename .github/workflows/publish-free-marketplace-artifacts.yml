@@ -8,6 +8,7 @@ on:
     paths:
       - ".github/workflows/publish-free-marketplace-artifacts.yml"
       - "examples/klite-copper-tin-miner/**"
+      - "marketplace-site/public/plugins.json"
 
 permissions:
   contents: write
@@ -43,15 +44,16 @@ jobs:
           const fs = require('node:fs');
           const path = require('node:path');
 
+          const version = '0.0.2';
           const source = path.join(
             'examples',
             'klite-copper-tin-miner',
             'build',
             'libs',
-            'klite-copper-tin-miner-1.0.0.jar'
+            `klite-copper-tin-miner-${version}.jar`
           );
           const targetDirectory = path.join('marketplace-site', 'public', 'artifacts');
-          const target = path.join(targetDirectory, 'copper-tin-miner-1.0.0.jar');
+          const target = path.join(targetDirectory, `copper-tin-miner-${version}.jar`);
           const catalogPath = path.join('marketplace-site', 'public', 'plugins.json');
 
           const bytes = fs.readFileSync(source);
@@ -59,7 +61,8 @@ jobs:
           const size = bytes.length;
           const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
           const plugin = catalog.plugins.find((entry) => entry.id === 'copper-tin-miner');
-          if (!plugin || !plugin.artifact || plugin.artifact.version !== '1.0.0') {
+          if (!plugin || !plugin.artifact || plugin.artifact.version !== version
+              || plugin.descriptor.version !== version) {
             throw new Error('Copper and Tin Miner catalog metadata is missing or has an unexpected version');
           }
 
@@ -81,7 +84,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add marketplace-site/public/artifacts/copper-tin-miner-1.0.0.jar marketplace-site/public/plugins.json
+          git add marketplace-site/public/artifacts/copper-tin-miner-0.0.2.jar marketplace-site/public/plugins.json
           if git diff --cached --quiet; then
             echo "Artifact and catalog are already current."
             exit 0
