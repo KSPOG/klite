@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Understand the KLite Java client, automation runtime, and web-walker APIs with plain-language guidance and searchable signatures.">
+  <meta name="description" content="Build KLite plugins with a standalone SDK, IntelliJ starter, public client API, automation runtime, and web-walker reference.">
   <meta name="theme-color" content="#080b11">
-  <title>KLite API Reference</title>
+  <title>KLite Developer Documentation</title>
   <link rel="icon" type="image/png" href="../assets/klite-marketplace.png">
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="../admin.css">
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
   <header class="site-header api-site-header">
@@ -28,30 +28,80 @@
       <header class="api-hero">
         <div class="api-hero-copy">
           <p class="eyebrow">KLite developer documentation</p>
-          <h1>Build KLite plugins with confidence.</h1>
-          <p class="api-page-introduction">Understand what each API area is for, when to use it, and what every public method returns. Browse client state, controlled interactions, automation lifecycle tools, and web-walker functionality without guessing.</p>
+          <h1>Build KLite plugins without the client source.</h1>
+          <p class="api-page-introduction">Download a standalone IntelliJ and Gradle starter, compile only against the approved public SDK, and hot reload the resulting plugin JAR in the installed KLite client.</p>
           <div class="api-hero-actions">
-            <a class="button button-primary" href="#reference-browser">Browse the reference</a>
-            <a class="button button-secondary" href="#getting-started">Read the quick start</a>
+            <a class="button button-primary" href="https://github.com/KSPOG/klite/releases/download/plugin-sdk/KLite-Plugin-Starter.zip">Download plugin starter</a>
+            <a class="button button-secondary" href="#plugin-sdk">IDE setup</a>
+            <a class="button button-secondary" href="#reference-browser">API reference</a>
           </div>
         </div>
         <aside class="api-hero-status">
           <span class="api-status-label">Documentation access</span>
           <strong id="api-account-status">Checking your marketplace session...</strong>
-          <p>The searchable type reference requires a signed-in marketplace account.</p>
+          <p>The SDK starter is downloadable without the client repository. The searchable type reference requires a signed-in marketplace account.</p>
         </aside>
       </header>
 
       <aside class="api-important-note" aria-labelledby="api-important-title">
-        <strong id="api-important-title">This is an in-client Java API—not a public web or REST API.</strong>
-        <p>Use these classes from a KLite plugin or automation module running inside the desktop client. The <code>/api/</code> address only hosts the documentation.</p>
+        <strong id="api-important-title">The SDK is compile-only and intentionally excludes the KLite client implementation.</strong>
+        <p>Developers receive approved API class signatures, the Gradle wrapper, starter source, and build tools. They do not need the KLite source tree or complete executable client JAR.</p>
       </aside>
+
+      <section id="plugin-sdk" class="api-orientation" aria-labelledby="plugin-sdk-title">
+        <div class="api-section-title-row">
+          <div>
+            <p class="eyebrow">Standalone development kit</p>
+            <h2 id="plugin-sdk-title">Set up IntelliJ in four steps</h2>
+          </div>
+          <p>The starter produces the same external-plugin JAR format used by the Marketplace, so local testing and review use the same artifact structure.</p>
+        </div>
+
+        <div class="api-concept-grid">
+          <article><code>1. Extract and open</code><p>Extract the starter ZIP, open its folder in IntelliJ, and import it as a Gradle project using JDK 11.</p></article>
+          <article><code>2. Rename the starter</code><p>Set the plugin ID, display name, version, author, Java package, entry class, and descriptor metadata.</p></article>
+          <article><code>3. Enable local plugins</code><p>In KLite Core settings, enable <strong>Plugin development → Enable development plugins</strong>.</p></article>
+          <article><code>4. Build and reload</code><p>Run <code>installDevPlugin</code>. KLite watches <code>%USERPROFILE%\.runelite\klite-dev-plugins</code> and reloads the newest JAR automatically.</p></article>
+        </div>
+
+        <div class="api-area-grid">
+          <article class="api-guide-card api-guide-cyan">
+            <span class="api-guide-number">SDK</span>
+            <span class="api-guide-copy">
+              <strong>Public compile surface only</strong>
+              <small>RuneLite API types, plugin lifecycle contracts, configuration annotations, KLite client API DTOs, automation contracts, and walker contracts.</small>
+              <code>libs/KLite-Plugin-SDK.jar</code>
+            </span>
+          </article>
+          <article class="api-guide-card api-guide-orange">
+            <span class="api-guide-number">BUILD</span>
+            <span class="api-guide-copy">
+              <strong>Production-shaped plugin JAR</strong>
+              <small>The build verifies that RuneLite, KLite, Guice, and injection runtime classes were not bundled into the submitted plugin.</small>
+              <code>.\gradlew.bat installDevPlugin</code>
+            </span>
+          </article>
+          <article class="api-guide-card api-guide-violet">
+            <span class="api-guide-number">RUNTIME</span>
+            <span class="api-guide-copy">
+              <strong>Installed KLite is the test client</strong>
+              <small>The local development loader safely stops the previous plugin instance, closes its class loader, and starts the newest build.</small>
+              <code>~/.runelite/klite-dev-plugins</code>
+            </span>
+          </article>
+        </div>
+
+        <div class="api-hero-actions">
+          <a class="button button-primary" href="https://github.com/KSPOG/klite/releases/download/plugin-sdk/KLite-Plugin-Starter.zip">Download IntelliJ starter ZIP</a>
+          <a class="button button-secondary" href="https://github.com/KSPOG/klite/releases/download/plugin-sdk/KLite-Plugin-SDK.jar">Download SDK JAR only</a>
+        </div>
+      </section>
 
       <section id="getting-started" class="api-orientation" aria-labelledby="api-orientation-title">
         <div class="api-section-title-row">
           <div>
-            <p class="eyebrow">Quick start</p>
-            <h2 id="api-orientation-title">Choose the API area that matches the job</h2>
+            <p class="eyebrow">Choose the correct API</p>
+            <h2 id="api-orientation-title">Match the API area to the job</h2>
           </div>
           <p>Most plugins begin with the Client API. Add the automation runtime for multi-step work and the walker when the player must travel.</p>
         </div>
@@ -162,6 +212,6 @@ api.inventoryContains(995)
     </section>
   </main>
 
-  <script src="app.js?v=5" defer></script>
+  <script src="app.js?v=6" defer></script>
 </body>
 </html>
