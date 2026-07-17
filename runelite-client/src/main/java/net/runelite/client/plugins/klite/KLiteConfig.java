@@ -14,6 +14,13 @@ import net.runelite.client.config.ConfigSection;
 public interface KLiteConfig extends Config
 {
 	@ConfigSection(
+		name = "Updates",
+		description = "KLite desktop client update settings.",
+		position = 0
+	)
+	String updatesSection = "updates";
+
+	@ConfigSection(
 		name = "Automation",
 		description = "Global controls for KLite automation modules.",
 		position = 1
@@ -29,6 +36,18 @@ public interface KLiteConfig extends Config
 	default boolean showStatusOverlay()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = "checkForClientUpdates",
+		name = "Check for client updates",
+		description = "Check for a newer verified KLite Windows client when KLite starts",
+		section = updatesSection,
+		position = 0
+	)
+	default boolean checkForClientUpdates()
+	{
+		return true;
 	}
 
 	@ConfigItem(
