@@ -76,6 +76,10 @@ jobs:
       - name: Package KLite installer
         shell: pwsh
         run: |
+          $appVersion = "1.0.$env:GITHUB_RUN_NUMBER"
+          "KLITE_APP_VERSION=$appVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Packaging KLite version $appVersion"
+
           New-Item -ItemType Directory -Force -Path "dist" | Out-Null
           jpackage `
             --type exe `
@@ -84,7 +88,7 @@ jobs:
             --name KLite `
             --main-jar KLite.jar `
             --main-class net.runelite.client.KLite `
-            --app-version 1.0.0 `
+            --app-version $appVersion `
             --vendor KLite `
             --description "KLite RuneLite-based desktop client" `
             --win-per-user-install `
@@ -136,7 +140,7 @@ jobs:
           $manifest = [ordered]@{
             schemaVersion = 1
             platform = "windows-x64"
-            version = "1.0.0"
+            version = $env:KLITE_APP_VERSION
             buildSha = $env:GITHUB_SHA
             downloadUrl = "https://klite-marketplace.pages.dev/download/windows"
             sha256 = $hash
