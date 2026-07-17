@@ -21,6 +21,11 @@ on:
         required: true
         default: "1"
         type: string
+  workflow_run:
+    workflows:
+      - Publish KLite Plugin SDK
+    types:
+      - completed
 
 permissions:
   actions: write
@@ -28,15 +33,16 @@ permissions:
 
 jobs:
   cleanup:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Select and clean workflow runs
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          CLEANUP_MODE: ${{ inputs.mode }}
-          KEEP_SUCCESSFUL: ${{ inputs.keep_successful_per_workflow }}
-          MINIMUM_AGE_HOURS: ${{ inputs.minimum_age_hours }}
+          CLEANUP_MODE: ${{ github.event_name == 'workflow_run' && 'delete' || inputs.mode }}
+          KEEP_SUCCESSFUL: ${{ github.event_name == 'workflow_run' && '5' || inputs.keep_successful_per_workflow }}
+          MINIMUM_AGE_HOURS: ${{ github.event_name == 'workflow_run' && '0' || inputs.minimum_age_hours }}
           CURRENT_RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
