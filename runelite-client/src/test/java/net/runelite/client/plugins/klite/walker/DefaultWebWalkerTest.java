@@ -15,7 +15,7 @@ import org.junit.Test;
 public class DefaultWebWalkerTest
 {
 	@Test
-	public void selectsFarthestTileWithinClickRange()
+	public void selectsShortOrderedLookAheadOnRoute()
 	{
 		List<WorldPoint> path = new ArrayList<>();
 		for (int x = 3200; x <= 3220; x++)
@@ -23,14 +23,15 @@ public class DefaultWebWalkerTest
 			path.add(new WorldPoint(x, 3200, 0));
 		}
 
-		WorldPoint selected = DefaultWebWalker.selectLookAhead(
+		int selected = DefaultWebWalker.selectRouteTargetIndex(
 			path, 0, new WorldPoint(3200, 3200, 0));
 
-		assertEquals(new WorldPoint(3215, 3200, 0), selected);
+		assertEquals(6, selected);
+		assertEquals(new WorldPoint(3206, 3200, 0), path.get(selected));
 	}
 
 	@Test
-	public void advancesClosestIndexWithoutRestartingPath()
+	public void advancesRouteCursorInsideForwardWindow()
 	{
 		List<WorldPoint> path = new ArrayList<>();
 		for (int x = 0; x < 20; x++)
@@ -38,8 +39,28 @@ public class DefaultWebWalkerTest
 			path.add(new WorldPoint(x, 0, 0));
 		}
 
-		int index = DefaultWebWalker.closestPathIndex(path, new WorldPoint(14, 0, 0), 10);
+		int index = DefaultWebWalker.advancePathIndex(path, new WorldPoint(14, 0, 0), 10);
 
 		assertEquals(14, index);
+	}
+
+	@Test
+	public void doesNotJumpAcrossDistantRouteCrossing()
+	{
+		List<WorldPoint> path = new ArrayList<>();
+		for (int x = 0; x <= 10; x++)
+		{
+			path.add(new WorldPoint(x, 0, 0));
+		}
+		for (int x = 10; x >= 0; x--)
+		{
+			path.add(new WorldPoint(x, 1, 0));
+		}
+
+		int index = DefaultWebWalker.advancePathIndex(path, new WorldPoint(2, 1, 0), 0);
+
+		// The physically adjacent return leg is much later in the route and must not
+		// be selected until the cursor has progressed through the outgoing leg.
+		assertEquals(2, index);
 	}
 }
