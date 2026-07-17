@@ -80,7 +80,7 @@ jobs:
           echo "build_sha=$build_sha" >> "$GITHUB_OUTPUT"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
 
-      - name: Publish immutable installer asset
+      - name: Publish content-addressed installer asset
         id: installer
         if: steps.guard.outputs.ready == 'true'
         shell: bash
@@ -89,8 +89,8 @@ jobs:
           VERSION: ${{ steps.source.outputs.version }}
         run: |
           set -euo pipefail
-          rm -rf dist
-          mkdir -p dist
+          rm -rf dist verify
+          mkdir -p dist verify
 
           gh release download windows-client \
             --pattern "KLite-Setup.exe" \
@@ -98,26 +98,49 @@ jobs:
             --repo "$GITHUB_REPOSITORY"
 
           source="dist/KLite-Setup.exe"
-          asset_name="KLite-Setup-$VERSION.exe"
-          immutable="dist/$asset_name"
-
           test -f "$source"
-          cp "$source" "$immutable"
-          gh release upload windows-client "$immutable" \
-            --clobber \
-            --repo "$GITHUB_REPOSITORY"
 
-          sha256="$(sha256sum "$immutable" | awk '{print $1}')"
-          size="$(stat -c '%s' "$immutable")"
+          sha256="$(sha256sum "$source" | awk '{print $1}')"
+          size="$(stat -c '%s' "$source")"
 
           if [[ ! "$sha256" =~ ^[a-f0-9]{64}$ ]] || [[ ! "$size" =~ ^[0-9]+$ ]] || [ "$size" -le 0 ]; then
-            echo "The synchronized installer metadata is invalid." >&2
+            echo "The installer metadata is invalid." >&2
+            exit 1
+          fi
+
+          asset_name="KLite-Setup-$VERSION-${sha256:0:16}.exe"
+          immutable="dist/$asset_name"
+          cp "$source" "$immutable"
+
+          existing="$(gh release view windows-client \
+            --repo "$GITHUB_REPOSITORY" \
+            --json assets \
+            --jq ".assets | map(select(.name == \"$asset_name\")) | length")"
+
+          if [ "$existing" -eq 0 ]; then
+            gh release upload windows-client "$immutable" \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            echo "The content-addressed installer already exists; it will not be overwritten."
+          fi
+
+          gh release download windows-client \
+            --pattern "$asset_name" \
+            --dir verify \
+            --repo "$GITHUB_REPOSITORY"
+
+          published="verify/$asset_name"
+          published_sha256="$(sha256sum "$published" | awk '{print $1}')"
+          published_size="$(stat -c '%s' "$published")"
+
+          if [ "$published_sha256" != "$sha256" ] || [ "$published_size" != "$size" ]; then
+            echo "The published content-addressed installer does not match the local build." >&2
             exit 1
           fi
 
           echo "asset_name=$asset_name" >> "$GITHUB_OUTPUT"
-          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
-          echo "size=$size" >> "$GITHUB_OUTPUT"
+          echo "sha256=$published_sha256" >> "$GITHUB_OUTPUT"
+          echo "size=$published_size" >> "$GITHUB_OUTPUT"
 
       - name: Refresh main before publishing manifest
         if: steps.guard.outputs.ready == 'true'
@@ -153,6 +176,12 @@ jobs:
               "launcher": "KLite.exe",
               "publishedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
           }
+
+          expected_asset = (
+              f"KLite-Setup-{manifest['version']}-{manifest['sha256'][:16]}.exe"
+          )
+          if manifest["assetName"] != expected_asset:
+              raise SystemExit("The manifest asset name is not content-addressed correctly.")
 
           path = Path("marketplace-site/public/client/windows/latest.json")
           path.parent.mkdir(parents=True, exist_ok=True)
