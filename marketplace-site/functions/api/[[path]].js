@@ -1,5 +1,9 @@
-// Cloudflare Pages API entrypoint. Keep this import on the Discord-aware worker wrapper.
-import marketplaceWorker from "../../worker/entry.js";
+import marketplaceWorker from "../../worker/index.js";
+import {
+  exchangeDiscordClientLogin,
+  handleDiscordLoginCallback,
+  startDiscordLogin
+} from "../../worker/discord-auth.js";
 import { handlePagesAuth } from "../../worker/pages-auth.js";
 import { handlePasswordReset } from "../../worker/pages-password-reset.js";
 import { handleControlPlane } from "../../worker/pages-control-plane.js";
@@ -18,6 +22,20 @@ function apiError(status, code, message) {
   });
 }
 
+function discordConfigurationError(env) {
+  const missing = [];
+  if (!env.DISCORD_CLIENT_ID) missing.push("DISCORD_CLIENT_ID");
+  if (!env.DISCORD_CLIENT_SECRET) missing.push("DISCORD_CLIENT_SECRET");
+  if (!env.DISCORD_GUILD_ID) missing.push("DISCORD_GUILD_ID");
+  if (missing.length === 0) return null;
+
+  return apiError(
+    503,
+    "discord_configuration_missing",
+    `Discord login is not configured. Add the following Cloudflare Pages variables or secrets and redeploy: ${missing.join(", ")}.`
+  );
+}
+
 export async function onRequest(context) {
   const { request } = context;
   const requestUrl = new URL(request.url);
@@ -34,39 +52,56 @@ export async function onRequest(context) {
     );
   }
 
-  if (!context.env.PASSWORD_PEPPER) {
-    return apiError(
-      503,
-      "password_pepper_missing",
-      "Marketplace authentication is not configured. Add the PASSWORD_PEPPER secret to the Cloudflare Pages project, then redeploy."
-    );
-  }
-
   const env = {
     ...context.env,
     PUBLIC_ORIGIN: context.env.PUBLIC_ORIGIN || requestUrl.origin
   };
 
   try {
-    const resetResponse = await handlePasswordReset(request, env, requestUrl);
-    if (resetResponse) {
-      return resetResponse;
+    const isDiscordStart = request.method === "POST"
+      && requestUrl.pathname === "/api/auth/discord/start";
+    const isDiscordExchange = request.method === "POST"
+      && requestUrl.pathname === "/api/auth/discord/exchange";
+    const isDiscordCallback = request.method === "GET"
+      && requestUrl.pathname === "/api/discord/callback";
+
+    if (isDiscordStart || isDiscordExchange || isDiscordCallback) {
+      const configurationError = discordConfigurationError(env);
+      if (configurationError) return configurationError;
     }
+
+    if (isDiscordStart) {
+      return await startDiscordLogin(request, env);
+    }
+
+    if (isDiscordExchange) {
+      return await exchangeDiscordClientLogin(request, env);
+    }
+
+    if (isDiscordCallback) {
+      const loginResponse = await handleDiscordLoginCallback(requestUrl, env);
+      if (loginResponse) return loginResponse;
+    }
+
+    if (!env.PASSWORD_PEPPER) {
+      return apiError(
+        503,
+        "password_pepper_missing",
+        "Marketplace authentication is not configured. Add the PASSWORD_PEPPER secret to the Cloudflare Pages project, then redeploy."
+      );
+    }
+
+    const resetResponse = await handlePasswordReset(request, env, requestUrl);
+    if (resetResponse) return resetResponse;
 
     const authResponse = await handlePagesAuth(request, env, requestUrl);
-    if (authResponse) {
-      return authResponse;
-    }
+    if (authResponse) return authResponse;
 
     const controlPlaneResponse = await handleControlPlane(request, env, requestUrl);
-    if (controlPlaneResponse) {
-      return controlPlaneResponse;
-    }
+    if (controlPlaneResponse) return controlPlaneResponse;
 
     const publicArtifactResponse = await handlePublicArtifact(request, env, requestUrl);
-    if (publicArtifactResponse) {
-      return publicArtifactResponse;
-    }
+    if (publicArtifactResponse) return publicArtifactResponse;
 
     const response = await marketplaceWorker.fetch(request, env);
     if (response.status >= 500) {
