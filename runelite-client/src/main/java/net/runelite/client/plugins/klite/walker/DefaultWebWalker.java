@@ -24,29 +24,32 @@ import net.runelite.api.Player;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.klite.api.KLiteThreadGateway;
-import net.runelite.client.plugins.klite.walker.pathfinder.GroundPathfinder;
 import net.runelite.client.plugins.klite.walker.pathfinder.PathSearchResult;
+import net.runelite.client.plugins.klite.walker.pathfinder.ShortestPathRoutePlanner;
 
 /**
- * Cached-plan walker which advances one action per call. The control flow mirrors
- * TwiLite's public Navigation.step contract while using KLite-owned code.
+ * KLite web walker backed by the bundled Shortest Path route planner.
+ *
+ * <p>The planner supplies a complete ordered route. Movement advances through
+ * that route monotonically and clicks only a small number of route steps ahead,
+ * preventing turns and route crossings from being skipped.</p>
  */
 @Singleton
 @Slf4j
 public class DefaultWebWalker implements WebWalker
 {
-	private static final int MAX_CLICK_DISTANCE = 15;
+	private static final int MAX_CLICK_DISTANCE = 8;
+	private static final int ROUTE_CLICK_STEPS = 6;
+	private static final int ROUTE_PROGRESS_WINDOW = 8;
 	private static final int REPLAN_DISTANCE = 4;
-	private static final int MOVEMENT_RECLICK_DISTANCE = 4;
+	private static final int MOVEMENT_RECLICK_DISTANCE = 2;
 	private static final long STALL_TIMEOUT_MILLIS = 8_000L;
 
 	private final Client client;
 	private final KLiteThreadGateway threadGateway;
-	private final GroundPathfinder pathfinder;
+	private final ShortestPathRoutePlanner pathfinder;
 	private final WebWalkBankCache bankCache;
 	private final ExecutorService pathExecutor;
-	@Nullable
-	private final ShortestPathBridge shortestPathBridge;
 
 	private volatile WebWalkResult status = new WebWalkResult(
 		WebWalkState.IDLE, null, null, 0, null);
@@ -57,7 +60,6 @@ public class DefaultWebWalker implements WebWalker
 	private int pathIndex;
 	@Nullable
 	private CompletableFuture<PathSearchResult> pendingPath;
-	private boolean shortestPathPending;
 	@Nullable
 	private WorldPoint clickTarget;
 	@Nullable
@@ -65,30 +67,21 @@ public class DefaultWebWalker implements WebWalker
 	private long lastProgressAt;
 
 	@Inject
-	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway, GroundPathfinder pathfinder,
-		WebWalkBankCache bankCache, ShortestPathBridge shortestPathBridge)
+	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway,
+		ShortestPathRoutePlanner pathfinder, WebWalkBankCache bankCache)
 	{
 		this(client, threadGateway, pathfinder, bankCache, Executors.newSingleThreadExecutor(
-			new ThreadFactoryBuilder().setDaemon(true).setNameFormat("klite-pathfinder-%d").build()),
-			shortestPathBridge);
+			new ThreadFactoryBuilder().setDaemon(true).setNameFormat("klite-shortest-path-%d").build()));
 	}
 
 	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway,
-		GroundPathfinder pathfinder, WebWalkBankCache bankCache, ExecutorService pathExecutor)
-	{
-		this(client, threadGateway, pathfinder, bankCache, pathExecutor, null);
-	}
-
-	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway,
-		GroundPathfinder pathfinder, WebWalkBankCache bankCache, ExecutorService pathExecutor,
-		@Nullable ShortestPathBridge shortestPathBridge)
+		ShortestPathRoutePlanner pathfinder, WebWalkBankCache bankCache, ExecutorService pathExecutor)
 	{
 		this.client = client;
 		this.threadGateway = threadGateway;
 		this.pathfinder = pathfinder;
 		this.bankCache = bankCache;
 		this.pathExecutor = pathExecutor;
-		this.shortestPathBridge = shortestPathBridge;
 	}
 
 	@Override
@@ -161,58 +154,24 @@ public class DefaultWebWalker implements WebWalker
 
 		if (shouldWaitForCurrentMovement(current))
 		{
-			return update(WebWalkState.MOVING, destination, clickTarget, path.size(), null);
+			return update(WebWalkState.MOVING, destination, clickTarget, path.size(),
+				followingMessage());
 		}
 
 		if (now - lastProgressAt >= STALL_TIMEOUT_MILLIS)
 		{
-			log.debug("KLite web walker replanning after a movement stall at {}", current);
+			log.debug("KLite Shortest Path walker replanning after a movement stall at {}", current);
 			clearPlan();
 			destination = requestedDestination;
 			arrivalDistance = requestedArrivalDistance;
 			lastProgressAt = now;
 		}
 
-		// Exact destinations can be clicked directly. Radius-based destinations are
-		// routed through Shortest Path or the internal pathfinder so a blocked center
-		// tile is never selected.
-		if (requestedArrivalDistance == 0 && path.isEmpty() && pendingPath == null
-			&& !shortestPathPending && directWalk(current, requestedDestination))
-		{
-			return update(WebWalkState.MOVING, destination, clickTarget, 0, null);
-		}
-
-		if (pendingPath == null && !shortestPathPending && path.isEmpty())
+		if (pendingPath == null && path.isEmpty())
 		{
 			requestPath(current, requestedDestination, requestedArrivalDistance);
 			return update(WebWalkState.PATHFINDING, destination, null, 0,
-				shortestPathPending ? "Waiting for the Shortest Path route" : "Calculating KLite ground route");
-		}
-
-		if (shortestPathPending)
-		{
-			ShortestPathBridge.RouteSnapshot route = shortestPathBridge.poll();
-			switch (route.getState())
-			{
-				case CALCULATING:
-					return update(WebWalkState.PATHFINDING, destination, null, 0,
-						"Waiting for the Shortest Path route");
-				case READY:
-					path = route.getPath();
-					pathIndex = 0;
-					shortestPathPending = false;
-					log.debug("Using Shortest Path route with {} tiles", path.size());
-					break;
-				case UNAVAILABLE:
-				case FAILED:
-					shortestPathPending = false;
-					log.debug("Shortest Path route unavailable: {}", route.getMessage());
-					requestInternalPath(current, requestedDestination, requestedArrivalDistance);
-					return update(WebWalkState.PATHFINDING, destination, null, 0,
-						route.getMessage() + "; calculating KLite ground route");
-				default:
-					throw new IllegalStateException("Unhandled Shortest Path state " + route.getState());
-			}
+				"Calculating Shortest Path route");
 		}
 
 		if (pendingPath != null)
@@ -220,7 +179,7 @@ public class DefaultWebWalker implements WebWalker
 			if (!pendingPath.isDone())
 			{
 				return update(WebWalkState.PATHFINDING, destination, null, 0,
-					"Calculating KLite ground route");
+					"Calculating Shortest Path route");
 			}
 			if (!acceptPendingPath())
 			{
@@ -228,28 +187,29 @@ public class DefaultWebWalker implements WebWalker
 			}
 		}
 
-		int closest = closestPathIndex(path, current, pathIndex);
-		if (closest < 0 || current.distanceTo(path.get(closest)) > REPLAN_DISTANCE)
+		int advancedIndex = advancePathIndex(path, current, pathIndex);
+		if (advancedIndex < 0)
 		{
 			clearPlan();
 			destination = requestedDestination;
 			arrivalDistance = requestedArrivalDistance;
 			requestPath(current, requestedDestination, requestedArrivalDistance);
 			return update(WebWalkState.PATHFINDING, destination, null, 0,
-				"Player moved away from the cached path");
+				"Player moved away from the Shortest Path route");
 		}
-		pathIndex = closest;
+		pathIndex = advancedIndex;
 
-		WorldPoint next = selectLookAhead(path, pathIndex, current);
-		if (next == null || !walk(next))
+		WorldPoint next = walkNextRouteTile(path, pathIndex, current);
+		if (next == null)
 		{
 			clearPlan();
 			destination = requestedDestination;
 			arrivalDistance = requestedArrivalDistance;
-			return update(WebWalkState.NO_PATH, destination, null, path.size(),
-				"No loaded path tile could be selected");
+			requestPath(current, requestedDestination, requestedArrivalDistance);
+			return update(WebWalkState.PATHFINDING, destination, null, 0,
+				"No loaded Shortest Path route tile is currently clickable; replanning");
 		}
-		return update(WebWalkState.MOVING, destination, clickTarget, path.size(), null);
+		return update(WebWalkState.MOVING, destination, next, path.size(), followingMessage());
 	}
 
 	private boolean acceptPendingPath()
@@ -262,51 +222,55 @@ public class DefaultWebWalker implements WebWalker
 			if (!result.isReached() || result.getPath().isEmpty())
 			{
 				update(WebWalkState.NO_PATH, destination, null, result.getPath().size(),
-					"No ground-only route was found after visiting " + result.getVisitedTiles() + " tiles");
+					"Shortest Path did not find a route after visiting "
+						+ result.getVisitedTiles() + " tiles");
 				return false;
 			}
 			path = result.getPath();
 			pathIndex = 0;
-			log.debug("KLite path found: {} tiles, {} visited, {}ms",
+			log.debug("Shortest Path route found: {} tiles, {} visited, {}ms",
 				path.size(), result.getVisitedTiles(), result.getElapsedMillis());
 			return true;
 		}
 		catch (CompletionException exception)
 		{
-			log.warn("KLite path calculation failed", exception.getCause());
+			Throwable cause = exception.getCause() == null ? exception : exception.getCause();
+			log.warn("Shortest Path calculation failed", cause);
 			update(WebWalkState.NO_PATH, destination, null, 0,
-				"Path calculation failed: " + exception.getCause().getClass().getSimpleName());
+				"Shortest Path calculation failed: " + cause.getClass().getSimpleName());
 			return false;
 		}
 	}
 
 	private void requestPath(WorldPoint start, WorldPoint target, int requestedArrivalDistance)
 	{
-		if (shortestPathBridge != null
-			&& shortestPathBridge.request(start, target, requestedArrivalDistance))
-		{
-			shortestPathPending = true;
-			return;
-		}
-		requestInternalPath(start, target, requestedArrivalDistance);
-	}
-
-	private void requestInternalPath(WorldPoint start, WorldPoint target, int requestedArrivalDistance)
-	{
 		pendingPath = CompletableFuture.supplyAsync(
 			() -> pathfinder.find(start, target, requestedArrivalDistance), pathExecutor);
 	}
 
-	private boolean directWalk(WorldPoint current, WorldPoint target)
+	@Nullable
+	private WorldPoint walkNextRouteTile(List<WorldPoint> route, int fromIndex, WorldPoint current)
 	{
-		return current.getPlane() == target.getPlane()
-			&& current.distanceTo(target) <= MAX_CLICK_DISTANCE
-			&& WorldPoint.isInScene(client.getTopLevelWorldView(), target.getX(), target.getY())
-			&& walk(target);
+		int targetIndex = selectRouteTargetIndex(route, fromIndex, current);
+		while (targetIndex >= fromIndex)
+		{
+			WorldPoint candidate = route.get(targetIndex);
+			if (!candidate.equals(current) && walk(candidate))
+			{
+				return candidate;
+			}
+			targetIndex--;
+		}
+		return null;
 	}
 
 	private boolean walk(WorldPoint target)
 	{
+		if (target.getPlane() != client.getTopLevelWorldView().getPlane()
+			|| !WorldPoint.isInScene(client.getTopLevelWorldView(), target.getX(), target.getY()))
+		{
+			return false;
+		}
 		LocalPoint local = LocalPoint.fromWorld(client.getTopLevelWorldView(), target.getX(), target.getY());
 		if (local == null)
 		{
@@ -333,43 +297,62 @@ public class DefaultWebWalker implements WebWalker
 		}
 	}
 
-	static int closestPathIndex(List<WorldPoint> path, WorldPoint current, int previousIndex)
+	/**
+	 * Advances only inside a small forward window. This prevents a route which
+	 * bends back near itself from jumping to a later crossing.
+	 */
+	static int advancePathIndex(List<WorldPoint> route, WorldPoint current, int previousIndex)
 	{
-		if (path.isEmpty())
+		if (route.isEmpty())
 		{
 			return -1;
 		}
-		int from = Math.max(0, previousIndex - 8);
-		int to = Math.min(path.size(), previousIndex + 256);
-		int closest = from;
-		int distance = Integer.MAX_VALUE;
-		for (int i = from; i < to; i++)
+		int base = Math.max(0, Math.min(previousIndex, route.size() - 1));
+		int from = Math.max(0, base - 1);
+		int to = Math.min(route.size(), base + ROUTE_PROGRESS_WINDOW + 1);
+		int best = base;
+		int bestDistance = current.distanceTo(route.get(base));
+		for (int index = from; index < to; index++)
 		{
-			int candidateDistance = current.distanceTo(path.get(i));
-			if (candidateDistance < distance)
+			int distance = current.distanceTo(route.get(index));
+			if (distance < bestDistance || distance == bestDistance && index > best)
 			{
-				distance = candidateDistance;
-				closest = i;
+				best = index;
+				bestDistance = distance;
 			}
 		}
-		return closest;
+		if (bestDistance > REPLAN_DISTANCE)
+		{
+			return -1;
+		}
+		return Math.max(base, best);
 	}
 
-	@Nullable
-	static WorldPoint selectLookAhead(List<WorldPoint> path, int fromIndex, WorldPoint current)
+	/** Selects a short, ordered look-ahead point which is always on the route. */
+	static int selectRouteTargetIndex(List<WorldPoint> route, int fromIndex, WorldPoint current)
 	{
-		WorldPoint selected = null;
-		for (int i = Math.max(0, fromIndex); i < path.size(); i++)
+		if (route.isEmpty())
 		{
-			WorldPoint candidate = path.get(i);
-			if (candidate.getPlane() != current.getPlane()
-				|| current.distanceTo(candidate) > MAX_CLICK_DISTANCE)
-			{
-				break;
-			}
-			selected = candidate;
+			return -1;
 		}
-		return selected;
+		int start = Math.max(0, Math.min(fromIndex, route.size() - 1));
+		int end = Math.min(route.size() - 1, start + ROUTE_CLICK_STEPS);
+		for (int index = end; index >= start; index--)
+		{
+			WorldPoint candidate = route.get(index);
+			if (candidate.getPlane() == current.getPlane()
+				&& current.distanceTo(candidate) <= MAX_CLICK_DISTANCE)
+			{
+				return index;
+			}
+		}
+		return -1;
+	}
+
+	private String followingMessage()
+	{
+		return path.isEmpty() ? "Following Shortest Path route"
+			: "Following Shortest Path route " + Math.min(pathIndex + 1, path.size()) + "/" + path.size();
 	}
 
 	private WebWalkResult update(WebWalkState state, @Nullable WorldPoint target,
@@ -396,11 +379,6 @@ public class DefaultWebWalker implements WebWalker
 			pendingPath.cancel(false);
 			pendingPath = null;
 		}
-		if (shortestPathBridge != null)
-		{
-			shortestPathBridge.clear();
-		}
-		shortestPathPending = false;
 		path = ImmutableList.of();
 		pathIndex = 0;
 		clickTarget = null;
