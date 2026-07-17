@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.runelite.client.plugins.klite.api.KLiteClientApi;
 
@@ -36,15 +37,27 @@ public final class AutomationContext
 	{
 		if (isCancellationRequested())
 		{
+			future.cancel(false);
 			throw new CancellationException("Automation was cancelled");
 		}
 
-		T value = future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-		if (isCancellationRequested())
+		try
 		{
-			throw new CancellationException("Automation was cancelled");
+			T value = future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+			if (isCancellationRequested())
+			{
+				throw new CancellationException("Automation was cancelled");
+			}
+			return value;
 		}
-		return value;
+		catch (TimeoutException exception)
+		{
+			// Do not leave stale client-thread operations queued after the caller has
+			// already abandoned the result. The gateway checks the cancelled future
+			// before executing its supplier.
+			future.cancel(false);
+			throw exception;
+		}
 	}
 
 	void cancel()
