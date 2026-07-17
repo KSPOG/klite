@@ -67,23 +67,70 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          SDK="dist/plugin-sdk/KLite-Plugin-SDK.jar"
-          STARTER="dist/plugin-sdk/KLite-Plugin-Starter.zip"
-          test -f "$SDK"
-          test -f "$STARTER"
-          unzip -l "$SDK" | grep -q "net/runelite/client/plugins/klite/api/KLiteClientApi.class"
-          unzip -l "$SDK" | grep -q "net/runelite/client/plugins/Plugin.class"
-          if unzip -l "$SDK" | grep -q "net/runelite/client/plugins/klite/marketplace/"; then
-            echo "Marketplace implementation classes must not be included in the SDK." >&2
-            exit 1
-          fi
-          if unzip -l "$SDK" | grep -q "net/runelite/client/plugins/klite/update/"; then
-            echo "Updater implementation classes must not be included in the SDK." >&2
-            exit 1
-          fi
-          unzip -l "$STARTER" | grep -q "libs/KLite-Plugin-SDK.jar"
-          unzip -l "$STARTER" | grep -q "src/main/resources/runelite_plugin.json"
-          sha256sum "$SDK" "$STARTER"
+          python3 <<'PY'
+          from pathlib import Path
+          from zipfile import BadZipFile, ZipFile
+
+          sdk = Path("dist/plugin-sdk/KLite-Plugin-SDK.jar")
+          starter = Path("dist/plugin-sdk/KLite-Plugin-Starter.zip")
+          for archive in (sdk, starter):
+              if not archive.is_file() or archive.stat().st_size == 0:
+                  raise SystemExit(f"Required SDK output is missing or empty: {archive}")
+
+          try:
+              with ZipFile(sdk) as archive:
+                  sdk_entries = set(archive.namelist())
+                  bad_sdk_entry = archive.testzip()
+              with ZipFile(starter) as archive:
+                  starter_entries = set(archive.namelist())
+                  bad_starter_entry = archive.testzip()
+          except BadZipFile as error:
+              raise SystemExit(f"Generated SDK output is not a valid ZIP/JAR: {error}") from error
+
+          if bad_sdk_entry:
+              raise SystemExit(f"SDK JAR contains a corrupt entry: {bad_sdk_entry}")
+          if bad_starter_entry:
+              raise SystemExit(f"Starter ZIP contains a corrupt entry: {bad_starter_entry}")
+
+          required_sdk = {
+              "net/runelite/client/plugins/klite/api/KLiteClientApi.class",
+              "net/runelite/client/plugins/Plugin.class",
+              "net/runelite/client/plugins/PluginDescriptor.class",
+              "net/runelite/client/eventbus/Subscribe.class",
+          }
+          missing_sdk = sorted(required_sdk - sdk_entries)
+          if missing_sdk:
+              raise SystemExit(f"SDK JAR is missing required entries: {missing_sdk}")
+
+          forbidden_prefixes = (
+              "net/runelite/client/plugins/klite/marketplace/",
+              "net/runelite/client/plugins/klite/update/",
+              "net/runelite/client/ui/",
+          )
+          forbidden = sorted(
+              entry for entry in sdk_entries
+              if entry.endswith(".class") and entry.startswith(forbidden_prefixes)
+          )
+          if forbidden:
+              raise SystemExit(f"Private client implementation classes entered the SDK: {forbidden[:20]}")
+
+          required_starter = {
+              "libs/KLite-Plugin-SDK.jar",
+              "src/main/resources/runelite_plugin.json",
+              "src/main/java/com/example/klite/StarterPlugin.java",
+              "build.gradle.kts",
+              "settings.gradle.kts",
+              "gradlew",
+              "gradlew.bat",
+          }
+          missing_starter = sorted(required_starter - starter_entries)
+          if missing_starter:
+              raise SystemExit(f"Starter ZIP is missing required entries: {missing_starter}")
+
+          print(f"Verified SDK JAR: {len(sdk_entries)} entries, {sdk.stat().st_size} bytes")
+          print(f"Verified starter ZIP: {len(starter_entries)} entries, {starter.stat().st_size} bytes")
+          PY
+          sha256sum dist/plugin-sdk/KLite-Plugin-SDK.jar dist/plugin-sdk/KLite-Plugin-Starter.zip
 
       - name: Compile generated standalone starter
         shell: bash
@@ -95,12 +142,35 @@ jobs:
           cd build/sdk-starter-verification
           chmod +x gradlew
           ./gradlew clean jar --no-daemon --stacktrace
-          test -f build/libs/starter-plugin-0.1.0.jar
-          if unzip -l build/libs/starter-plugin-0.1.0.jar | grep -q "net/runelite/"; then
-            echo "Generated starter bundled KLite or RuneLite runtime classes." >&2
-            exit 1
-          fi
-          unzip -l build/libs/starter-plugin-0.1.0.jar | grep -q "runelite_plugin.json"
+          python3 <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          plugin = Path("build/libs/starter-plugin-0.1.0.jar")
+          if not plugin.is_file() or plugin.stat().st_size == 0:
+              raise SystemExit(f"Generated starter plugin JAR was not produced: {plugin}")
+
+          with ZipFile(plugin) as archive:
+              entries = set(archive.namelist())
+              corrupt = archive.testzip()
+          if corrupt:
+              raise SystemExit(f"Generated starter plugin contains a corrupt entry: {corrupt}")
+          if "runelite_plugin.json" not in entries:
+              raise SystemExit("Generated starter plugin is missing runelite_plugin.json")
+
+          bundled_runtime = sorted(
+              entry for entry in entries
+              if entry.endswith(".class") and (
+                  entry.startswith("net/runelite/")
+                  or entry.startswith("com/google/inject/")
+                  or entry.startswith("javax/inject/")
+              )
+          )
+          if bundled_runtime:
+              raise SystemExit(f"Generated starter bundled runtime classes: {bundled_runtime[:20]}")
+
+          print(f"Compiled and verified starter plugin: {plugin.stat().st_size} bytes")
+          PY
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -134,3 +204,22 @@ jobs:
               --notes "Standalone compile-only SDK and IntelliJ/Gradle starter for building KLite plugins without access to the KLite client source or full client JAR." \
               --repo "$GITHUB_REPOSITORY"
           fi
+
+      - name: Verify published SDK release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          rm -rf build/sdk-release-verification
+          mkdir -p build/sdk-release-verification
+          gh release download plugin-sdk \
+            --pattern "KLite-Plugin-SDK.jar" \
+            --pattern "KLite-Plugin-Starter.zip" \
+            --pattern "sdk-manifest.json" \
+            --dir build/sdk-release-verification \
+            --repo "$GITHUB_REPOSITORY"
+          cmp dist/plugin-sdk/KLite-Plugin-SDK.jar build/sdk-release-verification/KLite-Plugin-SDK.jar
+          cmp dist/plugin-sdk/KLite-Plugin-Starter.zip build/sdk-release-verification/KLite-Plugin-Starter.zip
+          cmp dist/plugin-sdk/sdk-manifest.json build/sdk-release-verification/sdk-manifest.json
+          sha256sum build/sdk-release-verification/*
