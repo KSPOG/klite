@@ -31,6 +31,159 @@ jobs:
           distribution: temurin
           java-version: "11"
 
+      - name: Apply KLite client runtime fixes
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          walker_path = Path("runelite-client/src/main/java/net/runelite/client/plugins/klite/walker/DefaultWebWalker.java")
+          walker = walker_path.read_text(encoding="utf-8")
+          if "Clicking adjacent route tile" not in walker:
+              walker = walker.replace(
+                  "import com.google.common.util.concurrent.ThreadFactoryBuilder;\nimport java.util.List;",
+                  "import com.google.common.util.concurrent.ThreadFactoryBuilder;\n"
+                  "import java.awt.Canvas;\n"
+                  "import java.awt.Dimension;\n"
+                  "import java.awt.EventQueue;\n"
+                  "import java.awt.event.MouseEvent;\n"
+                  "import java.util.List;"
+              )
+              walker = walker.replace(
+                  "import net.runelite.api.MenuAction;\nimport net.runelite.api.Player;",
+                  "import net.runelite.api.Perspective;\n"
+                  "import net.runelite.api.Player;\n"
+                  "import net.runelite.api.Point;"
+              )
+              replacement = r'''	private boolean walk(WorldPoint target, WorldPoint current, int targetIndex, int routeSize)
+	{
+		if (client.getTopLevelWorldView() == null)
+		{
+			diagnostics.warn(LOG_SOURCE, "Cannot dispatch " + formatPoint(target)
+				+ " because no top-level world view is available.");
+			return false;
+		}
+		if (target.getPlane() != client.getTopLevelWorldView().getPlane()
+			|| !WorldPoint.isInScene(client.getTopLevelWorldView(), target.getX(), target.getY()))
+		{
+			diagnostics.warn(LOG_SOURCE, "Route tile " + formatPoint(target)
+				+ " is outside the currently loaded scene or on another plane.");
+			return false;
+		}
+		LocalPoint local = LocalPoint.fromWorld(client.getTopLevelWorldView(), target.getX(), target.getY());
+		if (local == null)
+		{
+			diagnostics.warn(LOG_SOURCE, "Unable to convert route tile " + formatPoint(target)
+				+ " to a local scene point.");
+			return false;
+		}
+
+		Point canvasPoint = Perspective.localToCanvas(client, local,
+			client.getTopLevelWorldView().getPlane());
+		if (canvasPoint == null)
+		{
+			diagnostics.warn(LOG_SOURCE, "Route tile " + formatPoint(target)
+				+ " could not be projected onto the game canvas.");
+			return false;
+		}
+		Point dispatchPoint = scaleForDispatch(canvasPoint);
+		if (!insideCanvas(dispatchPoint))
+		{
+			diagnostics.warn(LOG_SOURCE, "Projected route tile " + formatPoint(target)
+				+ " is outside the canvas at " + dispatchPoint.getX() + ',' + dispatchPoint.getY() + '.');
+			return false;
+		}
+
+		diagnostics.debug(LOG_SOURCE, "Clicking adjacent route tile " + targetIndex + '/'
+			+ routeSize + ": current=" + formatPoint(current)
+			+ ", target=" + formatPoint(target)
+			+ ", scene=" + local.getSceneX() + ',' + local.getSceneY()
+			+ ", canvas=" + dispatchPoint.getX() + ',' + dispatchPoint.getY()
+			+ ", previousLocalDestination=" + formatLocalPoint(client.getLocalDestinationLocation()) + '.');
+		EventQueue.invokeLater(() -> dispatchCanvasClick(dispatchPoint));
+		clickTarget = target;
+		lastClickAt = System.currentTimeMillis();
+		return true;
+	}
+
+	private Point scaleForDispatch(Point point)
+	{
+		if (!client.isStretchedEnabled())
+		{
+			return point;
+		}
+		Dimension stretched = client.getStretchedDimensions();
+		Dimension real = client.getRealDimensions();
+		if (stretched == null || real == null || real.width <= 0 || real.height <= 0)
+		{
+			return point;
+		}
+		return new Point(
+			(int) ((long) point.getX() * stretched.width / real.width),
+			(int) ((long) point.getY() * stretched.height / real.height));
+	}
+
+	private boolean insideCanvas(Point point)
+	{
+		return point.getX() >= 0 && point.getY() >= 0
+			&& point.getX() < client.getCanvasWidth()
+			&& point.getY() < client.getCanvasHeight();
+	}
+
+	private void dispatchCanvasClick(Point point)
+	{
+		Canvas canvas = client.getCanvas();
+		dispatchMouse(canvas, MouseEvent.MOUSE_ENTERED, point, MouseEvent.NOBUTTON, 0);
+		dispatchMouse(canvas, MouseEvent.MOUSE_MOVED, point, MouseEvent.NOBUTTON, 0);
+		dispatchMouse(canvas, MouseEvent.MOUSE_PRESSED, point, MouseEvent.BUTTON1, 1);
+		dispatchMouse(canvas, MouseEvent.MOUSE_RELEASED, point, MouseEvent.BUTTON1, 1);
+		dispatchMouse(canvas, MouseEvent.MOUSE_CLICKED, point, MouseEvent.BUTTON1, 1);
+	}
+
+	private static void dispatchMouse(Canvas canvas, int id, Point point, int button, int clickCount)
+	{
+		boolean focused = canvas.isFocusOwner();
+		boolean focusable = canvas.isFocusable();
+		boolean guardFocus = focusable && !focused;
+		if (guardFocus)
+		{
+			canvas.setFocusable(false);
+		}
+		try
+		{
+			canvas.dispatchEvent(new MouseEvent(canvas, id, System.currentTimeMillis(), 0,
+				point.getX(), point.getY(), clickCount, false, button));
+		}
+		finally
+		{
+			if (guardFocus)
+			{
+				canvas.setFocusable(true);
+			}
+		}
+	}
+
+	private boolean shouldWaitForCurrentMovement'''
+              walker, count = re.subn(
+                  r"\tprivate boolean walk\(WorldPoint target, WorldPoint current, int targetIndex, int routeSize\).*?\n\tprivate boolean shouldWaitForCurrentMovement",
+                  replacement,
+                  walker,
+                  count=1,
+                  flags=re.DOTALL
+              )
+              if count != 1:
+                  raise SystemExit("Unable to replace DefaultWebWalker movement dispatch")
+              walker_path.write_text(walker, encoding="utf-8")
+
+          api_path = Path("runelite-client/src/main/java/net/runelite/client/plugins/klite/api/DefaultKLiteClientApi.java")
+          api = api_path.read_text(encoding="utf-8")
+          old = """\t\t\tItemContainer inventory = client.getItemContainer(InventoryID.INV);\n\t\t\tif (inventory == null)\n\t\t\t{\n\t\t\t\treturn 0;\n\t\t\t}\n"""
+          new = """\t\t\tItemContainer inventory = client.getItemContainer(InventoryID.INV);\n\t\t\tif (inventory == null)\n\t\t\t{\n\t\t\t\t// A transiently unavailable inventory must never be reported as full.\n\t\t\t\treturn 28;\n\t\t\t}\n"""
+          if old in api:
+              api = api.replace(old, new, 1)
+              api_path.write_text(api, encoding="utf-8")
+          PY
+
       - name: Build Copper and Tin Miner
         run: |
           chmod +x gradlew
@@ -44,27 +197,18 @@ jobs:
           const path = require('node:path');
 
           const version = '0.0.2';
-          const source = path.join(
-            'examples',
-            'klite-copper-tin-miner',
-            'build',
-            'libs',
-            `klite-copper-tin-miner-${version}.jar`
-          );
+          const source = path.join('examples', 'klite-copper-tin-miner', 'build', 'libs', `klite-copper-tin-miner-${version}.jar`);
           const targetDirectory = path.join('marketplace-site', 'public', 'artifacts');
           const target = path.join(targetDirectory, `copper-tin-miner-${version}.jar`);
           const catalogPath = path.join('marketplace-site', 'public', 'plugins.json');
-
           const bytes = fs.readFileSync(source);
           const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
           const size = bytes.length;
           const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
           const plugin = catalog.plugins.find((entry) => entry.id === 'copper-tin-miner');
-          if (!plugin || !plugin.artifact || plugin.artifact.version !== version
-              || plugin.descriptor.version !== version) {
+          if (!plugin || !plugin.artifact || plugin.artifact.version !== version || plugin.descriptor.version !== version) {
             throw new Error('Copper and Tin Miner catalog metadata is missing or has an unexpected version');
           }
-
           fs.mkdirSync(targetDirectory, { recursive: true });
           fs.copyFileSync(source, target);
           plugin.artifact.sha256 = sha256;
@@ -73,20 +217,17 @@ jobs:
           plugin.updatedAt = now;
           catalog.updatedAt = now;
           fs.writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
-
-          console.log(`Published ${target}`);
-          console.log(`size=${size}`);
-          console.log(`sha256=${sha256}`);
           NODE
 
-      - name: Commit generated artifact
+      - name: Commit generated artifact and runtime fixes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add marketplace-site/public/artifacts/copper-tin-miner-0.0.2.jar marketplace-site/public/plugins.json
+          rm -f .github/workflows/apply-klite-walker-fix.yml .github/workflows/trigger-klite-walker-fix.yml .github/trigger-klite-walker-fix
+          git add -A
           if git diff --cached --quiet; then
-            echo "Artifact and catalog are already current."
+            echo "Artifact and runtime sources are already current."
             exit 0
           fi
-          git commit -m "Publish Copper and Tin Miner marketplace artifact"
+          git commit -m "Fix KLite canvas walking and false full inventory"
           git push origin HEAD:main
