@@ -18,15 +18,32 @@ export async function onRequest(context) {
     return jsonError(503, "update_manifest_invalid", validationError);
   }
 
-  const responseHeaders = installerHeaders(manifest);
-  if (context.request.method === "HEAD") {
-    return new Response(null, { status: 200, headers: responseHeaders });
-  }
-
   const assetUrl = new URL(`${RELEASE_BASE}${manifest.assetName}`);
   // The content hash is part of both the filename and query string. The query
   // prevents an intermediary from reusing a cached response for an older asset.
   assetUrl.searchParams.set("klite_sha256", manifest.sha256.toLowerCase());
+
+  const requestUrl = new URL(context.request.url);
+  if (requestUrl.searchParams.get("browser") === "1") {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        location: assetUrl.toString(),
+        "cache-control": "private, no-store, no-cache, must-revalidate, max-age=0",
+        pragma: "no-cache",
+        expires: "0",
+        "x-content-type-options": "nosniff",
+        "x-klite-build-sha": manifest.buildSha,
+        "x-klite-installer-sha256": manifest.sha256.toLowerCase(),
+        "x-klite-installer-asset": manifest.assetName
+      }
+    });
+  }
+
+  const responseHeaders = installerHeaders(manifest);
+  if (context.request.method === "HEAD") {
+    return new Response(null, { status: 200, headers: responseHeaders });
+  }
 
   const assetResponse = await fetch(assetUrl, {
     method: "GET",
