@@ -25,8 +25,8 @@ class KLiteAccountPanel extends JPanel
 	private final KLiteAccountService accountService;
 	private final KLiteDiscordLoginFlow discordLoginFlow;
 	private final KLiteDeveloperHotReloadService hotReloadService;
-	private final JLabel status = new JLabel("Restoring marketplace account...");
-	private final JButton action = new JButton("Sign in with Discord");
+	private final JLabel status = new JLabel("Restoring Discord session...");
+	private final JButton action = new JButton("Continue with Discord");
 	private final JButton hotReload = new JButton("Enable hot reload");
 
 	@Inject
@@ -43,11 +43,11 @@ class KLiteAccountPanel extends JPanel
 			BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
 			BorderFactory.createEmptyBorder(12, 12, 12, 12)));
 
-		JLabel heading = new JLabel("Marketplace account");
+		JLabel heading = new JLabel("KLite Discord account");
 		heading.setForeground(ColorScheme.TEXT_COLOR);
 		status.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		action.setToolTipText(
-			"Open Discord in your browser and authorize KLite");
+			"Open Discord in your browser and authorize the KLite client");
 		hotReload.setToolTipText("Watch "
 			+ KLiteDeveloperHotReloadService.pluginDirectory()
 			+ " for rebuilt plugin jars");
@@ -92,7 +92,7 @@ class KLiteAccountPanel extends JPanel
 		}
 
 		action.setEnabled(false);
-		status.setText("Opening Discord in your browser...");
+		status.setText("Opening Discord authorization in your browser...");
 		discordLoginFlow.login().whenComplete((account, error) ->
 			SwingUtilities.invokeLater(() ->
 			{
@@ -109,12 +109,12 @@ class KLiteAccountPanel extends JPanel
 	{
 		if (account.isEmpty())
 		{
-			action.setText("Sign in with Discord");
+			action.setText("Continue with Discord");
 			action.setEnabled(true);
 			hotReloadService.disable();
 			hotReload.setVisible(false);
 			status.setText(
-				"Sign in with Discord to access marketplace plugins");
+				"Authorize with Discord to access marketplace plugins");
 			return;
 		}
 
@@ -126,7 +126,7 @@ class KLiteAccountPanel extends JPanel
 			? "Disable hot reload" : "Enable hot reload");
 		String identity = current.getDiscordName() == null
 			? current.getUsername() : current.getDiscordName();
-		status.setText("Signed in as " + identity + " - "
+		status.setText("Signed in with Discord as " + identity + " - "
 			+ current.getEntitlementPluginIds().size()
 			+ " paid plugin(s)");
 	}
