@@ -17,7 +17,10 @@ import java.net.URLStreamHandler;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import javax.annotation.Nullable;
@@ -38,13 +41,21 @@ final class KLiteInMemoryPluginClassLoader extends ClassLoader
 
 	private final Map<String, byte[]> classes = new HashMap<>();
 	private final Map<String, byte[]> resources = new HashMap<>();
+	private final Set<String> pluginPackages;
 	private volatile boolean closed;
 	@Nullable
 	private MethodHandles.Lookup lookup;
 
 	KLiteInMemoryPluginClassLoader(byte[] jarBytes, ClassLoader parent) throws IOException
 	{
+		this(jarBytes, parent, Collections.emptyList());
+	}
+
+	KLiteInMemoryPluginClassLoader(byte[] jarBytes, ClassLoader parent,
+		List<String> declaredEntrypoints) throws IOException
+	{
 		super(parent);
+		pluginPackages = declaredPluginPackages(declaredEntrypoints);
 		readJar(jarBytes);
 		ReflectUtil.installLookupHelper(this);
 	}
@@ -206,6 +217,52 @@ final class KLiteInMemoryPluginClassLoader extends ClassLoader
 		}
 	}
 
+	private static Set<String> declaredPluginPackages(List<String> entrypoints)
+	{
+		Set<String> packages = new HashSet<>();
+		for (String entrypoint : entrypoints)
+		{
+			if (entrypoint == null)
+			{
+				continue;
+			}
+			int separator = entrypoint.lastIndexOf('.');
+			if (separator > 0)
+			{
+				packages.add(entrypoint.substring(0, separator + 1));
+			}
+		}
+		return Collections.unmodifiableSet(packages);
+	}
+
+	private boolean isPluginClass(String className)
+	{
+		for (String pluginPackage : pluginPackages)
+		{
+			if (className.startsWith(pluginPackage))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isParentFirst(String className)
+	{
+		if (isPluginClass(className))
+		{
+			return false;
+		}
+		for (String prefix : PARENT_FIRST_PACKAGES)
+		{
+			if (className.startsWith(prefix))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static byte[] readEntry(InputStream input) throws IOException
 	{
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -229,18 +286,6 @@ final class KLiteInMemoryPluginClassLoader extends ClassLoader
 		{
 			throw new IOException("Plugin archive contains an unsafe entry path");
 		}
-	}
-
-	private static boolean isParentFirst(String className)
-	{
-		for (String prefix : PARENT_FIRST_PACKAGES)
-		{
-			if (className.startsWith(prefix))
-			{
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private static final class MemoryUrlHandler extends URLStreamHandler
