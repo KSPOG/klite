@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -22,9 +23,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import net.runelite.api.Client;
 import net.runelite.client.RuneLiteProperties;
+import net.runelite.client.eventbus.EventBus;
+import net.runelite.client.events.ClientShutdown;
 import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
-import net.runelite.client.ui.ClientUI;
 import net.runelite.client.util.OSType;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -49,17 +52,19 @@ public final class KLiteUpdateService
 
 	private final OkHttpClient httpClient;
 	private final KLiteClientLogBuffer diagnostics;
-	private final ClientUI clientUI;
+	private final EventBus eventBus;
+	private final Client client;
 	private final AtomicReference<Call> activeCall = new AtomicReference<>();
 	private final AtomicBoolean installing = new AtomicBoolean();
 
 	@Inject
 	KLiteUpdateService(OkHttpClient httpClient, KLiteClientLogBuffer diagnostics,
-		ClientUI clientUI)
+		EventBus eventBus, Client client)
 	{
 		this.httpClient = httpClient;
 		this.diagnostics = diagnostics;
-		this.clientUI = clientUI;
+		this.eventBus = eventBus;
+		this.client = client;
 	}
 
 	/** Checks the published manifest and optionally reports an up-to-date result. */
@@ -221,7 +226,7 @@ public final class KLiteUpdateService
 					Path installer = downloadVerifiedInstaller(closeable, manifest);
 					scheduleInstaller(installer);
 					diagnostics.info(LOG_SOURCE, "Installer verified. KLite will shut down before installation.");
-					SwingUtilities.invokeLater(clientUI::shutdownClient);
+					shutdownClient();
 				}
 				catch (IOException | RuntimeException exception)
 				{
@@ -233,6 +238,26 @@ public final class KLiteUpdateService
 				}
 			}
 		});
+	}
+
+	private void shutdownClient()
+	{
+		ClientShutdown shutdown = new ClientShutdown();
+		eventBus.post(shutdown);
+		new Thread(() ->
+		{
+			shutdown.waitForAllConsumers(Duration.ofSeconds(10));
+			client.stopNow();
+			try
+			{
+				Thread.sleep(1_000L);
+			}
+			catch (InterruptedException ignored)
+			{
+				Thread.currentThread().interrupt();
+			}
+			System.exit(0);
+		}, "KLite Update Shutdown").start();
 	}
 
 	private static KLiteUpdateManifest readManifest(Response response) throws IOException
@@ -348,8 +373,15 @@ public final class KLiteUpdateService
 			Files.deleteIfExists(partial);
 			throw new IOException("Installer verification failed");
 		}
-		Files.move(partial, installer, StandardCopyOption.REPLACE_EXISTING,
-			StandardCopyOption.ATOMIC_MOVE);
+		try
+		{
+			Files.move(partial, installer, StandardCopyOption.REPLACE_EXISTING,
+				StandardCopyOption.ATOMIC_MOVE);
+		}
+		catch (java.nio.file.AtomicMoveNotSupportedException ignored)
+		{
+			Files.move(partial, installer, StandardCopyOption.REPLACE_EXISTING);
+		}
 		return installer;
 	}
 
