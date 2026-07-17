@@ -72,6 +72,13 @@ final class CopperTinMinerTask implements AutomationTask
 	}
 
 	@Override
+	public void onStart(AutomationContext context)
+	{
+		diagnostics.info(LOG_SOURCE,
+			"Automation started. Banking is permitted only after inventoryFreeSlots reaches 0.");
+	}
+
+	@Override
 	public AutomationResult tick(AutomationContext context) throws Exception
 	{
 		try
@@ -88,15 +95,46 @@ final class CopperTinMinerTask implements AutomationTask
 			int freeSlots = context.await(client.inventoryFreeSlots(), API_TIMEOUT);
 			if (!banking && freeSlots == 0)
 			{
-				banking = true;
-				setActivity("Inventory full; switching to banking");
-				diagnostics.info(LOG_SOURCE, "Inventory is full. Clearing the mining route and walking to the bank.");
-				context.await(webWalker.clear(), API_TIMEOUT);
+				List<KLiteItemStack> inventory = context.await(client.inventory(), API_TIMEOUT);
+				Optional<KLiteItemStack> depositable = firstNonPickaxe(context, client, inventory);
+				if (depositable.isPresent())
+				{
+					banking = true;
+					setActivity("Inventory full; switching to banking");
+					diagnostics.info(LOG_SOURCE,
+						"Inventory is full and contains a non-pickaxe item. Starting a banking trip.");
+					context.await(webWalker.clear(), API_TIMEOUT);
+				}
+				else
+				{
+					diagnostics.warn(LOG_SOURCE,
+						"Inventory is full but contains no depositable non-pickaxe item; banking was not started.");
+				}
 			}
 
 			if (banking)
 			{
-				bank(context, client, playerLocation);
+				boolean bankOpen = context.await(client.isBankOpen(), API_TIMEOUT);
+				List<KLiteItemStack> inventory = context.await(client.inventory(), API_TIMEOUT);
+				Optional<KLiteItemStack> depositable = firstNonPickaxe(context, client, inventory);
+
+				// A bank trip may only continue while travelling with the same full inventory,
+				// or while the bank interface is open and the triggered deposit cycle is finishing.
+				if (!bankOpen && (freeSlots > 0 || depositable.isEmpty()))
+				{
+					banking = false;
+					target = MINE;
+					setActivity("Banking cancelled; returning to mine");
+					diagnostics.info(LOG_SOURCE,
+						"Banking cancelled before opening the bank because inventory is no longer full "
+							+ "or contains no non-pickaxe item.");
+					context.await(webWalker.clear(), API_TIMEOUT);
+					mine(context, client, playerLocation);
+				}
+				else
+				{
+					bank(context, client, playerLocation, bankOpen, depositable);
+				}
 			}
 			else
 			{
@@ -113,28 +151,32 @@ final class CopperTinMinerTask implements AutomationTask
 	}
 
 	private void bank(AutomationContext context, KLiteClientApi client,
-		WorldPoint playerLocation) throws Exception
+		WorldPoint playerLocation, boolean bankOpen,
+		Optional<KLiteItemStack> depositable) throws Exception
 	{
-		if (context.await(client.isBankOpen(), API_TIMEOUT))
+		if (bankOpen)
 		{
 			target = null;
-			setActivity("Depositing ores");
-			Optional<KLiteItemStack> deposit = firstNonPickaxe(context, client);
-			if (deposit.isEmpty())
+			if (depositable.isEmpty())
 			{
 				banking = false;
 				setActivity("Banking complete; returning to mine");
-				diagnostics.info(LOG_SOURCE, "No non-pickaxe items remain. Clearing the bank route and returning to mining.");
+				diagnostics.info(LOG_SOURCE,
+					"No non-pickaxe items remain. Banking is complete and the miner is returning to the mine.");
 				context.await(webWalker.clear(), API_TIMEOUT);
 				return;
 			}
 
+			setActivity("Depositing ores");
 			if (cooldownElapsed())
 			{
-				diagnostics.debug(LOG_SOURCE, "Depositing inventory slot " + deposit.get().getSlot()
-					+ " with quantity ALL.");
-				context.await(client.depositBankInventoryItem(
-					deposit.get().getSlot(), KLiteBankQuantity.ALL), API_TIMEOUT);
+				KLiteItemStack item = depositable.get();
+				diagnostics.debug(LOG_SOURCE, "Depositing inventory slot " + item.getSlot()
+					+ " (itemId=" + item.getItemId() + ") with quantity ALL.");
+				KLiteInteractionResult result = context.await(client.depositBankInventoryItem(
+					item.getSlot(), KLiteBankQuantity.ALL), API_TIMEOUT);
+				diagnostics.info(LOG_SOURCE, "Deposit result: status=" + result.getStatus()
+					+ ", message=" + result.getMessage() + '.');
 				startCooldown();
 			}
 			return;
@@ -167,8 +209,10 @@ final class CopperTinMinerTask implements AutomationTask
 			setActivity("Opening bank");
 			diagnostics.info(LOG_SOURCE, "Interacting with bank object " + object.getObjectId()
 				+ " at " + formatPoint(object.getLocation()) + '.');
-			context.await(client.interactSceneObject(
+			KLiteInteractionResult result = context.await(client.interactSceneObject(
 				object.getObjectId(), object.getLocation(), "Bank"), API_TIMEOUT);
+			diagnostics.info(LOG_SOURCE, "Bank interaction result: status=" + result.getStatus()
+				+ ", message=" + result.getMessage() + '.');
 			startCooldown();
 		}
 		else
@@ -178,9 +222,9 @@ final class CopperTinMinerTask implements AutomationTask
 	}
 
 	private Optional<KLiteItemStack> firstNonPickaxe(
-		AutomationContext context, KLiteClientApi client) throws Exception
+		AutomationContext context, KLiteClientApi client,
+		List<KLiteItemStack> inventory) throws Exception
 	{
-		List<KLiteItemStack> inventory = context.await(client.inventory(), API_TIMEOUT);
 		for (KLiteItemStack item : inventory)
 		{
 			Optional<KLiteItemDefinition> definition = context.await(
@@ -252,7 +296,7 @@ final class CopperTinMinerTask implements AutomationTask
 		else
 		{
 			diagnostics.warn(LOG_SOURCE, "The Mine interaction was not dispatched for object "
-				+ selected.getObjectId() + '.');
+				+ selected.getObjectId() + ": " + result.getStatus() + " - " + result.getMessage());
 		}
 	}
 
