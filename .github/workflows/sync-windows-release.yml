@@ -1,0 +1,181 @@
+name: Synchronize KLite Windows release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/sync-windows-release.yml"
+      - "marketplace-site/functions/download/windows.js"
+  workflow_run:
+    workflows:
+      - "Build KLite Windows client"
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: klite-windows-release-sync
+  cancel-in-progress: true
+
+jobs:
+  synchronize:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check whether a Windows build is active
+        id: guard
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          active="$(gh run list \
+            --workflow build-windows-client.yml \
+            --limit 20 \
+            --json status \
+            --jq '[.[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested")] | length')"
+
+          if [ "$active" -gt 0 ]; then
+            echo "A Windows build is still active; its workflow_run event will synchronize the finished installer."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve latest successful Windows build
+        id: source
+        if: steps.guard.outputs.ready == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          run_json="$(gh run list \
+            --workflow build-windows-client.yml \
+            --status success \
+            --limit 1 \
+            --json databaseId,headSha,number,createdAt)"
+
+          run_number="$(jq -r '.[0].number // empty' <<< "$run_json")"
+          build_sha="$(jq -r '.[0].headSha // empty' <<< "$run_json")"
+          run_id="$(jq -r '.[0].databaseId // empty' <<< "$run_json")"
+
+          if [[ ! "$run_number" =~ ^[0-9]+$ ]] || [[ ! "$build_sha" =~ ^[a-f0-9]{40}$ ]] || [[ ! "$run_id" =~ ^[0-9]+$ ]]; then
+            echo "Unable to identify the latest successful Windows build." >&2
+            exit 1
+          fi
+
+          echo "version=1.0.$run_number" >> "$GITHUB_OUTPUT"
+          echo "build_sha=$build_sha" >> "$GITHUB_OUTPUT"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Publish immutable installer asset
+        id: installer
+        if: steps.guard.outputs.ready == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.source.outputs.version }}
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist
+
+          gh release download windows-client \
+            --pattern "KLite-Setup.exe" \
+            --dir dist \
+            --repo "$GITHUB_REPOSITORY"
+
+          source="dist/KLite-Setup.exe"
+          asset_name="KLite-Setup-$VERSION.exe"
+          immutable="dist/$asset_name"
+
+          test -f "$source"
+          cp "$source" "$immutable"
+          gh release upload windows-client "$immutable" \
+            --clobber \
+            --repo "$GITHUB_REPOSITORY"
+
+          sha256="$(sha256sum "$immutable" | awk '{print $1}')"
+          size="$(stat -c '%s' "$immutable")"
+
+          if [[ ! "$sha256" =~ ^[a-f0-9]{64}$ ]] || [[ ! "$size" =~ ^[0-9]+$ ]] || [ "$size" -le 0 ]; then
+            echo "The synchronized installer metadata is invalid." >&2
+            exit 1
+          fi
+
+          echo "asset_name=$asset_name" >> "$GITHUB_OUTPUT"
+          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
+          echo "size=$size" >> "$GITHUB_OUTPUT"
+
+      - name: Refresh main before publishing manifest
+        if: steps.guard.outputs.ready == 'true'
+        shell: bash
+        run: git pull --ff-only origin main
+
+      - name: Generate synchronized update manifest
+        if: steps.guard.outputs.ready == 'true'
+        shell: bash
+        env:
+          VERSION: ${{ steps.source.outputs.version }}
+          BUILD_SHA: ${{ steps.source.outputs.build_sha }}
+          ASSET_NAME: ${{ steps.installer.outputs.asset_name }}
+          INSTALLER_SHA256: ${{ steps.installer.outputs.sha256 }}
+          INSTALLER_SIZE: ${{ steps.installer.outputs.size }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          manifest = {
+              "schemaVersion": 1,
+              "platform": "windows-x64",
+              "version": os.environ["VERSION"],
+              "buildSha": os.environ["BUILD_SHA"],
+              "downloadUrl": "https://klite-marketplace.pages.dev/download/windows",
+              "assetName": os.environ["ASSET_NAME"],
+              "sha256": os.environ["INSTALLER_SHA256"],
+              "size": int(os.environ["INSTALLER_SIZE"]),
+              "launcher": "KLite.exe",
+              "publishedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+          }
+
+          path = Path("marketplace-site/public/client/windows/latest.json")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+          print(path.read_text(encoding="utf-8"))
+          PY
+
+      - name: Commit synchronized manifest
+        if: steps.guard.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add marketplace-site/public/client/windows/latest.json
+
+          if git diff --cached --quiet; then
+            echo "The Windows update manifest is already synchronized."
+            exit 0
+          fi
+
+          git commit -m "Synchronize KLite Windows update manifest"
+          if ! git push origin HEAD:main; then
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
