@@ -41,12 +41,12 @@ class KLiteDiscordLoginFlow
 	private static final long LOGIN_TIMEOUT_MINUTES = 10L;
 	private static final SecureRandom RANDOM = new SecureRandom();
 
-	private final KLiteAccountService accountService;
+	private final KLiteDiscordAccountClient accountClient;
 
 	@Inject
-	KLiteDiscordLoginFlow(KLiteAccountService accountService)
+	KLiteDiscordLoginFlow(KLiteDiscordAccountClient accountClient)
 	{
-		this.accountService = accountService;
+		this.accountClient = accountClient;
 	}
 
 	CompletableFuture<KLiteAccountState> login()
@@ -96,7 +96,7 @@ class KLiteDiscordLoginFlow
 				server, callbackExecutor, finished));
 		server.start();
 
-		accountService.startDiscordLogin(redirectUri, challenge)
+		accountClient.start(redirectUri, challenge)
 			.whenComplete((login, error) ->
 			{
 				if (error != null)
@@ -163,7 +163,7 @@ class KLiteDiscordLoginFlow
 			return;
 		}
 
-		accountService.exchangeDiscordLogin(code, state, verifier)
+		accountClient.exchange(code, state, verifier)
 			.whenComplete((account, exchangeError) ->
 			{
 				try
