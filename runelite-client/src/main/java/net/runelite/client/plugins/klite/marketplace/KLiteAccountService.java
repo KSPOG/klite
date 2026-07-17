@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,7 +27,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-/** Authenticates a KLite marketplace account and keeps its revocable token in memory only. */
+/** Authenticates a KLite marketplace account and restores its protected client session. */
 @Singleton
 public class KLiteAccountService
 {
@@ -36,28 +38,45 @@ public class KLiteAccountService
 	private final OkHttpClient httpClient;
 	private final Gson gson;
 	private final HttpUrl apiUrl;
+	@Nullable
+	private final KLiteAccountSessionStore sessionStore;
+	private final CopyOnWriteArrayList<Consumer<Optional<KLiteAccountState>>> changeListeners =
+		new CopyOnWriteArrayList<>();
 
 	@Nullable
 	private volatile String token;
 	@Nullable
 	private volatile KLiteAccountState state;
+	private volatile long tokenExpiresAt;
 
 	@Inject
-	KLiteAccountService(OkHttpClient httpClient, Gson gson)
+	KLiteAccountService(OkHttpClient httpClient, Gson gson, KLiteAccountSessionStore sessionStore)
 	{
-		this(httpClient, gson, DEFAULT_API_URL);
+		this(httpClient, gson, DEFAULT_API_URL, sessionStore);
 	}
 
 	KLiteAccountService(OkHttpClient httpClient, Gson gson, HttpUrl apiUrl)
 	{
+		this(httpClient, gson, apiUrl, null);
+	}
+
+	private KLiteAccountService(OkHttpClient httpClient, Gson gson, HttpUrl apiUrl,
+		@Nullable KLiteAccountSessionStore sessionStore)
+	{
 		this.httpClient = httpClient;
 		this.gson = gson;
 		this.apiUrl = apiUrl;
+		this.sessionStore = sessionStore;
 	}
 
 	public Optional<KLiteAccountState> currentAccount()
 	{
 		return Optional.ofNullable(state);
+	}
+
+	void addChangeListener(Consumer<Optional<KLiteAccountState>> listener)
+	{
+		changeListeners.add(listener);
 	}
 
 	public boolean hasEntitlement(String pluginId)
@@ -74,14 +93,47 @@ public class KLiteAccountService
 		{
 			throw new IllegalArgumentException("Invalid marketplace API path");
 		}
-		Request.Builder request = new Request.Builder()
-			.url(url)
-			.get();
+		Request.Builder request = new Request.Builder().url(url).get();
 		if (currentToken != null)
 		{
 			request.header("Authorization", "Bearer " + currentToken);
 		}
 		return request.build();
+	}
+
+	public CompletableFuture<Optional<KLiteAccountState>> restoreSession()
+	{
+		KLiteAccountState current = state;
+		if (current != null)
+		{
+			return CompletableFuture.completedFuture(Optional.of(current));
+		}
+		if (sessionStore == null)
+		{
+			return CompletableFuture.completedFuture(Optional.empty());
+		}
+		Optional<KLiteAccountSessionStore.StoredSession> stored = sessionStore.load();
+		if (stored.isEmpty())
+		{
+			return CompletableFuture.completedFuture(Optional.empty());
+		}
+
+		KLiteAccountSessionStore.StoredSession restored = stored.get();
+		token = restored.getToken();
+		tokenExpiresAt = restored.getExpiresAtEpochSeconds();
+		Request request = new Request.Builder()
+			.url(apiUrl.resolve("client/entitlements"))
+			.get()
+			.header("Accept", "application/json")
+			.header("Authorization", "Bearer " + restored.getToken())
+			.build();
+		return execute(request, false)
+			.thenApply(Optional::of)
+			.exceptionally(error ->
+			{
+				clearLocalSession();
+				return Optional.empty();
+			});
 	}
 
 	public CompletableFuture<KLiteAccountState> login(String email, char[] password)
@@ -118,8 +170,7 @@ public class KLiteAccountService
 	public CompletableFuture<Void> logout()
 	{
 		String currentToken = token;
-		token = null;
-		state = null;
+		clearLocalSession();
 		if (currentToken == null)
 		{
 			return CompletableFuture.completedFuture(null);
@@ -186,28 +237,61 @@ public class KLiteAccountService
 					String discordName = payload.account.discord == null ? null
 						: firstNonBlank(payload.account.discord.globalName,
 							payload.account.discord.username);
-					KLiteAccountState updated = new KLiteAccountState(
-						payload.account.username, payload.account.email, discordName,
-						capabilities, pluginIds, login ? payload.expiresAt : currentExpiry());
 					if (login)
 					{
 						token = payload.token;
+						tokenExpiresAt = payload.expiresAt;
 					}
+					KLiteAccountState updated = new KLiteAccountState(
+						payload.account.username, payload.account.email, discordName,
+						capabilities, pluginIds, tokenExpiresAt);
 					state = updated;
+					persistCurrentSession();
+					notifyChanged();
 					result.complete(updated);
 				}
 				catch (IOException | RuntimeException ex)
 				{
 					if (response.code() == 401)
 					{
-						token = null;
-						state = null;
+						clearLocalSession();
 					}
 					result.completeExceptionally(ex);
 				}
 			}
 		});
 		return result;
+	}
+
+	private void persistCurrentSession()
+	{
+		KLiteAccountState current = state;
+		String currentToken = token;
+		if (sessionStore != null && current != null && currentToken != null)
+		{
+			sessionStore.save(currentToken, current.getEmail(), tokenExpiresAt);
+		}
+	}
+
+	private void clearLocalSession()
+	{
+		token = null;
+		state = null;
+		tokenExpiresAt = 0L;
+		if (sessionStore != null)
+		{
+			sessionStore.clear();
+		}
+		notifyChanged();
+	}
+
+	private void notifyChanged()
+	{
+		Optional<KLiteAccountState> current = currentAccount();
+		for (Consumer<Optional<KLiteAccountState>> listener : changeListeners)
+		{
+			listener.accept(current);
+		}
 	}
 
 	private AccountResponse parseResponse(Response response) throws IOException
@@ -242,12 +326,6 @@ public class KLiteAccountService
 		return payload;
 	}
 
-	private long currentExpiry()
-	{
-		KLiteAccountState current = state;
-		return current == null ? 0L : current.getExpiresAtEpochSeconds();
-	}
-
 	@Nullable
 	private static String firstNonBlank(@Nullable String first, @Nullable String second)
 	{
@@ -262,7 +340,7 @@ public class KLiteAccountService
 		return future;
 	}
 
-	@SuppressWarnings("unused") // Gson serializes these fields reflectively.
+	@SuppressWarnings("unused")
 	private static final class LoginRequest
 	{
 		private final String email;
