@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">KLite automation and developer tools</title>
+  <desc id="desc">A KLite development dashboard with automation tasks, web walker state, API methods, and runtime controls.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#08121a"/><stop offset="1" stop-color="#11131b"/></linearGradient>
+    <linearGradient id="run" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#00d7ff"/><stop offset="1" stop-color="#4ce3a5"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#000" flood-opacity=".58"/></filter>
+  </defs>
+  <rect width="1440" height="900" fill="#05080d"/>
+  <circle cx="1180" cy="160" r="300" fill="#00d7ff" opacity=".05"/>
+  <circle cx="170" cy="760" r="270" fill="#ff7426" opacity=".05"/>
+  <g filter="url(#shadow)">
+    <rect x="78" y="68" width="1284" height="764" rx="24" fill="url(#bg)" stroke="#34424e" stroke-width="2"/>
+    <rect x="78" y="68" width="1284" height="68" rx="24" fill="#151b23"/>
+    <rect x="78" y="108" width="1284" height="28" fill="#151b23"/>
+    <text x="118" y="111" fill="#edf4f7" font-family="Segoe UI,Arial" font-size="24" font-weight="800">KLite Automation Workspace</text>
+    <rect x="1160" y="87" width="160" height="34" rx="17" fill="#0f342d"/>
+    <circle cx="1183" cy="104" r="7" fill="#51e0a0"/>
+    <text x="1200" y="110" fill="#7cf2b8" font-family="Segoe UI,Arial" font-size="14" font-weight="700">RUNTIME READY</text>
+
+    <rect x="106" y="164" width="300" height="638" rx="16" fill="#0c1219" stroke="#273641"/>
+    <text x="136" y="204" fill="#70e1f5" font-family="Segoe UI,Arial" font-size="14" font-weight="800" letter-spacing="2">TASKS</text>
+    <rect x="128" y="228" width="256" height="92" rx="12" fill="#14212a" stroke="#00caee" stroke-opacity=".5"/>
+    <circle cx="160" cy="260" r="12" fill="#00cfee"/>
+    <text x="184" y="266" fill="#f0f6f8" font-family="Segoe UI,Arial" font-size="17" font-weight="700">Copper &amp; Tin Miner</text>
+    <text x="160" y="296" fill="#8ea2b0" font-family="Segoe UI,Arial" font-size="14">Running • Mining copper</text>
+    <rect x="128" y="334" width="256" height="76" rx="12" fill="#111820"/>
+    <circle cx="160" cy="372" r="12" fill="#ff7b35"/>
+    <text x="184" y="378" fill="#dbe5ea" font-family="Segoe UI,Arial" font-size="16">Web Walker</text>
+    <rect x="128" y="424" width="256" height="76" rx="12" fill="#111820"/>
+    <circle cx="160" cy="462" r="12" fill="#a58aff"/>
+    <text x="184" y="468" fill="#dbe5ea" font-family="Segoe UI,Arial" font-size="16">Action Bars</text>
+    <rect x="128" y="514" width="256" height="76" rx="12" fill="#111820"/>
+    <circle cx="160" cy="552" r="12" fill="#58d694"/>
+    <text x="184" y="558" fill="#dbe5ea" font-family="Segoe UI,Arial" font-size="16">API Inspector</text>
+
+    <rect x="128" y="626" width="256" height="144" rx="12" fill="#101922" stroke="#293a46"/>
+    <text x="152" y="660" fill="#8da1af" font-family="Segoe UI,Arial" font-size="13" letter-spacing="1">GLOBAL CONTROLS</text>
+    <rect x="152" y="682" width="208" height="42" rx="9" fill="url(#run)"/>
+    <text x="205" y="709" fill="#061017" font-family="Segoe UI,Arial" font-size="15" font-weight="900">PAUSE ALL TASKS</text>
+    <text x="152" y="750" fill="#ff8b72" font-family="Segoe UI,Arial" font-size="14">Kill switch available</text>
+
+    <rect x="430" y="164" width="902" height="296" rx="16" fill="#0c1219" stroke="#273641"/>
+    <text x="462" y="204" fill="#70e1f5" font-family="Segoe UI,Arial" font-size="14" font-weight="800" letter-spacing="2">LIVE TASK STATE</text>
+    <text x="462" y="244" fill="#eff5f7" font-family="Segoe UI,Arial" font-size="24" font-weight="800">Copper and Tin Miner</text>
+    <text x="462" y="278" fill="#8ea2b0" font-family="Segoe UI,Arial" font-size="15">Varrock south-east mine → Varrock East bank</text>
+    <g transform="translate(462 310)">
+      <rect width="190" height="100" rx="12" fill="#121d25"/>
+      <text x="22" y="34" fill="#879ba9" font-family="Segoe UI,Arial" font-size="13">STATUS</text>
+      <text x="22" y="70" fill="#53e0a1" font-family="Segoe UI,Arial" font-size="21" font-weight="800">MINING</text>
+      <rect x="208" width="190" height="100" rx="12" fill="#121d25"/>
+      <text x="230" y="34" fill="#879ba9" font-family="Segoe UI,Arial" font-size="13">INVENTORY</text>
+      <text x="230" y="70" fill="#f0f5f7" font-family="Segoe UI,Arial" font-size="21" font-weight="800">18 / 28</text>
+      <rect x="416" width="190" height="100" rx="12" fill="#121d25"/>
+      <text x="438" y="34" fill="#879ba9" font-family="Segoe UI,Arial" font-size="13">NEXT ACTION</text>
+      <text x="438" y="70" fill="#57dff4" font-family="Segoe UI,Arial" font-size="19" font-weight="800">TIN ROCK</text>
+      <rect x="624" width="216" height="100" rx="12" fill="#121d25"/>
+      <text x="646" y="34" fill="#879ba9" font-family="Segoe UI,Arial" font-size="13">WALKER</text>
+      <text x="646" y="70" fill="#ff9a62" font-family="Segoe UI,Arial" font-size="19" font-weight="800">12 TILES READY</text>
+    </g>
+
+    <rect x="430" y="484" width="440" height="318" rx="16" fill="#0c1219" stroke="#273641"/>
+    <text x="462" y="524" fill="#70e1f5" font-family="Segoe UI,Arial" font-size="14" font-weight="800" letter-spacing="2">CLIENT API</text>
+    <text x="462" y="560" fill="#eff5f7" font-family="Segoe UI,Arial" font-size="21" font-weight="800">Safe, detached automation surfaces</text>
+    <g font-family="Consolas,monospace" font-size="15">
+      <rect x="462" y="586" width="376" height="40" rx="8" fill="#111c24"/>
+      <text x="480" y="612" fill="#62dff3">Inventory.snapshot()</text>
+      <rect x="462" y="638" width="376" height="40" rx="8" fill="#111c24"/>
+      <text x="480" y="664" fill="#83e5ad">WebWalker.walkTo(point)</text>
+      <rect x="462" y="690" width="376" height="40" rx="8" fill="#111c24"/>
+      <text x="480" y="716" fill="#ff9a62">Prayer.setEnabled(id, true)</text>
+      <rect x="462" y="742" width="376" height="40" rx="8" fill="#111c24"/>
+      <text x="480" y="768" fill="#b49cff">Runtime.cancel(taskId)</text>
+    </g>
+
+    <rect x="894" y="484" width="438" height="318" rx="16" fill="#0c1219" stroke="#273641"/>
+    <text x="926" y="524" fill="#70e1f5" font-family="Segoe UI,Arial" font-size="14" font-weight="800" letter-spacing="2">WALKER SNAPSHOT</text>
+    <rect x="926" y="552" width="374" height="180" rx="12" fill="#132027"/>
+    <path d="M950 694 C1018 620 1064 686 1126 610 S1230 610 1276 570" fill="none" stroke="#00d4f5" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 12"/>
+    <circle cx="950" cy="694" r="12" fill="#ff7a33"/>
+    <circle cx="1276" cy="570" r="12" fill="#57dfa1"/>
+    <g fill="#314b49">
+      <rect x="974" y="576" width="48" height="48" rx="8"/><rect x="1042" y="648" width="48" height="48" rx="8"/><rect x="1116" y="570" width="48" height="48" rx="8"/><rect x="1190" y="638" width="48" height="48" rx="8"/>
+    </g>
+    <text x="926" y="766" fill="#8fa3b1" font-family="Segoe UI,Arial" font-size="15">Collision map loaded • path recalculated safely</text>
+  </g>
+</svg>
