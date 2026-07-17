@@ -16,6 +16,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.RuneScapeProfileChanged;
+import net.runelite.client.externalplugins.KLiteDevelopmentPluginManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.klite.api.DefaultKLiteClientApi;
@@ -66,6 +67,9 @@ public class KLitePlugin extends Plugin
 	private WebWalkBankCache bankCache;
 
 	@Inject
+	private KLiteDevelopmentPluginManager developmentPluginManager;
+
+	@Inject
 	private ClientToolbar clientToolbar;
 
 	@Inject
@@ -104,9 +108,25 @@ public class KLitePlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (CONFIG_GROUP.equals(event.getGroup()) && "enableAutomation".equals(event.getKey()))
+		if (!CONFIG_GROUP.equals(event.getGroup()))
+		{
+			return;
+		}
+
+		if ("enableAutomation".equals(event.getKey()))
 		{
 			automationManager.setEnabled(config.enableAutomation());
+		}
+		else if ("enableDevelopmentPlugins".equals(event.getKey()))
+		{
+			if (config.enableDevelopmentPlugins())
+			{
+				developmentPluginManager.start();
+			}
+			else
+			{
+				developmentPluginManager.stop();
+			}
 		}
 	}
 
@@ -137,6 +157,10 @@ public class KLitePlugin extends Plugin
 		overlayManager.add(overlay);
 		overlayManager.add(shortestPathOverlay);
 		automationManager.setEnabled(config.enableAutomation());
+		if (config.enableDevelopmentPlugins())
+		{
+			developmentPluginManager.start();
+		}
 		bankCache.onAccountChanged();
 		marketplacePersistenceService.start();
 
@@ -169,6 +193,7 @@ public class KLitePlugin extends Plugin
 			startupUpdateTimer.stop();
 			startupUpdateTimer = null;
 		}
+		developmentPluginManager.stop();
 		marketplacePersistenceService.shutdown();
 		updateService.cancel();
 		clientToolbar.removeNavigation(marketplaceButton);
