@@ -8,7 +8,6 @@ on:
     paths:
       - ".github/workflows/publish-free-marketplace-artifacts.yml"
       - "examples/klite-copper-tin-miner/**"
-      - "marketplace-site/public/plugins.json"
 
 permissions:
   contents: write
