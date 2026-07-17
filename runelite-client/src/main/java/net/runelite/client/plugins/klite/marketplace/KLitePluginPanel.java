@@ -10,6 +10,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.WindowAdapter;
@@ -254,7 +255,7 @@ public class KLitePluginPanel extends PluginPanel
 		card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		card.setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-			BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+			BorderFactory.createEmptyBorder(10, 8, 10, 8)));
 
 		JPanel heading = new JPanel(new BorderLayout(6, 0));
 		heading.setOpaque(false);
@@ -274,9 +275,9 @@ public class KLitePluginPanel extends PluginPanel
 		card.add(metadata, BorderLayout.CENTER);
 
 		int columns = loaded.isConfigurable() ? 3 : 2;
-		JPanel controls = new JPanel(new GridLayout(1, columns, 5, 0));
+		JPanel controls = new JPanel(new GridLayout(1, columns, 4, 0));
 		controls.setOpaque(false);
-		JButton toggle = new JButton(loaded.isRunning() ? "Disable" : "Enable");
+		JButton toggle = compactControlButton(loaded.isRunning() ? "Disable" : "Enable");
 		toggle.addActionListener(event -> runOperation(
 			loaded.isRunning() ? "Disabling " : "Enabling ", marketplacePlugin.getName(),
 			loaded.isRunning()
@@ -286,7 +287,7 @@ public class KLitePluginPanel extends PluginPanel
 
 		if (loaded.isConfigurable())
 		{
-			JButton configure = new JButton("Configure");
+			JButton configure = compactControlButton("Configure");
 			configure.addActionListener(event ->
 			{
 				Plugin primary = loaded.getPrimaryPlugin();
@@ -295,12 +296,22 @@ public class KLitePluginPanel extends PluginPanel
 			controls.add(configure);
 		}
 
-		JButton unload = new JButton("Unload");
+		JButton unload = compactControlButton("Unload");
 		unload.addActionListener(event -> runOperation("Unloading ", marketplacePlugin.getName(),
 			streamedPluginService.unload(marketplacePlugin.getId())));
 		controls.add(unload);
 		card.add(controls, BorderLayout.SOUTH);
 		return card;
+	}
+
+	private static JButton compactControlButton(String text)
+	{
+		JButton button = new JButton(text);
+		button.setMargin(new Insets(2, 4, 2, 4));
+		button.setFont(button.getFont().deriveFont(11f));
+		button.setMinimumSize(new Dimension(0, button.getPreferredSize().height));
+		button.setMaximumSize(new Dimension(Integer.MAX_VALUE, button.getPreferredSize().height));
+		return button;
 	}
 
 	private void runOperation(String action, String pluginName, CompletableFuture<Void> operation)
