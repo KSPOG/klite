@@ -1,6 +1,5 @@
 const siteRouteDefinitions = {
   home: {
-    label: "Home",
     eyebrow: "KLite desktop client",
     title: "KLite for Windows",
     description: "Preview the client and explore its core features while the Windows release is under construction.",
@@ -11,7 +10,6 @@ const siteRouteDefinitions = {
     ]
   },
   marketplace: {
-    label: "Marketplace",
     eyebrow: "Reviewed extensions",
     title: "Plugin marketplace",
     description: "Browse available plugins without mixing account, developer, Discord, or review controls into the catalog.",
@@ -23,18 +21,17 @@ const siteRouteDefinitions = {
     ]
   },
   developer: {
-    label: "Developers",
     eyebrow: "Plugin development",
     title: "Developer workspace",
-    description: "Submit plugins, review your submission history, and open the dedicated KLite API reference.",
+    description: "Submit plugins, review your submission history, and open the KLite developer resources.",
     subcategories: [
       { label: "Submit a plugin", target: "submission-form" },
       { label: "Submission history", target: "submission-list" },
-      { label: "API reference", href: "/api/" }
+      { label: "API reference", href: "/api/" },
+      { label: "Plugin DOC's", href: "/docs/" }
     ]
   },
   community: {
-    label: "Community",
     eyebrow: "Discord integration",
     title: "Discord bot control center",
     description: "Install the bot, configure roles and channels, register commands, and manage marketplace announcements.",
@@ -46,7 +43,6 @@ const siteRouteDefinitions = {
     ]
   },
   account: {
-    label: "Account",
     eyebrow: "KLite membership",
     title: "Account and access",
     description: "Manage marketplace membership, Discord linking, paid-plugin entitlements, and account recovery.",
@@ -57,7 +53,6 @@ const siteRouteDefinitions = {
     ]
   },
   admin: {
-    label: "Administration",
     eyebrow: "Owner and reviewer tools",
     title: "Marketplace administration",
     description: "Appoint plugin developers and reviewers, then process the plugin approval queue from a focused administration area.",
@@ -126,13 +121,13 @@ function renderSecondaryNavigation(route) {
       link.href = item.href;
       link.textContent = item.label;
       secondarySiteNav.append(link);
-      continue;
+    } else {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = item.label;
+      button.addEventListener("click", () => scrollToSiteTarget(item.target));
+      secondarySiteNav.append(button);
     }
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = item.label;
-    button.addEventListener("click", () => scrollToSiteTarget(item.target));
-    secondarySiteNav.append(button);
   }
 }
 
@@ -144,8 +139,7 @@ function scrollToSiteTarget(id) {
 
 function activeVisiblePanels(route) {
   return routePanels.filter((panel) => panel.dataset.siteSection === route
-    && !panel.hidden
-    && !panel.classList.contains("route-inactive"));
+    && !panel.hidden && !panel.classList.contains("route-inactive"));
 }
 
 function renderRouteEmpty(route) {
@@ -153,18 +147,15 @@ function renderRouteEmpty(route) {
     routeEmpty.hidden = true;
     return;
   }
-
   routeEmpty.hidden = false;
   if (route === "account") {
     routeEmptyTitle.textContent = "Sign in to open your account";
     routeEmptyDescription.textContent = "Your membership, Discord link, and plugin entitlements appear here after signing in.";
-    routeEmptyAction.hidden = false;
     routeEmptyAction.textContent = "Sign in";
     routeEmptyAction.onclick = () => document.querySelector("#sign-in-button")?.click();
   } else {
     routeEmptyTitle.textContent = "This category requires additional access";
-    routeEmptyDescription.textContent = "Sign in with an account that has the required developer, Discord administrator, owner, or reviewer capability.";
-    routeEmptyAction.hidden = false;
+    routeEmptyDescription.textContent = "Sign in with an account that has the required capability.";
     routeEmptyAction.textContent = "Open account";
     routeEmptyAction.onclick = () => setSiteRoute("account");
   }
@@ -175,26 +166,20 @@ function setSiteRoute(route, options = {}) {
   updatePrivilegedNavigation();
   const selected = Object.hasOwn(siteRouteDefinitions, route) ? route : "home";
   currentSiteRoute = selected;
-
-  for (const panel of routePanels) {
-    panel.classList.toggle("route-inactive", panel.dataset.siteSection !== selected);
-  }
+  for (const panel of routePanels) panel.classList.toggle("route-inactive", panel.dataset.siteSection !== selected);
   for (const button of primaryRouteButtons) {
     button.classList.toggle("is-active", button.dataset.siteRoute === selected);
     button.setAttribute("aria-current", button.dataset.siteRoute === selected ? "page" : "false");
   }
-
   const definition = siteRouteDefinitions[selected];
-  const home = selected === "home";
-  workspaceHeading.hidden = home;
-  if (!home) {
+  workspaceHeading.hidden = selected === "home";
+  if (selected !== "home") {
     workspaceEyebrow.textContent = definition.eyebrow;
     workspaceTitle.textContent = definition.title;
     workspaceDescription.textContent = definition.description;
     renderSecondaryNavigation(selected);
   }
   renderRouteEmpty(selected);
-
   if (!options.preserveHash && window.location.hash !== `#${selected}`) {
     history.pushState({}, "", `${window.location.pathname}${window.location.search}#${selected}`);
   }
@@ -205,29 +190,46 @@ function createDownloadNoticeDialog() {
   const dialog = document.createElement("dialog");
   dialog.id = "download-notice-dialog";
   dialog.className = "auth-dialog";
-  dialog.setAttribute("aria-labelledby", "download-notice-title");
-  dialog.setAttribute("aria-describedby", "download-notice-description");
-  dialog.innerHTML = `
-    <div class="auth-form">
-      <div class="dialog-heading">
-        <div>
-          <p class="eyebrow">Development notice</p>
-          <h2 id="download-notice-title">KLite is under construction</h2>
-        </div>
-        <button class="dialog-close" type="button" aria-label="Close">&times;</button>
-      </div>
-      <p id="download-notice-description">The KLite client is currently under construction. Downloads will become available after the current development and testing work is complete.</p>
-      <button class="button button-primary button-wide" type="button" data-download-notice-close>Got it</button>
-    </div>`;
-
+  dialog.innerHTML = `<div class="auth-form"><div class="dialog-heading"><div><p class="eyebrow">Development notice</p><h2>KLite is under construction</h2></div><button class="dialog-close" type="button" aria-label="Close">&times;</button></div><p>The KLite client is currently under construction. Downloads will become available after the current development and testing work is complete.</p><button class="button button-primary button-wide" type="button" data-download-notice-close>Got it</button></div>`;
   const close = () => dialog.close();
   dialog.querySelector(".dialog-close")?.addEventListener("click", close);
   dialog.querySelector("[data-download-notice-close]")?.addEventListener("click", close);
-  dialog.addEventListener("click", (event) => {
-    if (event.target === dialog) close();
-  });
+  dialog.addEventListener("click", (event) => { if (event.target === dialog) close(); });
   document.body.append(dialog);
   return dialog;
+}
+
+function createResourcesMenu() {
+  const legacyApiButton = document.querySelector("#api-button");
+  if (!legacyApiButton) return;
+  const wrapper = document.createElement("div");
+  wrapper.className = "klite-resources-menu";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "button button-secondary";
+  button.textContent = "Resources ▾";
+  button.setAttribute("aria-expanded", "false");
+  const menu = document.createElement("div");
+  menu.className = "klite-resources-list";
+  menu.hidden = true;
+  menu.innerHTML = '<a href="/api/"><strong>API</strong><small>Authenticated API reference</small></a><a href="/docs/"><strong>DOC\'s</strong><small>Complete plugin development guide</small></a>';
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    menu.hidden = !menu.hidden;
+    button.setAttribute("aria-expanded", String(!menu.hidden));
+  });
+  document.addEventListener("click", (event) => {
+    if (!wrapper.contains(event.target)) {
+      menu.hidden = true;
+      button.setAttribute("aria-expanded", "false");
+    }
+  });
+  wrapper.append(button, menu);
+  legacyApiButton.replaceWith(wrapper);
+
+  const style = document.createElement("style");
+  style.textContent = `.klite-resources-menu{position:relative}.klite-resources-list{position:absolute;right:0;top:calc(100% + 8px);z-index:100;min-width:245px;padding:8px;border:1px solid rgba(143,174,195,.28);background:#09111a;box-shadow:0 20px 50px rgba(0,0,0,.45)}.klite-resources-list a{display:flex;flex-direction:column;gap:3px;padding:11px 12px;color:#f2f7fb;text-decoration:none;border-radius:6px}.klite-resources-list a:hover{background:rgba(19,217,255,.08)}.klite-resources-list small{color:#91a5b5}`;
+  document.head.append(style);
 }
 
 const downloadNoticeDialog = createDownloadNoticeDialog();
@@ -237,22 +239,12 @@ for (const link of document.querySelectorAll('a[href="/download/windows"], .down
     if (!downloadNoticeDialog.open) downloadNoticeDialog.showModal();
   });
 }
-
-for (const button of primaryRouteButtons) {
-  button.addEventListener("click", () => setSiteRoute(button.dataset.siteRoute));
-}
-
+createResourcesMenu();
+for (const button of primaryRouteButtons) button.addEventListener("click", () => setSiteRoute(button.dataset.siteRoute));
 document.querySelector("#explore-marketplace-button")?.addEventListener("click", () => setSiteRoute("marketplace"));
-document.querySelector("#footer-marketplace-link")?.addEventListener("click", (event) => {
-  event.preventDefault();
-  setSiteRoute("marketplace");
-});
+document.querySelector("#footer-marketplace-link")?.addEventListener("click", (event) => { event.preventDefault(); setSiteRoute("marketplace"); });
 document.querySelector("#account-menu-account")?.addEventListener("click", () => setSiteRoute("account"), true);
-
-window.addEventListener("hashchange", () => setSiteRoute(requestedSiteRoute(), {
-  preserveHash: true,
-  preserveScroll: false
-}));
+window.addEventListener("hashchange", () => setSiteRoute(requestedSiteRoute(), { preserveHash: true }));
 
 function scheduleShellUpdate() {
   if (shellUpdatePending) return;
@@ -261,18 +253,9 @@ function scheduleShellUpdate() {
     shellUpdatePending = false;
     assignDynamicPanels();
     updatePrivilegedNavigation();
-    for (const panel of routePanels) {
-      panel.classList.toggle("route-inactive", panel.dataset.siteSection !== currentSiteRoute);
-    }
+    for (const panel of routePanels) panel.classList.toggle("route-inactive", panel.dataset.siteSection !== currentSiteRoute);
     renderRouteEmpty(currentSiteRoute);
   });
 }
-
-new MutationObserver(scheduleShellUpdate).observe(document.body, {
-  subtree: true,
-  childList: true,
-  attributes: true,
-  attributeFilter: ["hidden"]
-});
-
+new MutationObserver(scheduleShellUpdate).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden"] });
 setSiteRoute(requestedSiteRoute(), { preserveHash: true, preserveScroll: true });
