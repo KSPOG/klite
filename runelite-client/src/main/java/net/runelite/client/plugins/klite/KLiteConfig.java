@@ -62,4 +62,16 @@ public interface KLiteConfig extends Config
 	{
 		return false;
 	}
+
+	@ConfigItem(
+		keyName = "showWebWalkerPath",
+		name = "Show web-walker path",
+		description = "Render the active integrated Shortest Path route in the game scene and minimap",
+		section = automationSection,
+		position = 1
+	)
+	default boolean showWebWalkerPath()
+	{
+		return true;
+	}
 }
