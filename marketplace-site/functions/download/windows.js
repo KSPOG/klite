@@ -2,7 +2,7 @@ const RELEASE_BASE = "https://github.com/KSPOG/klite/releases/download/windows-c
 const VERSION_PATTERN = /^1\.0\.\d+$/;
 const BUILD_SHA_PATTERN = /^[a-f0-9]{40}$/i;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
-const ASSET_PATTERN = /^KLite-Setup-1\.0\.\d+\.exe$/;
+const ASSET_PATTERN = /^KLite-Setup-1\.0\.\d+-[a-f0-9]{16}\.exe$/i;
 const MAX_INSTALLER_BYTES = 300 * 1024 * 1024;
 
 export async function onRequest(context) {
@@ -29,9 +29,11 @@ export async function onRequest(context) {
   }
 
   const manifest = await manifestResponse.json().catch(() => null);
-  const expectedAsset = manifest && VERSION_PATTERN.test(manifest.version || "")
-    ? `KLite-Setup-${manifest.version}.exe`
-    : null;
+  const expectedAsset = manifest
+    && VERSION_PATTERN.test(manifest.version || "")
+    && SHA256_PATTERN.test(manifest.sha256 || "")
+      ? `KLite-Setup-${manifest.version}-${manifest.sha256.slice(0, 16).toLowerCase()}.exe`
+      : null;
 
   if (!manifest
       || manifest.schemaVersion !== 1
