@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.klite.api.KLiteBankQuantity;
 import net.runelite.client.plugins.klite.api.KLiteClientApi;
@@ -23,6 +24,7 @@ import net.runelite.client.plugins.klite.api.KLiteSceneObjectSnapshot;
 import net.runelite.client.plugins.klite.automation.AutomationContext;
 import net.runelite.client.plugins.klite.automation.AutomationResult;
 import net.runelite.client.plugins.klite.automation.AutomationTask;
+import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
 import net.runelite.client.plugins.klite.walker.WebWalkResult;
 import net.runelite.client.plugins.klite.walker.WebWalkState;
 import net.runelite.client.plugins.klite.walker.WebWalker;
@@ -30,6 +32,7 @@ import net.runelite.client.plugins.klite.walker.WebWalker;
 /** Cooperative mining and banking loop used by {@link CopperTinMinerPlugin}. */
 final class CopperTinMinerTask implements AutomationTask
 {
+	private static final String LOG_SOURCE = "CopperTinMiner";
 	private static final Duration INTERVAL = Duration.ofMillis(600L);
 	private static final Duration API_TIMEOUT = Duration.ofSeconds(3L);
 	private static final long INTERACTION_COOLDOWN_MILLIS = 1_800L;
@@ -39,13 +42,21 @@ final class CopperTinMinerTask implements AutomationTask
 	private static final Set<Integer> TIN_ROCK_IDS = Set.of(11360, 11361);
 
 	private final WebWalker webWalker;
-	private boolean banking;
-	private boolean preferCopper = true;
+	private final KLiteClientLogBuffer diagnostics;
+	private volatile boolean banking;
+	private volatile boolean preferCopper = true;
+	private volatile String activity = "Starting";
+	@Nullable
+	private volatile WorldPoint target;
 	private long nextInteractionAt;
+	private String lastWalkSummary = "";
 
-	CopperTinMinerTask(WebWalker webWalker)
+	CopperTinMinerTask(WebWalker webWalker, KLiteClientLogBuffer diagnostics)
 	{
 		this.webWalker = webWalker;
+		this.diagnostics = diagnostics;
+		diagnostics.info(LOG_SOURCE, "Automation task created. Mine=" + formatPoint(MINE)
+			+ ", bank=" + formatPoint(VARROCK_EAST_BANK) + '.');
 	}
 
 	@Override
@@ -63,29 +74,42 @@ final class CopperTinMinerTask implements AutomationTask
 	@Override
 	public AutomationResult tick(AutomationContext context) throws Exception
 	{
-		KLiteClientApi client = context.client();
-		KLiteClientSnapshot snapshot = context.await(client.snapshot(), API_TIMEOUT);
-		WorldPoint playerLocation = snapshot.getPlayerLocation();
-		if (playerLocation == null)
+		try
 		{
+			KLiteClientApi client = context.client();
+			KLiteClientSnapshot snapshot = context.await(client.snapshot(), API_TIMEOUT);
+			WorldPoint playerLocation = snapshot.getPlayerLocation();
+			if (playerLocation == null)
+			{
+				setActivity("Waiting for player location");
+				return AutomationResult.CONTINUE;
+			}
+
+			int freeSlots = context.await(client.inventoryFreeSlots(), API_TIMEOUT);
+			if (!banking && freeSlots == 0)
+			{
+				banking = true;
+				setActivity("Inventory full; switching to banking");
+				diagnostics.info(LOG_SOURCE, "Inventory is full. Clearing the mining route and walking to the bank.");
+				context.await(webWalker.clear(), API_TIMEOUT);
+			}
+
+			if (banking)
+			{
+				bank(context, client, playerLocation);
+			}
+			else
+			{
+				mine(context, client, playerLocation);
+			}
 			return AutomationResult.CONTINUE;
 		}
-
-		if (!banking && context.await(client.inventoryFreeSlots(), API_TIMEOUT) == 0)
+		catch (Exception exception)
 		{
-			banking = true;
-			context.await(webWalker.clear(), API_TIMEOUT);
+			setActivity("Failed: " + exception.getClass().getSimpleName());
+			diagnostics.error(LOG_SOURCE, "Automation tick failed", exception);
+			throw exception;
 		}
-
-		if (banking)
-		{
-			bank(context, client, playerLocation);
-		}
-		else
-		{
-			mine(context, client, playerLocation);
-		}
-		return AutomationResult.CONTINUE;
 	}
 
 	private void bank(AutomationContext context, KLiteClientApi client,
@@ -93,16 +117,22 @@ final class CopperTinMinerTask implements AutomationTask
 	{
 		if (context.await(client.isBankOpen(), API_TIMEOUT))
 		{
+			target = null;
+			setActivity("Depositing ores");
 			Optional<KLiteItemStack> deposit = firstNonPickaxe(context, client);
 			if (deposit.isEmpty())
 			{
 				banking = false;
+				setActivity("Banking complete; returning to mine");
+				diagnostics.info(LOG_SOURCE, "No non-pickaxe items remain. Clearing the bank route and returning to mining.");
 				context.await(webWalker.clear(), API_TIMEOUT);
 				return;
 			}
 
 			if (cooldownElapsed())
 			{
+				diagnostics.debug(LOG_SOURCE, "Depositing inventory slot " + deposit.get().getSlot()
+					+ " with quantity ALL.");
 				context.await(client.depositBankInventoryItem(
 					deposit.get().getSlot(), KLiteBankQuantity.ALL), API_TIMEOUT);
 				startCooldown();
@@ -112,15 +142,20 @@ final class CopperTinMinerTask implements AutomationTask
 
 		if (playerLocation.distanceTo(VARROCK_EAST_BANK) > 5)
 		{
+			target = VARROCK_EAST_BANK;
+			setActivity("Walking to Varrock East bank");
 			walk(context, VARROCK_EAST_BANK, 4);
 			return;
 		}
 
+		target = VARROCK_EAST_BANK;
 		if (!cooldownElapsed())
 		{
+			setActivity("Waiting to open bank");
 			return;
 		}
 
+		setActivity("Finding bank object");
 		Optional<KLiteSceneObjectSnapshot> bankObject = context.await(
 			client.sceneObjects(), API_TIMEOUT).stream()
 			.filter(object -> object.getActions().stream().anyMatch(
@@ -129,9 +164,16 @@ final class CopperTinMinerTask implements AutomationTask
 		if (bankObject.isPresent())
 		{
 			KLiteSceneObjectSnapshot object = bankObject.get();
+			setActivity("Opening bank");
+			diagnostics.info(LOG_SOURCE, "Interacting with bank object " + object.getObjectId()
+				+ " at " + formatPoint(object.getLocation()) + '.');
 			context.await(client.interactSceneObject(
 				object.getObjectId(), object.getLocation(), "Bank"), API_TIMEOUT);
 			startCooldown();
+		}
+		else
+		{
+			setActivity("Bank object not visible");
 		}
 	}
 
@@ -157,20 +199,29 @@ final class CopperTinMinerTask implements AutomationTask
 	{
 		if (playerLocation.distanceTo(MINE) > 8)
 		{
+			target = MINE;
+			setActivity("Walking to Varrock East mine");
 			walk(context, MINE, 5);
 			return;
 		}
 
+		target = MINE;
 		Optional<KLitePlayerSnapshot> localPlayer = context.await(
 			client.players(), API_TIMEOUT).stream()
 			.filter(KLitePlayerSnapshot::isLocalPlayer)
 			.findFirst();
-		if (localPlayer.map(KLitePlayerSnapshot::getAnimation).orElse(-1) != -1
-			|| !cooldownElapsed())
+		if (localPlayer.map(KLitePlayerSnapshot::getAnimation).orElse(-1) != -1)
 		{
+			setActivity("Mining");
+			return;
+		}
+		if (!cooldownElapsed())
+		{
+			setActivity("Waiting for mining interaction");
 			return;
 		}
 
+		setActivity("Finding " + getPreferredOre().toLowerCase(Locale.ROOT) + " rock");
 		List<KLiteSceneObjectSnapshot> objects = context.await(
 			client.sceneObjects(), API_TIMEOUT);
 		Optional<KLiteSceneObjectSnapshot> rock = nearestRock(
@@ -182,16 +233,26 @@ final class CopperTinMinerTask implements AutomationTask
 		}
 		if (rock.isEmpty())
 		{
+			setActivity("Waiting for a copper or tin rock");
 			return;
 		}
 
-		KLiteSceneObjectSnapshot target = rock.get();
+		KLiteSceneObjectSnapshot selected = rock.get();
+		String ore = COPPER_ROCK_IDS.contains(selected.getObjectId()) ? "Copper" : "Tin";
+		setActivity("Mining " + ore.toLowerCase(Locale.ROOT));
+		diagnostics.info(LOG_SOURCE, "Interacting with " + ore + " rock "
+			+ selected.getObjectId() + " at " + formatPoint(selected.getLocation()) + '.');
 		KLiteInteractionResult result = context.await(client.interactSceneObject(
-			target.getObjectId(), target.getLocation(), "Mine"), API_TIMEOUT);
+			selected.getObjectId(), selected.getLocation(), "Mine"), API_TIMEOUT);
 		if (result.isDispatched())
 		{
 			preferCopper = !preferCopper;
 			startCooldown();
+		}
+		else
+		{
+			diagnostics.warn(LOG_SOURCE, "The Mine interaction was not dispatched for object "
+				+ selected.getObjectId() + '.');
 		}
 	}
 
@@ -210,6 +271,18 @@ final class CopperTinMinerTask implements AutomationTask
 	{
 		WebWalkResult result = context.await(
 			webWalker.step(destination, arrivalDistance), API_TIMEOUT);
+		String summary = result.getState() + "|" + result.getPathLength() + '|'
+			+ formatPoint(result.getClickTarget()) + '|' + String.valueOf(result.getMessage());
+		if (!summary.equals(lastWalkSummary))
+		{
+			lastWalkSummary = summary;
+			diagnostics.info(LOG_SOURCE, "Web walker returned state=" + result.getState()
+				+ ", destination=" + formatPoint(destination)
+				+ ", arrivalDistance=" + arrivalDistance
+				+ ", pathLength=" + result.getPathLength()
+				+ ", nextTile=" + formatPoint(result.getClickTarget())
+				+ (result.getMessage() == null ? "" : ", message=" + result.getMessage()));
+		}
 		if (result.getState() == WebWalkState.NO_PATH)
 		{
 			throw new IllegalStateException(result.getMessage() == null
@@ -227,9 +300,47 @@ final class CopperTinMinerTask implements AutomationTask
 		nextInteractionAt = System.currentTimeMillis() + INTERACTION_COOLDOWN_MILLIS;
 	}
 
+	private void setActivity(String nextActivity)
+	{
+		if (!nextActivity.equals(activity))
+		{
+			activity = nextActivity;
+			diagnostics.debug(LOG_SOURCE, "Activity: " + nextActivity);
+		}
+	}
+
+	String getActivity()
+	{
+		return activity;
+	}
+
+	boolean isBanking()
+	{
+		return banking;
+	}
+
+	String getPreferredOre()
+	{
+		return preferCopper ? "Copper" : "Tin";
+	}
+
+	@Nullable
+	WorldPoint getTarget()
+	{
+		return target;
+	}
+
 	@Override
 	public void onStop(AutomationContext context)
 	{
+		setActivity("Stopped");
+		diagnostics.info(LOG_SOURCE, "Automation task stopped and the web-walker route was cleared.");
 		webWalker.clear();
+	}
+
+	private static String formatPoint(@Nullable WorldPoint point)
+	{
+		return point == null ? "none"
+			: point.getX() + "," + point.getY() + "," + point.getPlane();
 	}
 }
