@@ -6,39 +6,44 @@ const methodsOnly = document.querySelector("#api-methods-only");
 const summary = document.querySelector("#api-summary");
 const content = document.querySelector("#api-content");
 const logout = document.querySelector("#api-logout");
+const areaTabs = [...document.querySelectorAll("[data-api-tab]")];
+const areaCards = [...document.querySelectorAll("[data-api-area]")];
+const referenceBrowser = document.querySelector("#reference-browser");
+
 let reference = null;
 
 const SECTION_GUIDES = {
   "Client API": {
-    description: "Read current client state and request controlled client interactions. Start here for inventory, NPCs, players, widgets, combat, banking, camera, settings, and definitions.",
-    useWhen: "Use this area whenever the plugin needs to observe the game or perform one focused client action."
+    description: "Read current client state and request controlled interactions for inventory, NPCs, players, widgets, banking, combat, camera, settings, and definitions.",
+    useWhen: "Start here for most plugin features and focused game interactions."
   },
   "Automation runtime": {
-    description: "Run multi-step work with an explicit lifecycle. These types help automation start, stop, wait, report status, and avoid mixing long-running logic into plugin UI code.",
-    useWhen: "Use this area when work continues across multiple ticks, screens, destinations, or recovery states."
+    description: "Coordinate multi-step work with lifecycle, cancellation, waiting, recovery, and status reporting.",
+    useWhen: "Use this when a workflow spans several ticks, screens, destinations, or recovery states."
   },
   "Web walker": {
-    description: "Plan and execute travel toward world destinations while tracking route and movement progress.",
-    useWhen: "Use this area when the player must travel beyond a nearby direct interaction or minimap click."
+    description: "Plan and execute travel to world destinations while tracking route and movement progress.",
+    useWhen: "Use this when the player must travel beyond a nearby direct interaction."
   }
 };
 
 const TYPE_DESCRIPTIONS = {
-  DefaultKLiteClientApi: "The built-in implementation of KLiteClientApi. Plugin code should normally depend on the KLiteClientApi interface rather than constructing this implementation directly.",
-  KLiteClientApi: "The primary public entry point for reading client state and requesting controlled interactions. Calls complete asynchronously so work can be coordinated safely with the client.",
-  KLiteInteractionResult: "Describes the outcome of a requested client interaction. Check this value before assuming that a click, selection, withdrawal, or other action succeeded.",
-  KLiteBankQuantity: "Selects how many items a bank withdrawal or deposit operation should move.",
-  KLiteMenuActionRequest: "Carries the parameters required to submit a low-level menu action. Prefer a specific high-level interaction method when one is available.",
-  KLiteClientSnapshot: "A broad point-in-time view of important client state. Use narrower snapshots when only one subsystem is needed.",
-  KLiteItemStack: "Represents an item entry and its quantity in an inventory-style container.",
-  KLiteAutomationStatus: "Reports the current lifecycle or execution state of an automation task.",
-  KLiteWalkerStatus: "Reports the current state of a web-walker request, such as planning, travelling, completed, stopped, or failed."
+  DefaultKLiteClientApi: "The built-in implementation of KLiteClientApi. Depend on the interface instead of constructing this class directly.",
+  KLiteClientApi: "The primary public entry point for reading client state and requesting controlled interactions.",
+  KLiteInteractionResult: "Describes the outcome of a requested client interaction.",
+  KLiteBankQuantity: "Selects how many items a bank withdrawal or deposit should move.",
+  KLiteMenuActionRequest: "Carries the information required for a low-level menu action.",
+  KLiteClientSnapshot: "A broad point-in-time view of important client state.",
+  KLiteItemStack: "Represents an item and its quantity in an inventory-style container.",
+  KLiteAutomationStatus: "Reports the current lifecycle state of an automation task.",
+  KLiteWalkerStatus: "Reports the current state of a web-walker request."
 };
 
 const ACTION_PREFIXES = [
   "accept", "add", "choose", "clear", "close", "collect", "continue", "decline",
   "deposit", "hop", "interact", "invalidate", "open", "play", "queue", "refresh",
-  "run", "select", "set", "use", "withdraw", "walk", "start", "stop", "cancel", "pause", "resume"
+  "run", "select", "set", "use", "withdraw", "walk", "start", "stop", "cancel",
+  "pause", "resume"
 ];
 
 async function request(path, options = {}) {
@@ -61,15 +66,19 @@ async function request(path, options = {}) {
 async function load() {
   try {
     const account = await request("/api/account");
-    accountStatus.textContent = `Signed in as ${account.account.username} / ${account.account.email}`;
+    accountStatus.textContent = `Signed in as ${account.account.username}`;
     logout.hidden = false;
+
     reference = await request("/api/docs");
     populateFilters();
+    sectionFilter.value = "Client API";
+    methodsOnly.checked = true;
+    updateAreaTabs();
     render();
   } catch (error) {
     if (error.status === 401) {
-      accountStatus.textContent = "Sign in on the marketplace to view the searchable type reference.";
-      content.innerHTML = '<div class="api-auth-required"><p>The orientation guide above remains available, but type and method details require a marketplace session.</p><a class="button button-primary" href="/?signin=1">Return to sign in</a></div>';
+      accountStatus.textContent = "Sign in to unlock the searchable reference";
+      content.innerHTML = '<div class="api-auth-required"><strong>Marketplace sign-in required</strong><p>The quick-start guidance remains available, but detailed Java types and method signatures require an authenticated marketplace session.</p><a class="button button-primary" href="/?signin=1">Return to sign in</a></div>';
       search.disabled = true;
       sectionFilter.disabled = true;
       kindFilter.disabled = true;
@@ -81,11 +90,10 @@ async function load() {
 }
 
 function populateFilters() {
-  const sections = (reference.sections || []).map((section) => section.name);
-  for (const name of sections) {
+  for (const section of reference.sections || []) {
     const option = document.createElement("option");
-    option.value = name;
-    option.textContent = name;
+    option.value = section.name;
+    option.textContent = section.name;
     sectionFilter.append(option);
   }
 
@@ -101,12 +109,29 @@ function populateFilters() {
   }
 }
 
+function setApiArea(area, scroll = false) {
+  sectionFilter.value = area;
+  updateAreaTabs();
+  render();
+  if (scroll) referenceBrowser?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function updateAreaTabs() {
+  for (const tab of areaTabs) {
+    const active = tab.dataset.apiTab === sectionFilter.value;
+    tab.classList.toggle("is-active", active);
+    tab.setAttribute("aria-pressed", String(active));
+  }
+}
+
 function render() {
   if (!reference) return;
+
   const query = search.value.trim().toLowerCase();
   const selectedSection = sectionFilter.value;
   const selectedKind = kindFilter.value;
   const requireMethods = methodsOnly.checked;
+
   content.replaceChildren();
 
   let visibleTypes = 0;
@@ -121,40 +146,33 @@ function render() {
       if (requireMethods && !(type.signatures || []).length) return false;
       if (!query) return true;
 
-      const explanationText = (type.signatures || [])
-        .map((signature) => `${signature} ${explainSignature(signature)}`)
-        .join(" ");
-      return [
+      const searchable = [
         type.name,
         type.packageName,
         typeDescription(type),
         typeUsage(type),
-        explanationText
-      ].join(" ").toLowerCase().includes(query);
+        ...(type.signatures || []).map((signature) => `${signature} ${explainSignature(signature)}`)
+      ].join(" ").toLowerCase();
+      return searchable.includes(query);
     });
 
     if (!matching.length) continue;
     visibleSections += 1;
 
-    const sectionGuide = SECTION_GUIDES[section.name] || {
+    const guide = SECTION_GUIDES[section.name] || {
       description: "Public KLite types grouped by package and responsibility.",
-      useWhen: "Open a type below to inspect its purpose and callable methods."
+      useWhen: "Open a type below to inspect its purpose and methods."
     };
-    const sectionHeading = document.createElement("section");
-    sectionHeading.className = "api-reference-section-heading";
+
+    const heading = document.createElement("section");
+    heading.className = "api-reference-section-heading";
     const headingCopy = document.createElement("div");
-    const heading = document.createElement("h2");
-    heading.textContent = section.name;
-    const description = document.createElement("p");
-    description.textContent = sectionGuide.description;
-    const useWhen = document.createElement("small");
-    useWhen.textContent = sectionGuide.useWhen;
-    headingCopy.append(heading, description, useWhen);
+    headingCopy.innerHTML = `<h2>${escapeHtml(section.name)}</h2><p>${escapeHtml(guide.description)}</p><small>${escapeHtml(guide.useWhen)}</small>`;
     const count = document.createElement("span");
     count.className = "api-count-badge";
     count.textContent = `${matching.length} ${matching.length === 1 ? "type" : "types"}`;
-    sectionHeading.append(headingCopy, count);
-    content.append(sectionHeading);
+    heading.append(headingCopy, count);
+    content.append(heading);
 
     for (const type of matching) {
       visibleTypes += 1;
@@ -164,7 +182,7 @@ function render() {
   }
 
   if (!visibleTypes) {
-    content.innerHTML = '<div class="api-empty-state"><strong>No API types match the current filters.</strong><p>Try a broader search or clear one of the filters.</p></div>';
+    content.innerHTML = '<div class="api-empty-state"><strong>No API types match the current filters.</strong><p>Try a broader search, select another API area, or disable the callable-method filter.</p></div>';
   }
 
   summary.textContent = visibleTypes
@@ -199,24 +217,10 @@ function renderType(type) {
 
   const body = document.createElement("div");
   body.className = "api-type-body";
-
-  const packageLabel = document.createElement("div");
-  packageLabel.className = "api-package-row";
-  const packageTitle = document.createElement("span");
-  packageTitle.textContent = "Import";
-  const packageName = document.createElement("code");
-  packageName.textContent = `${type.packageName}.${type.name}`;
-  packageLabel.append(packageTitle, packageName);
-
-  const purpose = document.createElement("div");
-  purpose.className = "api-type-explanation";
-  purpose.innerHTML = `<strong>What it does</strong><p>${escapeHtml(typeDescription(type))}</p>`;
-
-  const usage = document.createElement("div");
-  usage.className = "api-type-explanation";
-  usage.innerHTML = `<strong>When to use it</strong><p>${escapeHtml(typeUsage(type))}</p>`;
-
-  body.append(packageLabel, purpose, usage);
+  body.innerHTML = `
+    <div class="api-package-row"><span>Import</span><code>${escapeHtml(`${type.packageName}.${type.name}`)}</code></div>
+    <div class="api-type-explanation"><strong>What it does</strong><p>${escapeHtml(typeDescription(type))}</p></div>
+    <div class="api-type-explanation"><strong>When to use it</strong><p>${escapeHtml(typeUsage(type))}</p></div>`;
 
   if (signatures.length) {
     const methodsHeading = document.createElement("div");
@@ -224,24 +228,20 @@ function renderType(type) {
     methodsHeading.innerHTML = `<strong>Callable methods</strong><span>${signatures.length} total</span>`;
     body.append(methodsHeading);
 
-    const groups = groupSignatures(signatures);
-    for (const [groupName, groupSignaturesList] of groups) {
+    for (const [groupName, grouped] of groupSignatures(signatures)) {
       const group = document.createElement("section");
       group.className = "api-method-group";
       const groupTitle = document.createElement("h3");
       groupTitle.textContent = groupName;
       group.append(groupTitle);
-
-      for (const signature of groupSignaturesList) {
-        group.append(renderMethod(signature));
-      }
+      for (const signature of grouped) group.append(renderMethod(signature));
       body.append(group);
     }
   } else {
-    const noMethods = document.createElement("div");
-    noMethods.className = "api-data-type-note";
-    noMethods.innerHTML = `<strong>No callable methods are listed for this type.</strong><p>This is usually a snapshot, request object, result object, record, or enum used by another API call. Inspect its fields, accessors, or enum constants in your IDE.</p>`;
-    body.append(noMethods);
+    const note = document.createElement("div");
+    note.className = "api-data-type-note";
+    note.innerHTML = "<strong>No callable methods are listed for this type.</strong><p>This is usually a snapshot, request, result, record, or enum used by another API call. Inspect its fields, accessors, or constants in your IDE.</p>";
+    body.append(note);
   }
 
   details.append(title, body);
@@ -286,6 +286,7 @@ function renderMethod(signature) {
     returns.innerHTML = `<strong>Returns:</strong> ${escapeHtml(returnNote)}`;
     method.append(returns);
   }
+
   return method;
 }
 
@@ -351,49 +352,27 @@ function explainSignature(signature) {
   const subject = humanize(parsed.name);
   let explanation;
 
-  if (parsed.name.endsWith("Contains")) {
-    explanation = `Checks whether the ${lowerFirst(humanize(parsed.name.slice(0, -8)))} contains a matching item or value.`;
-  } else if (parsed.name.startsWith("is")) {
-    explanation = `Checks whether ${lowerFirst(subject.replace(/^Is /, ""))} is currently true.`;
-  } else if (parsed.name.startsWith("has")) {
-    explanation = `Checks whether ${lowerFirst(subject.replace(/^Has /, ""))} is currently available.`;
-  } else if (parsed.name.endsWith("Active")) {
-    explanation = `Checks whether ${lowerFirst(subject.replace(/ Active$/, ""))} is currently active.`;
-  } else if (parsed.name.endsWith("Open")) {
-    explanation = `Checks whether ${lowerFirst(subject.replace(/ Open$/, ""))} is currently open.`;
-  } else if (parsed.name.endsWith("Enabled")) {
-    explanation = `Checks whether ${lowerFirst(subject.replace(/ Enabled$/, ""))} is currently enabled.`;
-  } else if (parsed.name.startsWith("nearest")) {
-    explanation = `Finds the nearest currently available ${lowerFirst(subject.replace(/^Nearest /, ""))} that matches the supplied criteria.`;
-  } else if (parsed.name.startsWith("first")) {
-    explanation = `Finds the first matching ${lowerFirst(subject.replace(/^First /, ""))}.`;
-  } else if (parsed.name.endsWith("Snapshot") || parsed.name === "snapshot") {
-    explanation = `Captures a point-in-time view of ${lowerFirst(subject.replace(/ Snapshot$/, ""))}.`;
-  } else if (/^(inventory|equipment|bank|players|npcs|skills|worlds|friends|ignores|projectiles|sceneObjects|groundItems|graphicsObjects|dialogOptions|grandExchangeOffers)$/.test(parsed.name)) {
-    explanation = `Reads the current ${lowerFirst(subject)} collection.`;
-  } else if (/Count$/.test(parsed.name) || parsed.name.startsWith("count")) {
-    explanation = `Returns the current count for ${lowerFirst(subject.replace(/ Count$/, ""))}.`;
-  } else if (parsed.name.startsWith("distance")) {
-    explanation = "Calculates the current distance to the supplied world location.";
-  } else if (parsed.name.startsWith("interact")) {
-    explanation = `Requests the client interaction described by ${lowerFirst(subject.replace(/^Interact /, ""))}.`;
-  } else if (parsed.name.startsWith("set")) {
-    explanation = `Changes ${lowerFirst(subject.replace(/^Set /, ""))} to the supplied value.`;
-  } else if (parsed.name.startsWith("walk")) {
-    explanation = `Requests walker movement for ${lowerFirst(subject.replace(/^Walk /, ""))}.`;
-  } else if (ACTION_PREFIXES.some((prefix) => parsed.name.startsWith(prefix))) {
-    explanation = `Requests the ${lowerFirst(subject)} operation.`;
-  } else {
-    explanation = `Provides the ${lowerFirst(subject)} operation exposed by this type.`;
-  }
+  if (parsed.name.endsWith("Contains")) explanation = `Checks whether the ${lowerFirst(humanize(parsed.name.slice(0, -8)))} contains a matching item or value.`;
+  else if (parsed.name.startsWith("is")) explanation = `Checks whether ${lowerFirst(subject.replace(/^Is /, ""))} is currently true.`;
+  else if (parsed.name.startsWith("has")) explanation = `Checks whether ${lowerFirst(subject.replace(/^Has /, ""))} is currently available.`;
+  else if (parsed.name.endsWith("Active")) explanation = `Checks whether ${lowerFirst(subject.replace(/ Active$/, ""))} is currently active.`;
+  else if (parsed.name.endsWith("Open")) explanation = `Checks whether ${lowerFirst(subject.replace(/ Open$/, ""))} is currently open.`;
+  else if (parsed.name.endsWith("Enabled")) explanation = `Checks whether ${lowerFirst(subject.replace(/ Enabled$/, ""))} is currently enabled.`;
+  else if (parsed.name.startsWith("nearest")) explanation = `Finds the nearest currently available ${lowerFirst(subject.replace(/^Nearest /, ""))} matching the supplied criteria.`;
+  else if (parsed.name.startsWith("first")) explanation = `Finds the first matching ${lowerFirst(subject.replace(/^First /, ""))}.`;
+  else if (parsed.name.endsWith("Snapshot") || parsed.name === "snapshot") explanation = `Captures a point-in-time view of ${lowerFirst(subject.replace(/ Snapshot$/, ""))}.`;
+  else if (/^(inventory|equipment|bank|players|npcs|skills|worlds|friends|ignores|projectiles|sceneObjects|groundItems|graphicsObjects|dialogOptions|grandExchangeOffers)$/.test(parsed.name)) explanation = `Reads the current ${lowerFirst(subject)} collection.`;
+  else if (/Count$/.test(parsed.name) || parsed.name.startsWith("count")) explanation = `Returns the current count for ${lowerFirst(subject.replace(/ Count$/, ""))}.`;
+  else if (parsed.name.startsWith("distance")) explanation = "Calculates the current distance to the supplied world location.";
+  else if (parsed.name.startsWith("interact")) explanation = `Requests the client interaction described by ${lowerFirst(subject.replace(/^Interact /, ""))}.`;
+  else if (parsed.name.startsWith("set")) explanation = `Changes ${lowerFirst(subject.replace(/^Set /, ""))} to the supplied value.`;
+  else if (parsed.name.startsWith("walk")) explanation = `Requests walker movement for ${lowerFirst(subject.replace(/^Walk /, ""))}.`;
+  else if (ACTION_PREFIXES.some((prefix) => parsed.name.startsWith(prefix))) explanation = `Requests the ${lowerFirst(subject)} operation.`;
+  else explanation = `Provides the ${lowerFirst(subject)} operation exposed by this type.`;
 
-  if (parsed.returnType.includes("Optional<")) {
-    explanation += " No value is returned when no current match exists.";
-  } else if (parsed.returnType.includes("List<")) {
-    explanation += " The returned list may be empty.";
-  } else if (parsed.returnType.includes("KLiteInteractionResult")) {
-    explanation += " Inspect the interaction result before advancing the workflow.";
-  }
+  if (parsed.returnType.includes("Optional<")) explanation += " No value is returned when no current match exists.";
+  else if (parsed.returnType.includes("List<")) explanation += " The returned list may be empty.";
+  else if (parsed.returnType.includes("KLiteInteractionResult")) explanation += " Inspect the interaction result before advancing the workflow.";
   return explanation;
 }
 
@@ -413,7 +392,6 @@ function typeDescription(type) {
   if (type.description?.trim()) return type.description.trim();
   if (TYPE_DESCRIPTIONS[type.name]) return TYPE_DESCRIPTIONS[type.name];
   const readable = humanize(type.name.replace(/^KLite/, "").replace(/Snapshot$/, "").replace(/Definition$/, ""));
-
   if (type.name.endsWith("Snapshot")) return `A read-only, point-in-time view of ${lowerFirst(readable)} state.`;
   if (type.name.endsWith("Definition")) return `Descriptive metadata for ${lowerFirst(readable)}, such as identity, name, actions, or configuration.`;
   if (type.name.endsWith("Request")) return `An input object used to describe a ${lowerFirst(readable)} request.`;
@@ -426,12 +404,12 @@ function typeDescription(type) {
 }
 
 function typeUsage(type) {
-  if (type.name === "DefaultKLiteClientApi") return "Use it indirectly through dependency injection. Depend on KLiteClientApi so code remains easier to test and less coupled to the implementation.";
-  if (type.name === "KLiteClientApi") return "Inject or receive this interface when plugin code needs client state, definitions, widgets, inventory containers, interactions, or client settings.";
-  if (type.name.endsWith("Snapshot")) return "Use it after a snapshot-returning method completes. Request another snapshot before making decisions that require fresh state.";
+  if (type.name === "DefaultKLiteClientApi") return "Use it indirectly through dependency injection. Depend on KLiteClientApi so code stays easier to test and less coupled to the implementation.";
+  if (type.name === "KLiteClientApi") return "Inject this interface when plugin code needs client state, definitions, widgets, inventory containers, interactions, or client settings.";
+  if (type.name.endsWith("Snapshot")) return "Use it after a snapshot-returning method completes. Request a fresh snapshot before decisions that depend on current state.";
   if (type.name.endsWith("Definition")) return "Use it when IDs alone are insufficient and the plugin needs metadata such as names or available actions.";
   if (type.name.endsWith("Request")) return "Construct it before calling the operation that accepts this request type.";
-  if (type.name.endsWith("Result")) return "Read it immediately after an operation to decide whether to continue, retry, or recover.";
+  if (type.name.endsWith("Result")) return "Read it after an operation to decide whether to continue, retry, or recover.";
   if (type.kind === "enum") return "Pass one of its constants to methods that restrict a setting, mode, quantity, or state to supported values.";
   if ((type.signatures || []).length) return "Use its methods for the operations listed below. Prefer the most specific method that matches the task.";
   return "Use it as a value returned by, or supplied to, another public KLite API method.";
@@ -465,9 +443,20 @@ function escapeHtml(value) {
 }
 
 search.addEventListener("input", render);
-sectionFilter.addEventListener("change", render);
+sectionFilter.addEventListener("change", () => {
+  updateAreaTabs();
+  render();
+});
 kindFilter.addEventListener("change", render);
 methodsOnly.addEventListener("change", render);
+
+for (const tab of areaTabs) {
+  tab.addEventListener("click", () => setApiArea(tab.dataset.apiTab || ""));
+}
+for (const card of areaCards) {
+  card.addEventListener("click", () => setApiArea(card.dataset.apiArea || "", true));
+}
+
 content.addEventListener("click", async (event) => {
   const button = event.target.closest(".api-copy-button");
   if (!button) return;
@@ -479,8 +468,10 @@ content.addEventListener("click", async (event) => {
     button.textContent = "Copy failed";
   }
 });
+
 logout.addEventListener("click", async () => {
   await request("/api/auth/logout", { method: "POST", body: "{}" });
   window.location.assign("/");
 });
+
 load();
