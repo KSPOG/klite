@@ -57,10 +57,10 @@ public class DefaultWebWalkerTest
 			path.add(new WorldPoint(x, 1, 0));
 		}
 
-		int index = DefaultWebWalker.advancePathIndex(path, new WorldPoint(2, 1, 0), 0);
+		int index = DefaultWebWalker.advancePathIndex(path, new WorldPoint(2, 0, 0), 0);
 
-		// The physically adjacent return leg is much later in the route and must not
-		// be selected until the cursor has progressed through the outgoing leg.
+		// The adjacent return leg is much later in the route and must not be selected
+		// until the cursor has progressed through the outgoing leg.
 		assertEquals(2, index);
 	}
 }
