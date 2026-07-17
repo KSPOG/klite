@@ -8,6 +8,7 @@ package net.runelite.client.plugins.klite;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
+import javax.swing.Timer;
 import net.runelite.api.events.AccountHashChanged;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.gameval.InventoryID;
@@ -39,6 +40,7 @@ import net.runelite.client.util.ImageUtil;
 public class KLitePlugin extends Plugin
 {
 	static final String CONFIG_GROUP = "klite";
+	private static final int STARTUP_UPDATE_DELAY_MILLIS = 3_000;
 
 	@Inject
 	private OverlayManager overlayManager;
@@ -71,6 +73,7 @@ public class KLitePlugin extends Plugin
 	private KLiteUpdateService updateService;
 
 	private NavigationButton marketplaceButton;
+	private Timer startupUpdateTimer;
 
 	@Provides
 	KLiteConfig provideConfig(ConfigManager configManager)
@@ -141,13 +144,21 @@ public class KLitePlugin extends Plugin
 
 		if (config.checkForClientUpdates())
 		{
-			updateService.checkForUpdates(pluginPanel, false);
+			startupUpdateTimer = new Timer(STARTUP_UPDATE_DELAY_MILLIS,
+				event -> updateService.checkForUpdates(pluginPanel, false));
+			startupUpdateTimer.setRepeats(false);
+			startupUpdateTimer.start();
 		}
 	}
 
 	@Override
 	protected void shutDown()
 	{
+		if (startupUpdateTimer != null)
+		{
+			startupUpdateTimer.stop();
+			startupUpdateTimer = null;
+		}
 		updateService.cancel();
 		clientToolbar.removeNavigation(marketplaceButton);
 		marketplaceWindow.close();
