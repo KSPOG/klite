@@ -10,12 +10,13 @@
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="../admin.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="layout-v2.css">
 </head>
 <body>
-  <header class="site-header">
+  <header class="site-header api-site-header">
     <a class="brand" href="/" aria-label="KLite marketplace home">
       <img src="../assets/klite-marketplace.png" alt="" width="48" height="48">
-      <span><strong>KLite</strong><small>API Reference</small></span>
+      <span><strong>KLite</strong><small>Developer Documentation</small></span>
     </a>
     <div class="account-actions">
       <a class="button button-secondary" href="/">Marketplace</a>
@@ -24,93 +25,88 @@
   </header>
 
   <main class="api-page-main">
-    <section class="account-panel api-reference-page">
-      <div class="api-page-header">
-        <div>
-          <p class="eyebrow">Authenticated developer reference</p>
-          <h1>KLite client and automation API</h1>
-          <p class="api-page-introduction">A searchable Java reference for reading client state, performing controlled interactions, running automation tasks, and moving through the world with the integrated walker.</p>
-          <p id="api-account-status" class="api-account-status">Checking your marketplace session...</p>
+    <section class="api-reference-page">
+      <header class="api-hero">
+        <div class="api-hero-copy">
+          <p class="eyebrow">KLite developer documentation</p>
+          <h1>Build client plugins without guessing what the API does.</h1>
+          <p class="api-page-introduction">Use the KLite Java API to read game state, request controlled interactions, coordinate longer automation workflows, and move through the world with the integrated walker.</p>
+          <div class="api-hero-actions">
+            <a class="button button-primary" href="#reference-browser">Browse the reference</a>
+            <a class="button button-secondary" href="#getting-started">Read the quick start</a>
+          </div>
         </div>
-      </div>
+        <aside class="api-hero-status">
+          <span class="api-status-label">Documentation access</span>
+          <strong id="api-account-status">Checking your marketplace session...</strong>
+          <p>The searchable type reference requires a signed-in marketplace account.</p>
+        </aside>
+      </header>
 
       <aside class="api-important-note" aria-labelledby="api-important-title">
-        <strong id="api-important-title">This is an in-client Java API, not a public HTTP API.</strong>
-        <p>Use these types from a KLite plugin or automation module running inside the desktop client. The <code>/api/</code> website path only hosts this documentation.</p>
+        <strong id="api-important-title">This is an in-client Java API—not a public web or REST API.</strong>
+        <p>Use these classes from a KLite plugin or automation module running inside the desktop client. The <code>/api/</code> address is only the documentation page.</p>
       </aside>
 
-      <section class="api-orientation" aria-labelledby="api-orientation-title">
+      <section id="getting-started" class="api-orientation" aria-labelledby="api-orientation-title">
         <div class="api-section-title-row">
           <div>
-            <p class="eyebrow">Start here</p>
-            <h2 id="api-orientation-title">Choose the correct API area</h2>
+            <p class="eyebrow">Quick start</p>
+            <h2 id="api-orientation-title">Choose the API area that matches the job</h2>
           </div>
-          <p>Most plugins use the Client API first, add the automation runtime for long-running workflows, and use the web walker only when travel is required.</p>
+          <p>Most plugins start with the Client API. Add the automation runtime for multi-step work and the walker when the player must travel.</p>
         </div>
+
         <div class="api-area-grid">
-          <article class="api-guide-card api-guide-cyan">
+          <button class="api-guide-card api-guide-cyan" type="button" data-api-area="Client API">
             <span class="api-guide-number">01</span>
-            <h3>Client API</h3>
-            <p>Reads inventory, players, NPCs, widgets, combat state, camera state, varbits, and other client data. It also exposes controlled interactions such as clicking an NPC, withdrawing an item, or changing a client setting.</p>
-            <small>Typical entry point: <code>KLiteClientApi</code></small>
-          </article>
-          <article class="api-guide-card api-guide-orange">
+            <span class="api-guide-copy">
+              <strong>Client API</strong>
+              <small>Inventory, NPCs, players, widgets, combat, banking, definitions, settings, and focused interactions.</small>
+              <code>KLiteClientApi</code>
+            </span>
+          </button>
+          <button class="api-guide-card api-guide-orange" type="button" data-api-area="Automation runtime">
             <span class="api-guide-number">02</span>
-            <h3>Automation runtime</h3>
-            <p>Coordinates repeatable or long-running work. Use it for task lifecycle, cancellation, delays, status reporting, and keeping automation logic separate from UI or plugin startup code.</p>
-            <small>Use it when an action spans multiple game states or ticks.</small>
-          </article>
-          <article class="api-guide-card api-guide-violet">
+            <span class="api-guide-copy">
+              <strong>Automation runtime</strong>
+              <small>Task lifecycle, cancellation, waiting, recovery, status reporting, and multi-step workflows.</small>
+              <code>Use for work spanning multiple ticks or states</code>
+            </span>
+          </button>
+          <button class="api-guide-card api-guide-violet" type="button" data-api-area="Web walker">
             <span class="api-guide-number">03</span>
-            <h3>Web walker</h3>
-            <p>Plans and executes travel to a destination. It handles route progress and movement-specific state so plugin code does not need to repeatedly issue raw tile clicks.</p>
-            <small>Use <code>WorldPoint</code> destinations with X, Y, and plane.</small>
-          </article>
+            <span class="api-guide-copy">
+              <strong>Web walker</strong>
+              <small>Route planning, travel progress, destinations, movement status, and long-distance navigation.</small>
+              <code>WorldPoint(x, y, plane)</code>
+            </span>
+          </button>
         </div>
       </section>
 
-      <section class="api-concepts" aria-labelledby="api-concepts-title">
-        <div class="api-section-title-row">
-          <div>
-            <p class="eyebrow">How to read the reference</p>
-            <h2 id="api-concepts-title">Important return types and conventions</h2>
+      <details class="api-learning-panel">
+        <summary>
+          <span><strong>How to read KLite return types</strong><small>CompletableFuture, Optional, snapshots, interaction results, lists, and coordinates</small></span>
+          <span aria-hidden="true">+</span>
+        </summary>
+        <div class="api-learning-body">
+          <div class="api-concept-grid">
+            <article><code>CompletableFuture&lt;T&gt;</code><p>The operation completes asynchronously. Chain work with <code>thenApply</code>, <code>thenCompose</code>, or <code>thenAccept</code> rather than blocking the client thread.</p></article>
+            <article><code>Optional&lt;T&gt;</code><p>The requested object may not currently exist. Handle the empty case rather than calling <code>get()</code> without checking.</p></article>
+            <article><code>*Snapshot</code><p>A read-only point-in-time view. Request a new snapshot before making a decision that depends on current state.</p></article>
+            <article><code>KLiteInteractionResult</code><p>The outcome of a requested action. Check it before assuming a click, withdrawal, selection, or interaction succeeded.</p></article>
+            <article><code>List&lt;T&gt;</code><p>A collection of current matches. An empty list is valid and simply means nothing matched at that moment.</p></article>
+            <article><code>WorldPoint</code><p>A world coordinate with X, Y, and plane. The correct plane matters for objects, ground items, and walking destinations.</p></article>
           </div>
-        </div>
-        <div class="api-concept-grid">
-          <article>
-            <code>CompletableFuture&lt;T&gt;</code>
-            <p>The call completes asynchronously. Prefer <code>thenApply</code>, <code>thenCompose</code>, or <code>thenAccept</code> instead of blocking the client with <code>get()</code> or <code>join()</code>.</p>
-          </article>
-          <article>
-            <code>Optional&lt;T&gt;</code>
-            <p>No matching object may exist. Check <code>isPresent()</code>, use <code>ifPresent</code>, or provide a fallback instead of calling <code>get()</code> blindly.</p>
-          </article>
-          <article>
-            <code>*Snapshot</code>
-            <p>A point-in-time, read-only view of client state. Request a new snapshot when current information matters; do not treat an old snapshot as a live game object.</p>
-          </article>
-          <article>
-            <code>KLiteInteractionResult</code>
-            <p>An interaction request can be accepted, rejected, or fail. Inspect the result before advancing the automation state.</p>
-          </article>
-          <article>
-            <code>List&lt;T&gt;</code>
-            <p>A collection of current matches. An empty list is valid and means nothing matched at that moment.</p>
-          </article>
-          <article>
-            <code>WorldPoint</code>
-            <p>A world coordinate containing X, Y, and plane. Make sure the plane is correct when targeting objects, ground items, or walker destinations.</p>
-          </article>
-        </div>
-      </section>
 
-      <section class="api-example" aria-labelledby="api-example-title">
-        <div>
-          <p class="eyebrow">Minimal example</p>
-          <h2 id="api-example-title">Read state without blocking</h2>
-          <p>This example checks whether the inventory contains coins and handles the asynchronous result.</p>
-        </div>
-        <pre><code>KLiteClientApi api = /* injected API */;
+          <div class="api-example">
+            <div>
+              <p class="eyebrow">Minimal example</p>
+              <h3>Read inventory state without blocking</h3>
+              <p>Check for coins and continue only after the asynchronous result is available.</p>
+            </div>
+            <pre><code>KLiteClientApi api = /* injected API */;
 
 api.inventoryContains(995)
     .thenAccept(hasCoins -&gt; {
@@ -118,21 +114,30 @@ api.inventoryContains(995)
             // Continue the workflow.
         }
     });</code></pre>
-      </section>
+          </div>
+        </div>
+      </details>
 
-      <section class="api-browser" aria-labelledby="api-browser-title">
+      <section id="reference-browser" class="api-browser" aria-labelledby="api-browser-title">
         <div class="api-section-title-row">
           <div>
-            <p class="eyebrow">Searchable reference</p>
+            <p class="eyebrow">Searchable Java reference</p>
             <h2 id="api-browser-title">Types and callable methods</h2>
           </div>
-          <p>Open a type to see what it represents, when to use it, and an explanation under every callable signature.</p>
+          <p>The default view shows callable Client API types. Select another area or disable the callable-method filter to inspect data-only snapshot and request types.</p>
         </div>
+
+        <nav class="api-area-tabs" aria-label="API area">
+          <button type="button" data-api-tab="Client API">Client API</button>
+          <button type="button" data-api-tab="Automation runtime">Automation runtime</button>
+          <button type="button" data-api-tab="Web walker">Web walker</button>
+          <button type="button" data-api-tab="">All areas</button>
+        </nav>
 
         <div class="api-filter-grid">
           <label class="form-field api-search">
-            <span>Search names, descriptions, methods, or packages</span>
-            <input id="api-search" type="search" placeholder="inventory, walker, snapshot..." autocomplete="off">
+            <span>Search types, methods, descriptions, or packages</span>
+            <input id="api-search" type="search" placeholder="Try inventory, nearestNpc, walker, snapshot..." autocomplete="off">
           </label>
           <label class="form-field">
             <span>API area</span>
@@ -147,7 +152,7 @@ api.inventoryContains(995)
             </select>
           </label>
           <label class="api-checkbox-filter">
-            <input id="api-methods-only" type="checkbox">
+            <input id="api-methods-only" type="checkbox" checked>
             <span>Only show types with callable methods</span>
           </label>
         </div>
@@ -159,5 +164,6 @@ api.inventoryContains(995)
   </main>
 
   <script src="app.js" defer></script>
+  <script src="layout-v2.js" defer></script>
 </body>
 </html>
