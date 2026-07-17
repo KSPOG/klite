@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-07-17T00:20:51Z",
+  "updatedAt": "2026-07-17T01:40:35Z",
   "categories": [
     "Agility",
     "Bossing",
@@ -98,15 +98,15 @@
       "status": "available",
       "artifact": {
         "version": "1.0.0",
-        "sha256": "626255fc638da012d02b02b9fa56dbcef0311dded9b12bcfa9d724f43b0783b8",
-        "size": 7459,
+        "sha256": "cfb6226c9bb6e0b052204846659e38604a337e7f51b87408f985bf40cf2ac805",
+        "size": 7490,
         "entrypoints": [
           "net.runelite.client.plugins.klite.examples.miner.CopperTinMinerPlugin"
         ]
       },
       "homepageUrl": "https://github.com/KSPOG/klite/tree/main/examples/klite-copper-tin-miner",
       "releasedAt": "2026-07-16T18:49:21Z",
-      "updatedAt": "2026-07-17T00:20:51Z",
+      "updatedAt": "2026-07-17T01:40:35Z",
       "trendingDay": 0,
       "trendingWeek": 0,
       "trendingMonth": 0
