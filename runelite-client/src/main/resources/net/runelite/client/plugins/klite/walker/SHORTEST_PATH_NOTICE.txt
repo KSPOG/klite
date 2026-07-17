@@ -1,0 +1,22 @@
+KLite Integrated Shortest Path Notice
+=====================================
+
+KLite's integrated route planner, route rendering, collision-map format, and
+forward waypoint walking behavior include code and design adapted from:
+
+1. Shortest Path
+   Project: https://github.com/Skretzo/shortest-path
+   Author: Skretzo
+   License: BSD 2-Clause License
+
+2. Microbot Shortest Path / Rs2Walker
+   Project: https://github.com/chsami/Microbot
+   License: BSD 2-Clause License
+
+KLite modifications include marketplace integration, asynchronous route state,
+KLite diagnostics, KLite configuration, scene/minimap rendering, and the
+WebWalker API adapter.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the applicable BSD 2-Clause license
+conditions and copyright notices are retained.
