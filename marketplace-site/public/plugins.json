@@ -73,7 +73,7 @@
       "id": "copper-tin-miner",
       "descriptor": {
         "name": "Copper and Tin Miner",
-        "description": "Alternates copper and tin at the Varrock south-east mine, then banks every inventory item except pickaxes.",
+        "description": "Alternates copper and tin at the Varrock south-east mine, banks only when the inventory is full, and keeps pickaxes in the inventory.",
         "tags": [
           "mining",
           "copper",
@@ -84,7 +84,7 @@
         "authors": [
           "KSP"
         ],
-        "version": "1.0.0",
+        "version": "0.0.2",
         "minClientVersion": "1.0.0",
         "enabledByDefault": false,
         "isExternal": true
@@ -97,7 +97,7 @@
       "access": "Free",
       "status": "available",
       "artifact": {
-        "version": "1.0.0",
+        "version": "0.0.2",
         "sha256": "cfb6226c9bb6e0b052204846659e38604a337e7f51b87408f985bf40cf2ac805",
         "size": 7490,
         "entrypoints": [
