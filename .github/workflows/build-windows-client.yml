@@ -206,7 +206,7 @@ jobs:
             dist/KLite-Portable.zip
           if-no-files-found: error
 
-      - name: Publish rolling Windows release
+      - name: Publish rolling Windows release staging assets
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -221,43 +221,9 @@ jobs:
             gh release create windows-client $installer $portable `
               --target $env:GITHUB_SHA `
               --title "KLite Windows Client" `
-              --notes "Rolling Windows packages. KLite-Setup.exe installs and upgrades the native KLite.exe application. KLite-Portable.zip contains the same KLite.exe launcher and its required bundled runtime." `
+              --notes "Rolling staging packages. The synchronization workflow publishes a content-addressed installer and the verified update manifest after this build completes." `
               --latest `
               --repo $env:GITHUB_REPOSITORY
           }
 
-      - name: Generate verified update manifest
-        shell: pwsh
-        run: |
-          $installer = Get-Item "dist\KLite-Setup.exe"
-          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-          $manifest = [ordered]@{
-            schemaVersion = 1
-            platform = "windows-x64"
-            version = $env:KLITE_APP_VERSION
-            buildSha = $env:GITHUB_SHA
-            downloadUrl = "https://klite-marketplace.pages.dev/download/windows"
-            sha256 = $hash
-            size = $installer.Length
-            launcher = "KLite.exe"
-            publishedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-          }
-          $directory = "marketplace-site\public\client\windows"
-          New-Item -ItemType Directory -Force -Path $directory | Out-Null
-          $manifest | ConvertTo-Json | Set-Content `
-            -Path "$directory\latest.json" `
-            -Encoding utf8
-          Get-Content "$directory\latest.json"
-
-      - name: Commit update manifest
-        shell: pwsh
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add marketplace-site/public/client/windows/latest.json
-          if (git diff --cached --quiet) {
-            Write-Host "The update manifest is already current."
-            exit 0
-          }
-          git commit -m "Publish KLite Windows update manifest"
-          git push origin HEAD:main
+          Write-Host "The synchronization workflow will publish the immutable installer and update manifest."
