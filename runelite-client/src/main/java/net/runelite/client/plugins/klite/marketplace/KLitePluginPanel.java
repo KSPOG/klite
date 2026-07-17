@@ -27,7 +27,7 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import net.runelite.client.plugins.Plugin;
-import net.runelite.client.plugins.config.ConfigPlugin;
+import net.runelite.client.plugins.config.PluginConfigurationNavigator;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
@@ -40,7 +40,7 @@ public class KLitePluginPanel extends PluginPanel
 		KLitePluginPanel.class, "klite_marketplace.png");
 
 	private final KLiteStreamedPluginService streamedPluginService;
-	private final ConfigPlugin configPlugin;
+	private final PluginConfigurationNavigator configurationNavigator;
 	private final JPanel pluginList = new JPanel();
 	private final JLabel operationStatus = new JLabel(" ");
 
@@ -48,10 +48,10 @@ public class KLitePluginPanel extends PluginPanel
 	KLitePluginPanel(KLiteMarketplaceWindow marketplaceWindow,
 		KLiteAccountPanel accountPanel,
 		KLiteStreamedPluginService streamedPluginService,
-		ConfigPlugin configPlugin)
+		PluginConfigurationNavigator configurationNavigator)
 	{
 		this.streamedPluginService = streamedPluginService;
-		this.configPlugin = configPlugin;
+		this.configurationNavigator = configurationNavigator;
 
 		setLayout(new BorderLayout(0, 12));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -187,7 +187,7 @@ public class KLitePluginPanel extends PluginPanel
 			configure.addActionListener(event ->
 			{
 				Plugin primary = loaded.getPrimaryPlugin();
-				configPlugin.openPluginConfiguration(primary);
+				configurationNavigator.open(primary);
 			});
 			controls.add(configure);
 		}
