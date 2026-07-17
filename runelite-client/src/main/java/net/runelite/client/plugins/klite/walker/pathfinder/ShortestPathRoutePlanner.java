@@ -13,9 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.PriorityQueue;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
 
 /**
  * KLite-owned Shortest Path planner.
@@ -29,6 +31,7 @@ import net.runelite.api.coords.WorldPoint;
 @Singleton
 public final class ShortestPathRoutePlanner
 {
+	private static final String LOG_SOURCE = "WebWalker";
 	private static final int[] DX = {-1, 1, 0, 0, -1, 1, -1, 1};
 	private static final int[] DY = {0, 0, -1, 1, -1, -1, 1, 1};
 	private static final int STRAIGHT_COST = 10;
@@ -37,16 +40,20 @@ public final class ShortestPathRoutePlanner
 	private static final int MAX_VISITED_TILES = 3_000_000;
 
 	private final TraversalMap map;
+	@Nullable
+	private final KLiteClientLogBuffer diagnostics;
 
 	@Inject
-	ShortestPathRoutePlanner(StaticCollisionMap map)
+	ShortestPathRoutePlanner(StaticCollisionMap map, KLiteClientLogBuffer diagnostics)
 	{
 		this.map = map;
+		this.diagnostics = diagnostics;
 	}
 
 	ShortestPathRoutePlanner(TraversalMap map)
 	{
 		this.map = Objects.requireNonNull(map, "map");
+		this.diagnostics = null;
 	}
 
 	public PathSearchResult find(WorldPoint start, WorldPoint destination)
@@ -65,14 +72,25 @@ public final class ShortestPathRoutePlanner
 		}
 
 		long startedAt = System.currentTimeMillis();
+		debug("Route search started: start=" + formatPoint(start)
+			+ ", destination=" + formatPoint(destination)
+			+ ", arrivalDistance=" + arrivalDistance + '.');
 		int startPacked = WorldPointCodec.pack(start);
 		int destinationPacked = WorldPointCodec.pack(destination);
-		if (start.getPlane() != destination.getPlane() || !map.contains(startPacked))
+		if (start.getPlane() != destination.getPlane())
 		{
+			warn("Route rejected because the start and destination planes differ.");
+			return result(false, ImmutableList.of(), 0, startedAt);
+		}
+		if (!map.contains(startPacked))
+		{
+			warn("Route rejected because the collision map does not contain the starting tile "
+				+ formatPoint(start) + '.');
 			return result(false, ImmutableList.of(), 0, startedAt);
 		}
 		if (withinArrivalDistance(startPacked, destinationPacked, arrivalDistance))
 		{
+			debug("The player is already inside the destination radius.");
 			return result(true, ImmutableList.of(start), 1, startedAt);
 		}
 
@@ -131,11 +149,21 @@ public final class ShortestPathRoutePlanner
 			}
 		}
 
+		long elapsed = Math.max(0L, System.currentTimeMillis() - startedAt);
 		if (reached == -1)
 		{
+			String reason = System.currentTimeMillis() > deadline ? "search timed out"
+				: visited >= MAX_VISITED_TILES ? "visited-tile limit reached"
+				: "search boundary was exhausted";
+			warn("No route found: " + reason + ", visited=" + visited
+				+ ", elapsed=" + elapsed + "ms.");
 			return result(false, ImmutableList.of(), visited, startedAt);
 		}
-		return result(true, reconstruct(parents, startPacked, reached), visited, startedAt);
+		List<WorldPoint> route = reconstruct(parents, startPacked, reached);
+		debug("Route found: length=" + route.size() + ", visited=" + visited
+			+ ", elapsed=" + elapsed + "ms, reached="
+			+ formatPoint(route.get(route.size() - 1)) + '.');
+		return result(true, route, visited, startedAt);
 	}
 
 	private static int heuristic(int point, int destination, int arrivalDistance)
@@ -184,6 +212,27 @@ public final class ShortestPathRoutePlanner
 	{
 		return new PathSearchResult(reached, path, visited,
 			Math.max(0L, System.currentTimeMillis() - startedAt));
+	}
+
+	private void debug(String message)
+	{
+		if (diagnostics != null)
+		{
+			diagnostics.debug(LOG_SOURCE, message);
+		}
+	}
+
+	private void warn(String message)
+	{
+		if (diagnostics != null)
+		{
+			diagnostics.warn(LOG_SOURCE, message);
+		}
+	}
+
+	private static String formatPoint(WorldPoint point)
+	{
+		return point.getX() + "," + point.getY() + "," + point.getPlane();
 	}
 
 	private static final class SearchNode implements Comparable<SearchNode>
