@@ -136,6 +136,11 @@ final class CopperTinMinerTask implements AutomationTask
 		}
 		catch (Exception exception)
 		{
+			if (context.isCancellationRequested())
+			{
+				diagnostics.debug(LOG_SOURCE, "Automation tick cancelled during plugin shutdown.");
+				return AutomationResult.STOP;
+			}
 			setActivity("Failed: " + exception.getClass().getSimpleName());
 			diagnostics.error(LOG_SOURCE, "Automation tick failed", exception);
 			throw exception;
