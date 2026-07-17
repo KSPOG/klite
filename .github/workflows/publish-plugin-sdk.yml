@@ -30,6 +30,7 @@ concurrency:
 jobs:
   build-sdk:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -43,11 +44,19 @@ jobs:
           java-version: "11"
           cache: gradle
 
+      - name: Show SDK build environment
+        shell: bash
+        run: |
+          set -euxo pipefail
+          java -version
+          ./gradlew --version
+          git rev-parse HEAD
+
       - name: Build RuneLite API classes
-        run: ./gradlew -p runelite-api jar --no-daemon
+        run: ./gradlew -p runelite-api clean jar --no-daemon --stacktrace
 
       - name: Build approved KLite client API classes
-        run: ./gradlew :client:classes --no-daemon
+        run: ./gradlew :client:classes --no-daemon --stacktrace
 
       - name: Build isolated SDK and starter ZIP
         env:
@@ -57,7 +66,7 @@ jobs:
       - name: Verify SDK archive boundaries
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           SDK="dist/plugin-sdk/KLite-Plugin-SDK.jar"
           STARTER="dist/plugin-sdk/KLite-Plugin-Starter.zip"
           test -f "$SDK"
@@ -79,13 +88,13 @@ jobs:
       - name: Compile generated standalone starter
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           rm -rf build/sdk-starter-verification
           mkdir -p build/sdk-starter-verification
           unzip -q dist/plugin-sdk/KLite-Plugin-Starter.zip -d build/sdk-starter-verification
           cd build/sdk-starter-verification
           chmod +x gradlew
-          ./gradlew clean build --no-daemon
+          ./gradlew clean jar --no-daemon --stacktrace
           test -f build/libs/starter-plugin-0.1.0.jar
           if unzip -l build/libs/starter-plugin-0.1.0.jar | grep -q "net/runelite/"; then
             echo "Generated starter bundled KLite or RuneLite runtime classes." >&2
@@ -108,7 +117,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           SDK="dist/plugin-sdk/KLite-Plugin-SDK.jar"
           STARTER="dist/plugin-sdk/KLite-Plugin-Starter.zip"
           MANIFEST="dist/plugin-sdk/sdk-manifest.json"
