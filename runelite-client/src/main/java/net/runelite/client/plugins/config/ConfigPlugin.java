@@ -14,7 +14,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
  * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -67,7 +67,6 @@ public class ConfigPlugin extends Plugin
 	private ChatColorConfig chatColorConfig;
 
 	private TopLevelConfigPanel topLevelConfigPanel;
-
 	private NavigationButton navButton;
 
 	@Override
@@ -105,6 +104,24 @@ public class ConfigPlugin extends Plugin
 		clientToolbar.removeNavigation(navButton);
 	}
 
+	/** Opens RuneLite's normal configuration panel for a loaded plugin. */
+	public void openPluginConfiguration(Plugin plugin)
+	{
+		if (plugin == null)
+		{
+			return;
+		}
+		SwingUtilities.invokeLater(() ->
+		{
+			if (navButton == null || topLevelConfigPanel == null)
+			{
+				return;
+			}
+			clientToolbar.openPanel(navButton);
+			topLevelConfigPanel.openConfigurationPanel(plugin.getName());
+		});
+	}
+
 	@Subscribe
 	public void onOverlayMenuClicked(OverlayMenuClicked overlayMenuClicked)
 	{
@@ -117,13 +134,7 @@ public class ConfigPlugin extends Plugin
 			{
 				return;
 			}
-
-			// Expand config panel for plugin
-			SwingUtilities.invokeLater(() ->
-			{
-				clientToolbar.openPanel(navButton);
-				topLevelConfigPanel.openConfigurationPanel(plugin.getName());
-			});
+			openPluginConfiguration(plugin);
 		}
 	}
 }
