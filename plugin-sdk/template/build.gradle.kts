@@ -19,10 +19,6 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     // Compile-only means none of these runtime classes are copied into the plugin JAR.
     compileOnly(files("libs/KLite-Plugin-SDK.jar"))
