@@ -1,4 +1,5 @@
 name: Apply verified KLite PMD fixes
+run-name: Apply and verify KLite PMD fixes
 
 on:
   workflow_dispatch:
