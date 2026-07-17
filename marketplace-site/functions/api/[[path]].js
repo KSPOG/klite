@@ -1,3 +1,4 @@
+// Cloudflare Pages API entrypoint. Keep this import on the Discord-aware worker wrapper.
 import marketplaceWorker from "../../worker/entry.js";
 import { handlePagesAuth } from "../../worker/pages-auth.js";
 import { handlePasswordReset } from "../../worker/pages-password-reset.js";
