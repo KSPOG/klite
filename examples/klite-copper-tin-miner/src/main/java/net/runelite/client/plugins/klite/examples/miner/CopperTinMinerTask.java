@@ -36,6 +36,8 @@ final class CopperTinMinerTask implements AutomationTask
 	private static final Duration INTERVAL = Duration.ofMillis(600L);
 	private static final Duration API_TIMEOUT = Duration.ofSeconds(3L);
 	private static final long INTERACTION_COOLDOWN_MILLIS = 1_800L;
+	private static final long MINING_START_TIMEOUT_MILLIS = 4_000L;
+	private static final long MINING_STOP_CONFIRM_MILLIS = 600L;
 	private static final int INVENTORY_CAPACITY = 28;
 	private static final WorldPoint MINE = new WorldPoint(3285, 3362, 0);
 	private static final WorldPoint VARROCK_EAST_BANK = new WorldPoint(3253, 3420, 0);
@@ -51,6 +53,12 @@ final class CopperTinMinerTask implements AutomationTask
 	private volatile WorldPoint target;
 	private long nextInteractionAt;
 	private String lastWalkSummary = "";
+	@Nullable
+	private WorldPoint activeRockLocation;
+	private int activeRockId = -1;
+	private long activeRockClickedAt;
+	private boolean miningAnimationObserved;
+	private long animationStoppedAt;
 
 	CopperTinMinerTask(WebWalker webWalker, KLiteClientLogBuffer diagnostics)
 	{
@@ -100,6 +108,7 @@ final class CopperTinMinerTask implements AutomationTask
 			if (!banking && inventoryFull && depositable.isPresent())
 			{
 				banking = true;
+				clearActiveRock();
 				setActivity("Inventory full; switching to banking");
 				diagnostics.info(LOG_SOURCE,
 					"Inventory contains 28 occupied slots and at least one non-pickaxe item. Starting a banking trip.");
@@ -240,6 +249,7 @@ final class CopperTinMinerTask implements AutomationTask
 	{
 		if (playerLocation.distanceTo(MINE) > 8)
 		{
+			clearActiveRock();
 			target = MINE;
 			setActivity("Walking to Varrock East mine");
 			walk(context, MINE, 5);
@@ -251,7 +261,15 @@ final class CopperTinMinerTask implements AutomationTask
 			client.players(), API_TIMEOUT).stream()
 			.filter(KLitePlayerSnapshot::isLocalPlayer)
 			.findFirst();
-		if (localPlayer.map(KLitePlayerSnapshot::getAnimation).orElse(-1) != -1)
+		int animation = localPlayer.map(KLitePlayerSnapshot::getAnimation).orElse(-1);
+		List<KLiteSceneObjectSnapshot> objects = context.await(
+			client.sceneObjects(), API_TIMEOUT);
+
+		if (waitForActiveRock(objects, animation))
+		{
+			return;
+		}
+		if (animation != -1)
 		{
 			setActivity("Mining");
 			return;
@@ -263,8 +281,6 @@ final class CopperTinMinerTask implements AutomationTask
 		}
 
 		setActivity("Finding " + getPreferredOre().toLowerCase(Locale.ROOT) + " rock");
-		List<KLiteSceneObjectSnapshot> objects = context.await(
-			client.sceneObjects(), API_TIMEOUT);
 		Optional<KLiteSceneObjectSnapshot> rock = nearestRock(
 			objects, playerLocation, preferCopper ? COPPER_ROCK_IDS : TIN_ROCK_IDS);
 		if (rock.isEmpty())
@@ -287,14 +303,102 @@ final class CopperTinMinerTask implements AutomationTask
 			selected.getObjectId(), selected.getLocation(), "Mine"), API_TIMEOUT);
 		if (result.isDispatched())
 		{
-			preferCopper = !preferCopper;
+			activeRockId = selected.getObjectId();
+			activeRockLocation = selected.getLocation();
+			activeRockClickedAt = System.currentTimeMillis();
+			miningAnimationObserved = false;
+			animationStoppedAt = 0L;
 			startCooldown();
+			setActivity("Waiting for mining animation");
+			diagnostics.debug(LOG_SOURCE, "Tracking rock " + activeRockId + " at "
+				+ formatPoint(activeRockLocation)
+				+ " until mining stops or the rock object changes.");
 		}
 		else
 		{
 			diagnostics.warn(LOG_SOURCE, "The Mine interaction was not dispatched for object "
 				+ selected.getObjectId() + ": " + result.getStatus() + " - " + result.getMessage());
 		}
+	}
+
+	private boolean waitForActiveRock(List<KLiteSceneObjectSnapshot> objects, int animation)
+	{
+		if (activeRockLocation == null)
+		{
+			return false;
+		}
+
+		long now = System.currentTimeMillis();
+		boolean sameRockPresent = objects.stream().anyMatch(object ->
+			object.getObjectId() == activeRockId
+				&& activeRockLocation.equals(object.getLocation()));
+		if (!sameRockPresent)
+		{
+			Optional<KLiteSceneObjectSnapshot> replacement = objects.stream()
+				.filter(object -> activeRockLocation.equals(object.getLocation()))
+				.findFirst();
+			diagnostics.debug(LOG_SOURCE, "Tracked rock " + activeRockId + " at "
+				+ formatPoint(activeRockLocation) + " changed to "
+				+ replacement.map(object -> Integer.toString(object.getObjectId())).orElse("no object")
+				+ "; selecting the next rock.");
+			completeActiveRock();
+			return false;
+		}
+
+		if (animation != -1)
+		{
+			miningAnimationObserved = true;
+			animationStoppedAt = 0L;
+			setActivity("Mining");
+			return true;
+		}
+
+		if (!miningAnimationObserved)
+		{
+			if (now - activeRockClickedAt < MINING_START_TIMEOUT_MILLIS)
+			{
+				setActivity("Waiting for mining animation");
+				return true;
+			}
+			diagnostics.warn(LOG_SOURCE, "Mining animation did not start within "
+				+ MINING_START_TIMEOUT_MILLIS + "ms for rock " + activeRockId + " at "
+				+ formatPoint(activeRockLocation) + "; allowing a retry.");
+			clearActiveRock();
+			return false;
+		}
+
+		if (animationStoppedAt == 0L)
+		{
+			animationStoppedAt = now;
+			setActivity("Confirming mining stopped");
+			return true;
+		}
+		if (now - animationStoppedAt < MINING_STOP_CONFIRM_MILLIS)
+		{
+			setActivity("Confirming mining stopped");
+			return true;
+		}
+
+		diagnostics.debug(LOG_SOURCE, "Mining animation stopped for rock " + activeRockId
+			+ " at " + formatPoint(activeRockLocation) + "; selecting the next rock.");
+		completeActiveRock();
+		return false;
+	}
+
+	private void completeActiveRock()
+	{
+		preferCopper = !preferCopper;
+		clearActiveRock();
+		nextInteractionAt = 0L;
+	}
+
+	private void clearActiveRock()
+	{
+		activeRockLocation = null;
+		activeRockId = -1;
+		activeRockClickedAt = 0L;
+		miningAnimationObserved = false;
+		animationStoppedAt = 0L;
 	}
 
 	private Optional<KLiteSceneObjectSnapshot> nearestRock(
@@ -374,6 +478,7 @@ final class CopperTinMinerTask implements AutomationTask
 	@Override
 	public void onStop(AutomationContext context)
 	{
+		clearActiveRock();
 		setActivity("Stopped");
 		diagnostics.info(LOG_SOURCE, "Automation task stopped and the web-walker route was cleared.");
 		webWalker.clear();
