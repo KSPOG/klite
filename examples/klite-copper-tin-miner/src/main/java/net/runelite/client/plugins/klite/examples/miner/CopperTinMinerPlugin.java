@@ -77,7 +77,7 @@ public class CopperTinMinerPlugin extends Plugin
 			throw new IllegalStateException("Another KLite automation task is already running");
 		}
 		diagnostics.info(LOG_SOURCE, "Plugin v" + VERSION
-			+ " enabled. Overlay registered and automation task started.");
+			+ " enabled. Overlay registered and automation task started with full-inventory banking.");
 	}
 
 	@Override
