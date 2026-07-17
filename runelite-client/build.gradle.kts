@@ -63,7 +63,7 @@ dependencies {
         exclude("com.google.code.findbugs", "jsr305")
         exclude("com.google.errorprone", "error_prone_annotations")
         exclude("com.google.j2objc", "j2objc-annotations")
-        exclude("org.codehaus.mojo", "animal-sniffer-annotations")
+        exclude("org.codehaus.mojo", "animal-sniffer")
     }
     api(variantOf(libs.guice.core) { classifier("no_aop") }) {
         exclude("com.google.guava", "guava")
@@ -162,23 +162,40 @@ tasks.processResources {
     inputs.property("projectVersion", project.version)
     inputs.property("pluginHubVersion", pluginHubVersion)
 
-    val commit = ByteArrayOutputStream()
+    val commitOutput = ByteArrayOutputStream()
     exec {
         commandLine("git", "rev-parse", "--short=7", "HEAD")
-        standardOutput = commit
+        standardOutput = commitOutput
     }
+    val repositoryCommit = commitOutput.toString().trim()
+    val workflowCommit = System.getenv("GITHUB_SHA")
+        ?.trim()
+        ?.takeIf { it.matches(Regex("[0-9a-fA-F]{40}")) }
+        ?.substring(0, 7)
+    val commit = workflowCommit ?: repositoryCommit
 
-    val dirty = ByteArrayOutputStream()
+    val dirtyOutput = ByteArrayOutputStream()
     exec {
         commandLine("git", "status", "--short")
-        standardOutput = dirty
+        standardOutput = dirtyOutput
     }
+    val dirty = if (System.getenv("GITHUB_ACTIONS").equals("true", ignoreCase = true)) {
+        false
+    } else {
+        dirtyOutput.toString().isNotBlank()
+    }
+
+    // The embedded commit and dirty state are part of the generated resource.
+    // Declaring them prevents Gradle from restoring runelite.properties from a
+    // different checkout through the local or GitHub Actions build cache.
+    inputs.property("gitCommit", commit)
+    inputs.property("gitDirty", dirty)
 
     filesMatching("net/runelite/client/runelite.properties") {
         filter { it.replace("\${project.version}", project.version.toString()) }
         filter { it.replace("\${pluginhub.version}", pluginHubVersion) }
-        filter { it.replace("\${git.commit.id.abbrev}", commit.toString().trim()) }
-        filter { it.replace("\${git.dirty}", dirty.toString().isNotBlank().toString()) }
+        filter { it.replace("\${git.commit.id.abbrev}", commit) }
+        filter { it.replace("\${git.dirty}", dirty.toString()) }
     }
 }
 
