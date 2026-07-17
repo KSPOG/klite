@@ -51,6 +51,26 @@ jobs:
           $icon = Get-Item "runelite-client\src\main\resources\net\runelite\client\ui\klite_icon.png"
           Write-Host "Applied supplied splash crest to client resources: $($icon.Length) bytes"
 
+      - name: Verify Discord-only marketplace login
+        shell: pwsh
+        run: |
+          $panelPath = "runelite-client\src\main\java\net\runelite\client\plugins\klite\marketplace\KLiteAccountPanel.java"
+          $panel = Get-Content $panelPath -Raw
+
+          foreach ($required in @("KLiteDiscordLoginFlow", "Continue with Discord")) {
+            if (-not $panel.Contains($required)) {
+              throw "The Windows client is missing required Discord login source: $required"
+            }
+          }
+
+          foreach ($forbidden in @("JPasswordField", "JTextField", "accountService.login(")) {
+            if ($panel.Contains($forbidden)) {
+              throw "Password login source must not be included in the published Windows client: $forbidden"
+            }
+          }
+
+          Write-Host "Verified Discord-only KLite marketplace login UI."
+
       - name: Build the executable KLite JAR
         shell: pwsh
         run: .\gradlew.bat :client:shadowJar --no-daemon
