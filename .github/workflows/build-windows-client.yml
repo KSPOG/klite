@@ -71,9 +71,59 @@ jobs:
 
           Write-Host "Verified Discord-only KLite marketplace login UI."
 
-      - name: Build the executable KLite JAR
+      - name: Build the executable KLite JAR from a clean checkout
         shell: pwsh
-        run: .\gradlew.bat :client:shadowJar --no-daemon
+        run: .\gradlew.bat clean :client:shadowJar --no-daemon --no-build-cache
+
+      - name: Verify embedded client build and Discord classes
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem "runelite-client\build\libs\klite-*.jar" |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $jar) {
+            throw "The KLite shaded JAR was not produced."
+          }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [IO.Compression.ZipFile]::OpenRead($jar.FullName)
+          try {
+            $propertiesEntry = $archive.GetEntry("net/runelite/client/runelite.properties")
+            if (-not $propertiesEntry) {
+              throw "The packaged client is missing runelite.properties."
+            }
+
+            $reader = [IO.StreamReader]::new($propertiesEntry.Open())
+            try {
+              $properties = $reader.ReadToEnd()
+            } finally {
+              $reader.Dispose()
+            }
+
+            $expectedCommit = $env:GITHUB_SHA.Substring(0, 7).ToLowerInvariant()
+            $commitMatch = [regex]::Match($properties, '(?m)^runelite\.commit=(.+)$')
+            if (-not $commitMatch.Success) {
+              throw "The packaged client does not contain an embedded commit."
+            }
+            $actualCommit = $commitMatch.Groups[1].Value.Trim().ToLowerInvariant()
+            if ($actualCommit -ne $expectedCommit) {
+              throw "Stale client JAR: embedded commit $actualCommit does not match workflow commit $expectedCommit."
+            }
+
+            foreach ($className in @(
+              "net/runelite/client/plugins/klite/marketplace/KLiteAccountPanel.class",
+              "net/runelite/client/plugins/klite/marketplace/KLiteDiscordLoginFlow.class",
+              "net/runelite/client/plugins/klite/marketplace/KLiteDiscordAccountClient.class"
+            )) {
+              if (-not $archive.GetEntry($className)) {
+                throw "The packaged client is missing required Discord login class: $className"
+              }
+            }
+
+            Write-Host "Verified packaged client commit $actualCommit and Discord-only login classes."
+          } finally {
+            $archive.Dispose()
+          }
 
       - name: Prepare packaging input
         shell: pwsh
