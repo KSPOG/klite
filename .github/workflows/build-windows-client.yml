@@ -73,22 +73,47 @@ jobs:
             $wix | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           }
 
-      - name: Package KLite installer and portable EXE
+      - name: Build native KLite.exe application image
         shell: pwsh
         run: |
           $appVersion = "1.0.$env:GITHUB_RUN_NUMBER"
           "KLITE_APP_VERSION=$appVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host "Packaging KLite version $appVersion"
 
-          New-Item -ItemType Directory -Force -Path "dist" | Out-Null
+          New-Item -ItemType Directory -Force -Path "app-image" | Out-Null
           jpackage `
-            --type exe `
-            --dest dist `
+            --type app-image `
+            --dest app-image `
             --input package-input `
             --name KLite `
             --main-jar KLite.jar `
             --main-class net.runelite.client.KLite `
             --app-version $appVersion `
+            --vendor KLite `
+            --description "KLite RuneLite-based desktop client" `
+            --java-options "-Xmx1024m"
+
+          $launcher = "app-image\KLite\KLite.exe"
+          if (-not (Test-Path $launcher)) {
+            throw "jpackage did not produce the native KLite.exe launcher."
+          }
+          $launcherItem = Get-Item $launcher
+          if ($launcherItem.Extension -ne ".exe") {
+            throw "The installed KLite launcher is not a Windows executable."
+          }
+          Write-Host "Native launcher: $($launcherItem.FullName)"
+          Get-FileHash $launcherItem.FullName -Algorithm SHA256
+
+      - name: Package KLite.exe Windows installer and portable application
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "dist" | Out-Null
+          jpackage `
+            --type exe `
+            --dest dist `
+            --name KLite `
+            --app-image "app-image\KLite" `
+            --app-version $env:KLITE_APP_VERSION `
             --vendor KLite `
             --description "KLite RuneLite-based desktop client" `
             --win-per-user-install `
@@ -96,8 +121,7 @@ jobs:
             --win-menu `
             --win-menu-group KLite `
             --win-shortcut `
-            --win-upgrade-uuid "8f8e4eb1-3d18-4aac-8f86-6ab22b8a5c17" `
-            --java-options "-Xmx1024m"
+            --win-upgrade-uuid "8f8e4eb1-3d18-4aac-8f86-6ab22b8a5c17"
 
           $installer = Get-ChildItem "dist\*.exe" | Select-Object -First 1
           if (-not $installer) {
@@ -105,25 +129,9 @@ jobs:
           }
           Move-Item $installer.FullName "dist\KLite-Setup.exe" -Force
 
-          New-Item -ItemType Directory -Force -Path "portable" | Out-Null
-          jpackage `
-            --type app-image `
-            --dest portable `
-            --input package-input `
-            --name KLite `
-            --main-jar KLite.jar `
-            --main-class net.runelite.client.KLite `
-            --app-version $appVersion `
-            --vendor KLite `
-            --description "KLite RuneLite-based desktop client" `
-            --java-options "-Xmx1024m"
-
-          if (-not (Test-Path "portable\KLite\KLite.exe")) {
-            throw "The portable KLite.exe launcher was not produced."
-          }
-          Compress-Archive -Path "portable\KLite\*" -DestinationPath "dist\KLite-Portable.zip" -Force
+          Compress-Archive -Path "app-image\KLite\*" -DestinationPath "dist\KLite-Portable.zip" -Force
           Get-FileHash "dist\KLite-Setup.exe" -Algorithm SHA256
-          Get-FileHash "portable\KLite\KLite.exe" -Algorithm SHA256
+          Get-FileHash "app-image\KLite\KLite.exe" -Algorithm SHA256
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
@@ -149,7 +157,7 @@ jobs:
             gh release create windows-client $installer $portable `
               --target $env:GITHUB_SHA `
               --title "KLite Windows Client" `
-              --notes "Rolling Windows packages. KLite-Setup.exe installs and upgrades KLite. KLite-Portable.zip contains the direct KLite.exe launcher and its required bundled runtime." `
+              --notes "Rolling Windows packages. KLite-Setup.exe installs and upgrades the native KLite.exe application. KLite-Portable.zip contains the same KLite.exe launcher and its required bundled runtime." `
               --latest `
               --repo $env:GITHUB_REPOSITORY
           }
@@ -167,6 +175,7 @@ jobs:
             downloadUrl = "https://klite-marketplace.pages.dev/download/windows"
             sha256 = $hash
             size = $installer.Length
+            launcher = "KLite.exe"
             publishedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
           }
           $directory = "marketplace-site\public\client\windows"
