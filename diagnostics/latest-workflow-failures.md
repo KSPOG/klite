@@ -1,8 +1,99 @@
 # Recent GitHub Actions failures
 
-Generated: 2026-07-17T23:51:01.978485+00:00
+Generated: 2026-07-17T23:55:35.701059+00:00
 Repository: `KSPOG/klite`
-Failed runs inspected: **13**
+Failed runs inspected: **15**
+
+## CI: Run verified KLite PMD fixes
+
+- Run: [29621828069](https://github.com/KSPOG/klite/actions/runs/29621828069)
+- Conclusion: `failure`
+- Event: `push`
+- Commit: `69f0efc45918933643651d34a2959eab4aaa3188`
+- Created: `2026-07-17T23:53:35Z`
+
+### Failed jobs and steps
+
+- **build** — `failure`
+  - Step 6: **Build and Test** — `failure`
+
+### Relevant log context
+
+```text
+build	Build and Test	2026-07-17T23:54:13.1249532Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/ui/overlay/infobox/Timer.java:91: warning: no description for @param
+build	Build and Test	2026-07-17T23:54:13.1250998Z 	 * @param duration
+build	Build and Test	2026-07-17T23:54:13.1251446Z 	   ^
+build	Build and Test	2026-07-17T23:54:13.1251899Z > Task :client:javadoc
+build	Build and Test	2026-07-17T23:54:13.6216316Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:60: warning: no @throws for java.io.IOException
+build	Build and Test	2026-07-17T23:54:13.6235446Z 	public void play(File file, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-17T23:54:13.6244663Z 	            ^
+build	Build and Test	2026-07-17T23:54:13.6285900Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:60: warning: no @throws for javax.sound.sampled.UnsupportedAudioFileException
+build	Build and Test	2026-07-17T23:54:13.6295274Z 	public void play(File file, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-17T23:54:13.6324869Z 	            ^
+build	Build and Test	2026-07-17T23:54:13.6326763Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:60: warning: no @throws for javax.sound.sampled.LineUnavailableException
+build	Build and Test	2026-07-17T23:54:13.6329233Z 	public void play(File file, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-17T23:54:13.6330316Z 	            ^
+build	Build and Test	2026-07-17T23:54:13.6331659Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:73: warning: no @throws for java.io.IOException
+build	Build and Test	2026-07-17T23:54:13.6333753Z 	public void play(Class<?> c, String path, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-17T23:54:13.6335131Z 	            ^
+build	Build and Test	2026-07-17T23:54:13.6336705Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:73: warning: no @throws for javax.sound.sampled.UnsupportedAudioFileException
+build	Build and Test	2026-07-17T23:54:13.6339384Z 	public void play(Class<?> c, String path, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-17T23:54:13.6340556Z 	            ^
+build	Build and Test	2026-07-17T23:54:13.6342137Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:73: warning: no @throws for javax.sound.sampled.LineUnavailableException
+build	Build and Test	2026-07-17T23:54:13.6344705Z 	public void play(Class<?> c, String path, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-17T23:54:13.6345844Z 	            ^
+build	Build and Test	2026-07-17T23:54:13.6347508Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:85: warning: no @throws for java.io.IOException
+build	Build and Test	2026-07-17T23:54:13.6349576Z 	public void play(InputStream stream, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-17T23:54:13.6350720Z 	            ^
+build	Build and Test	2026-07-17T23:54:13.6352275Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:85: warning: no @throws for javax.sound.sampled.UnsupportedAudioFileException
+build	Build and Test	2026-07-17T23:54:13.6375039Z 	public void play(InputStream stream, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-17T23:54:13.6376236Z 	            ^
+build	Build and Test	2026-07-17T23:54:13.6377804Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:85: warning: no @throws for javax.sound.sampled.LineUnavailableException
+build	Build and Test	2026-07-17T23:54:13.6380084Z 	public void play(InputStream stream, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-17T23:54:13.6381225Z 	            ^
+build	Build and Test	2026-07-17T23:54:13.6382570Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/banktags/BankTag.java:41: warning: no description for @param
+build	Build and Test	2026-07-17T23:54:13.6384083Z 	 * @param itemId
+build	Build and Test	2026-07-17T23:54:13.6384770Z 	   ^
+build	Build and Test	2026-07-17T23:54:13.6386113Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/banktags/BankTag.java:42: warning: no description for @return
+build	Build and Test	2026-07-17T23:54:13.6387623Z 	 * @return
+build	Build and Test	2026-07-17T23:54:14.1213534Z 	            ^
+build	Build and Test	2026-07-17T23:54:14.2217708Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/ui/components/DimmableJPanel.java:66: warning: no description for @param
+build	Build and Test	2026-07-17T23:54:14.2220492Z 	 * @param dimmed
+build	Build and Test	2026-07-17T23:54:14.2221296Z 	   ^
+build	Build and Test	2026-07-17T23:54:14.2222913Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/ui/components/PluginErrorPanel.java:69: warning: no @param for title
+build	Build and Test	2026-07-17T23:54:14.2225023Z 	public void setContent(String title, String description)
+build	Build and Test	2026-07-17T23:54:14.2225923Z 	            ^
+build	Build and Test	2026-07-17T23:54:14.2227549Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/ui/components/PluginErrorPanel.java:69: warning: no @param for description
+build	Build and Test	2026-07-17T23:54:14.2229818Z 	public void setContent(String title, String description)
+build	Build and Test	2026-07-17T23:54:14.2230697Z 	            ^
+build	Build and Test	2026-07-17T23:54:14.3210426Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/ui/overlay/components/LineComponent.java:202: warning: no @param for left
+build	Build and Test	2026-07-17T23:54:14.3212611Z 		public LineComponent.LineComponentBuilder left(final String left) {
+build	Build and Test	2026-07-17T23:54:14.3213605Z 		                                          ^
+build	Build and Test	2026-07-17T23:54:18.9209188Z 100 warnings
+build	Build and Test	2026-07-17T23:54:56.5261293Z /tmp/junit1139996545169073521/junit13680554166156575860/vertui.glsl.vert
+build	Build and Test	2026-07-17T23:54:56.5285293Z /tmp/junit1139996545169073521/junit13680554166156575860/fragui.glsl.frag
+build	Build and Test	2026-07-17T23:54:58.0236486Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/debug/KLiteClientLogBuffer.java:35:	UseDiamondOperator:	Explicit type arguments can be replaced by a diamond: `new AppenderBase<>()`
+build	Build and Test	2026-07-17T23:54:58.3234997Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/marketplace/KLiteMarketplacePersistenceService.java:339:	ImmutableField:	Field 'schemaVersion' may be declared final
+build	Build and Test	2026-07-17T23:54:58.4210590Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/marketplace/KLiteStreamedPluginService.java:295:	IdenticalCatchBranches:	'catch' branch identical to 'IOException | ClassNotFoundException | PluginInstantiationException' branch
+build	Build and Test	2026-07-17T23:54:58.4272047Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/marketplace/KLiteStreamedPluginService.java:400:	PreserveStackTrace:	Thrown exception does not preserve the stack trace of exception 'ex' on all code paths
+build	Build and Test	2026-07-17T23:55:05.4234604Z
+build	Build and Test	2026-07-17T23:55:05.4275211Z > Task :client:pmdMain FAILED
+build	Build and Test	2026-07-17T23:55:13.5214885Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784332433844.json
+build	Build and Test	2026-07-17T23:55:13.5218004Z
+build	Build and Test	2026-07-17T23:55:13.5218286Z 68 actionable tasks: 29 executed, 39 from cache
+build	Build and Test	2026-07-17T23:55:13.5245399Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-17T23:55:13.5245743Z
+build	Build and Test	2026-07-17T23:55:13.5246084Z * What went wrong:
+build	Build and Test	2026-07-17T23:55:13.5246619Z Execution failed for task ':client:pmdMain'.
+build	Build and Test	2026-07-17T23:55:13.5247563Z > A failure occurred while executing org.gradle.api.plugins.quality.internal.PmdAction
+build	Build and Test	2026-07-17T23:55:13.5249007Z    > 5 PMD rule violations were found. See the report at: file:///home/runner/work/klite/klite/runelite-client/build/reports/pmd/main.html
+build	Build and Test	2026-07-17T23:55:13.5251727Z
+build	Build and Test	2026-07-17T23:55:13.5251921Z * Try:
+build	Build and Test	2026-07-17T23:55:13.5252365Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-17T23:55:13.5252746Z
+build	Build and Test	2026-07-17T23:55:13.5252935Z BUILD FAILED in 1m 26s
+build	Build and Test	2026-07-17T23:55:14.0419884Z ##[error]Process completed with exit code 1.
+```
 
 ## CI: Apply verified KLite PMD fixes
 
@@ -93,6 +184,43 @@ build	Build and Test	2026-07-17T23:50:39.5558757Z > Run with --scan to get full 
 build	Build and Test	2026-07-17T23:50:39.5559213Z
 build	Build and Test	2026-07-17T23:50:39.5559432Z BUILD FAILED in 1m 30s
 build	Build and Test	2026-07-17T23:50:40.0252004Z ##[error]Process completed with exit code 1.
+```
+
+## Apply verified KLite PMD fixes: Apply verified KLite PMD fixes
+
+- Run: [29621631508](https://github.com/KSPOG/klite/actions/runs/29621631508)
+- Conclusion: `failure`
+- Event: `push`
+- Commit: `91780c61f328ae8d03c161026879e10ba75763c9`
+- Created: `2026-07-17T23:48:50Z`
+
+### Failed jobs and steps
+
+- **apply** — `failure`
+  - Step 5: **Verify PMD** — `failure`
+
+### Relevant log context
+
+```text
+apply	Verify PMD	2026-07-17T23:51:04.2519537Z
+apply	Verify PMD	2026-07-17T23:51:04.2520378Z > Task :client:classes
+apply	Verify PMD	2026-07-17T23:51:12.2562951Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/externalplugins/KLiteDevelopmentPluginManager.java:447:	UnusedPrivateField:	Avoid unused private fields such as 'jar'.
+apply	Verify PMD	2026-07-17T23:51:17.5522818Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/marketplace/KLiteMarketplacePersistenceService.java:339:	FinalFieldCouldBeStatic:	This final field could be made static
+apply	Verify PMD	2026-07-17T23:51:20.7532296Z > Task :client:pmdMain FAILED
+apply	Verify PMD	2026-07-17T23:51:20.8519540Z
+apply	Verify PMD	2026-07-17T23:51:20.8525902Z FAILURE: Build failed with an exception.
+apply	Verify PMD	2026-07-17T23:51:20.8526554Z 23 actionable tasks: 23 executed
+apply	Verify PMD	2026-07-17T23:51:20.8527190Z
+apply	Verify PMD	2026-07-17T23:51:20.8527539Z * What went wrong:
+apply	Verify PMD	2026-07-17T23:51:20.8528178Z Execution failed for task ':client:pmdMain'.
+apply	Verify PMD	2026-07-17T23:51:20.8529191Z > A failure occurred while executing org.gradle.api.plugins.quality.internal.PmdAction
+apply	Verify PMD	2026-07-17T23:51:20.8530998Z    > 2 PMD rule violations were found. See the report at: file:///home/runner/work/klite/klite/runelite-client/build/reports/pmd/main.html
+apply	Verify PMD	2026-07-17T23:51:20.8532089Z
+apply	Verify PMD	2026-07-17T23:51:20.8532387Z * Try:
+apply	Verify PMD	2026-07-17T23:51:20.8532944Z > Run with --scan to get full insights.
+apply	Verify PMD	2026-07-17T23:51:20.8533517Z
+apply	Verify PMD	2026-07-17T23:51:20.8533845Z BUILD FAILED in 2m 16s
+apply	Verify PMD	2026-07-17T23:51:21.2657672Z ##[error]Process completed with exit code 1.
 ```
 
 ## CI: Refresh and automate workflow failure diagnostics
