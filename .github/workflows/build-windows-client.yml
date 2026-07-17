@@ -38,6 +38,19 @@ jobs:
           java-version: "11"
           cache: gradle
 
+      - name: Apply supplied KLite splash icon to client resources
+        shell: pwsh
+        run: |
+          $encoded = Get-Content `
+            "runelite-client\src\main\resources\net\runelite\client\klite_splash_icon.b64" `
+            -Raw
+          [IO.File]::WriteAllBytes(
+            "runelite-client\src\main\resources\net\runelite\client\ui\klite_icon.png",
+            [Convert]::FromBase64String($encoded)
+          )
+          $icon = Get-Item "runelite-client\src\main\resources\net\runelite\client\ui\klite_icon.png"
+          Write-Host "Applied supplied splash crest to client resources: $($icon.Length) bytes"
+
       - name: Build the executable KLite JAR
         shell: pwsh
         run: .\gradlew.bat :client:shadowJar --no-daemon
@@ -61,23 +74,16 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Prepare supplied KLite splash icon
+      - name: Prepare supplied KLite native Windows icon
         shell: pwsh
         run: |
           python -m pip install --disable-pip-version-check --quiet pillow
           New-Item -ItemType Directory -Force -Path "build\packaging" | Out-Null
-          $encoded = Get-Content `
-            "runelite-client\src\main\resources\net\runelite\client\klite_splash_icon.b64" `
-            -Raw
-          [IO.File]::WriteAllBytes(
-            "build\packaging\KLite.png",
-            [Convert]::FromBase64String($encoded)
-          )
           @'
           from pathlib import Path
           from PIL import Image
 
-          source = Path("build/packaging/KLite.png")
+          source = Path("runelite-client/src/main/resources/net/runelite/client/ui/klite_icon.png")
           output = Path("build/packaging/KLite.ico")
           if not source.is_file():
               raise SystemExit(f"KLite splash icon is missing: {source}")
