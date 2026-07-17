@@ -3,21 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Browse reviewed plugins for the KLite client.">
+  <meta name="description" content="Download the KLite Windows client and browse reviewed KLite plugins.">
   <meta name="theme-color" content="#080b11">
-  <title>KLite Plugin Marketplace</title>
+  <title>KLite Client</title>
   <link rel="icon" type="image/png" href="assets/klite-marketplace.png">
   <link rel="manifest" href="site.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="filters.css">
   <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="site-shell.css">
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="/" aria-label="KLite marketplace home">
+    <a class="brand" href="#home" aria-label="KLite home">
       <img src="assets/klite-marketplace.png" alt="" width="48" height="48">
-      <span><strong>KLite</strong><small>Plugin Marketplace</small></span>
+      <span><strong>KLite</strong><small>Desktop Client</small></span>
     </a>
+
+    <nav class="primary-site-nav" aria-label="Primary navigation">
+      <button type="button" data-site-route="home">Home</button>
+      <button type="button" data-site-route="marketplace">Marketplace</button>
+      <button type="button" data-site-route="developer" hidden>Developers</button>
+      <button type="button" data-site-route="community" hidden>Community</button>
+      <button type="button" data-site-route="account">Account</button>
+      <button type="button" data-site-route="admin" hidden>Administration</button>
+    </nav>
+
     <div class="account-actions" aria-label="Account actions">
       <button id="sign-in-button" class="button button-secondary" type="button">Sign in</button>
       <button id="register-button" class="button button-primary" type="button">Register</button>
@@ -34,16 +45,75 @@
   </header>
 
   <main>
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <p class="eyebrow">Reviewed extensions for KLite</p>
-        <h1 id="hero-title">Extend your client with confidence.</h1>
-        <p class="hero-description">Discover plugins reviewed and published for the KLite client. The catalog is being prepared for its first releases.</p>
+    <section class="landing-hero" data-site-section="home" aria-labelledby="hero-title">
+      <div class="landing-copy">
+        <p class="eyebrow">Focused RuneLite-based client</p>
+        <h1 id="hero-title">KLite for Windows.</h1>
+        <p class="hero-description">A focused desktop client with reviewed marketplace plugins, automation-safe APIs, an integrated web walker, and owner-controlled publishing.</p>
+        <div class="hero-actions">
+          <a class="button button-primary download-button" href="https://github.com/KSPOG/klite/releases/download/windows-client/KLite-Setup.exe">Download KLite .exe</a>
+          <button id="explore-marketplace-button" class="button button-secondary" type="button">Explore marketplace</button>
+        </div>
+        <p class="hero-platform-note">Windows 10/11 • GitHub-hosted installer • Current release channel</p>
       </div>
-      <img class="hero-mark" src="assets/klite-marketplace.png" alt="KLite shield logo" width="280" height="280">
+      <div class="hero-preview">
+        <img src="assets/showcase/client-overview.svg" alt="Preview of the KLite desktop client" width="1440" height="900">
+      </div>
     </section>
 
-    <section id="account" class="account-panel" aria-labelledby="account-title" hidden>
+    <section id="client-showcase" class="client-showcase" data-site-section="home" aria-labelledby="showcase-title">
+      <div class="section-heading-wide">
+        <div>
+          <p class="eyebrow">Inside KLite</p>
+          <h2 id="showcase-title">One client, separated workspaces.</h2>
+        </div>
+        <p>The desktop client keeps gameplay, plugins, automation, marketplace access, and development tools organized without forcing every control into one panel.</p>
+      </div>
+      <div class="showcase-grid">
+        <figure class="showcase-card">
+          <img src="assets/showcase/client-overview.svg" alt="KLite client overview" width="1440" height="900" loading="lazy">
+          <figcaption><strong>Focused desktop client</strong><span>RuneLite foundations with KLite branding, plugin navigation, runtime status, and marketplace access.</span></figcaption>
+        </figure>
+        <figure class="showcase-card">
+          <img src="assets/showcase/marketplace.svg" alt="KLite marketplace window" width="1440" height="900" loading="lazy">
+          <figcaption><strong>Reviewed plugin marketplace</strong><span>Browse catalog entries, verify access, and run pinned plugin artifacts directly from the client.</span></figcaption>
+        </figure>
+        <figure class="showcase-card">
+          <img src="assets/showcase/automation.svg" alt="KLite automation workspace" width="1440" height="900" loading="lazy">
+          <figcaption><strong>Automation and developer surfaces</strong><span>Task state, web-walker snapshots, cancellation controls, and detached client APIs in one workspace.</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="download-card" class="download-card" data-site-section="home" aria-labelledby="download-title">
+      <div>
+        <p class="eyebrow">Windows download</p>
+        <h2 id="download-title">Install KLite as a normal Windows application.</h2>
+        <p>The installer bundles the required runtime, creates the KLite application entry, and can add Start Menu and desktop shortcuts.</p>
+      </div>
+      <a class="button button-primary download-button" href="https://github.com/KSPOG/klite/releases/download/windows-client/KLite-Setup.exe">Download KLite-Setup.exe</a>
+    </section>
+
+    <section id="workspace-heading" class="workspace-heading" hidden>
+      <div class="workspace-heading-copy">
+        <div>
+          <p id="workspace-eyebrow" class="eyebrow"></p>
+          <h1 id="workspace-title"></h1>
+        </div>
+        <p id="workspace-description" class="workspace-heading-description"></p>
+      </div>
+      <nav id="secondary-site-nav" class="secondary-site-nav" aria-label="Category navigation"></nav>
+    </section>
+
+    <section id="route-empty" class="route-empty" hidden>
+      <div>
+        <h2 id="route-empty-title"></h2>
+        <p id="route-empty-description"></p>
+        <button id="route-empty-action" class="button button-primary" type="button">Sign in</button>
+      </div>
+    </section>
+
+    <section id="account" class="account-panel site-route-panel" data-site-section="account" aria-labelledby="account-title" hidden>
       <div>
         <p class="eyebrow">Your account</p>
         <h2 id="account-title">KLite membership</h2>
@@ -83,7 +153,7 @@
       <div id="api-reference-content" class="api-reference-content"></div>
     </section>
 
-    <section id="developer-dashboard" class="account-panel developer-dashboard" aria-labelledby="developer-title" hidden>
+    <section id="developer-dashboard" class="account-panel developer-dashboard site-route-panel" data-site-section="developer" aria-labelledby="developer-title" hidden>
       <div>
         <p class="eyebrow">Plugin developer</p>
         <h2 id="developer-title">Developer dashboard</h2>
@@ -101,7 +171,7 @@
       <div><h3>Your submissions</h3><div id="submission-list" class="submission-list"></div></div>
     </section>
 
-    <section id="discord-bot-dashboard" class="account-panel bot-dashboard" aria-labelledby="discord-bot-title" hidden>
+    <section id="discord-bot-dashboard" class="account-panel bot-dashboard site-route-panel" data-site-section="community" aria-labelledby="discord-bot-title" hidden>
       <div class="bot-dashboard-heading">
         <div>
           <p class="eyebrow">Discord administration</p>
@@ -110,16 +180,13 @@
         </div>
         <span id="discord-bot-access" class="access-owned">Checking access...</span>
       </div>
-
       <div id="discord-bootstrap-slot"></div>
-
       <div id="discord-bot-status-grid" class="bot-status-grid">
         <article class="account-card"><span class="account-label">Bot account</span><strong id="discord-bot-identity">Loading...</strong><p id="discord-bot-id" class="account-note"></p></article>
         <article class="account-card"><span class="account-label">Discord server</span><strong id="discord-guild-name">Loading...</strong><p id="discord-guild-status" class="account-note"></p></article>
         <article class="account-card"><span class="account-label">Linked accounts</span><strong id="discord-linked-count">0</strong><p id="discord-session-count" class="account-note"></p></article>
         <article class="account-card"><span class="account-label">Bot commands</span><strong id="discord-command-count">0</strong><p id="discord-announcement-count" class="account-note"></p></article>
       </div>
-
       <form id="discord-bot-settings-form" class="bot-settings-form">
         <div class="bot-settings-group">
           <div><h3>Role settings</h3><p class="account-note">The site owner always retains access. Additional administrators are verified against the selected Discord role.</p></div>
@@ -146,7 +213,6 @@
         </div>
         <p id="announcement-status" class="form-error" role="status" aria-live="polite"></p>
       </form>
-
       <div class="bot-detail-grid">
         <section><h3>Registered commands</h3><div id="discord-command-list" class="submission-list"></div></section>
         <section><h3>Server roles</h3><div id="discord-role-list" class="submission-list bot-scroll-list"></div></section>
@@ -154,12 +220,12 @@
       </div>
     </section>
 
-    <section id="review-dashboard" class="account-panel developer-dashboard" aria-labelledby="review-title" hidden>
+    <section id="review-dashboard" class="account-panel developer-dashboard site-route-panel" data-site-section="admin" aria-labelledby="review-title" hidden>
       <div><p class="eyebrow">Marketplace review</p><h2 id="review-title">Plugin approval queue</h2><p>Reviewers selected by the KLite owner can approve, reject, or request changes. Approval records the decision; publishing remains separate.</p></div>
       <div id="review-list" class="submission-list"></div>
     </section>
 
-    <section class="catalog" aria-labelledby="catalog-title">
+    <section class="catalog site-route-panel" data-site-section="marketplace" aria-labelledby="catalog-title">
       <div class="catalog-heading"><div><p class="eyebrow">Catalog</p><h2 id="catalog-title">Available plugins</h2></div></div>
       <form class="catalog-controls" role="search">
         <label class="search-field"><span class="sr-only">Search plugins</span><input id="plugin-search" type="search" placeholder="Search plugins" autocomplete="off"></label>
@@ -172,7 +238,15 @@
     </section>
   </main>
 
-  <footer><p>KLite is an independent RuneLite-based client project.</p><p>Only install plugins you trust.</p></footer>
+  <footer>
+    <p>KLite is an independent RuneLite-based client project.</p>
+    <nav class="site-footer-nav" aria-label="Footer navigation">
+      <a href="#home">Home</a>
+      <a id="footer-marketplace-link" href="#marketplace">Marketplace</a>
+      <a href="/api/">API reference</a>
+      <a href="https://github.com/KSPOG/klite/releases/download/windows-client/KLite-Setup.exe">Windows download</a>
+    </nav>
+  </footer>
 
   <dialog id="auth-dialog" class="auth-dialog">
     <form id="auth-form" class="auth-form">
@@ -200,5 +274,6 @@
 
   <script src="app.js" defer></script>
   <script src="enhancements.js" defer></script>
+  <script src="site-shell.js" defer></script>
 </body>
 </html>
