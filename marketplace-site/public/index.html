@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Download the KLite Windows client and browse reviewed KLite plugins.">
-  <meta name="theme-color" content="#080b11">
+  <meta name="theme-color" content="#05090f">
   <title>KLite Client</title>
   <link rel="icon" type="image/png" href="assets/klite-marketplace.png">
   <link rel="manifest" href="site.webmanifest">
@@ -46,52 +46,75 @@
 
   <main>
     <section class="landing-hero" data-site-section="home" aria-labelledby="hero-title">
+      <div class="hero-energy hero-energy-cyan" aria-hidden="true"></div>
+      <div class="hero-energy hero-energy-orange" aria-hidden="true"></div>
       <div class="landing-copy">
         <p class="eyebrow">Focused RuneLite-based client</p>
-        <h1 id="hero-title">KLite for Windows.</h1>
+        <h1 id="hero-title"><span>KLite for</span><strong>Windows.</strong></h1>
         <p class="hero-description">A focused desktop client with reviewed marketplace plugins, automation-safe APIs, an integrated web walker, and owner-controlled publishing.</p>
         <div class="hero-actions">
-          <a class="button button-primary download-button" href="/download/windows">Download KLite .exe</a>
-          <button id="explore-marketplace-button" class="button button-secondary" type="button">Explore marketplace</button>
+          <a class="button button-primary download-button" href="/download/windows">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>
+            Download KLite .exe
+          </a>
+          <button id="explore-marketplace-button" class="button button-secondary hero-marketplace-button" type="button">Explore marketplace <span aria-hidden="true">›</span></button>
         </div>
-        <p class="hero-platform-note">Windows 10/11 • Self-contained installer • Current release channel</p>
+        <p class="hero-platform-note"><span class="windows-mark" aria-hidden="true"></span>Windows 10/11 <b>•</b> Self-contained installer <b>•</b> Current release channel</p>
       </div>
       <div class="hero-preview">
-        <img src="assets/showcase/client-overview.svg" alt="Preview of the KLite desktop client" width="1440" height="900">
+        <div class="hero-preview-frame">
+          <div class="hero-preview-toolbar"><span></span><span></span><span></span><strong>KLite Client</strong></div>
+          <img src="assets/showcase/client-overview.svg" alt="Preview of the KLite desktop client" width="1440" height="900">
+        </div>
       </div>
     </section>
 
+    <div class="brand-divider" data-site-section="home" aria-hidden="true"><span></span><strong>Powerful. Secure. Extensible.</strong><span></span></div>
+
     <section id="client-showcase" class="client-showcase" data-site-section="home" aria-labelledby="showcase-title">
-      <div class="section-heading-wide">
-        <div>
-          <p class="eyebrow">Inside KLite</p>
-          <h2 id="showcase-title">One client, separated workspaces.</h2>
-        </div>
-        <p>The desktop client keeps gameplay, plugins, automation, marketplace access, and development tools organized without forcing every control into one panel.</p>
-      </div>
-      <div class="showcase-grid">
-        <figure class="showcase-card">
-          <img src="assets/showcase/client-overview.svg" alt="KLite client overview" width="1440" height="900" loading="lazy">
-          <figcaption><strong>Focused desktop client</strong><span>RuneLite foundations with KLite branding, plugin navigation, runtime status, and marketplace access.</span></figcaption>
-        </figure>
-        <figure class="showcase-card">
-          <img src="assets/showcase/marketplace.svg" alt="KLite marketplace window" width="1440" height="900" loading="lazy">
-          <figcaption><strong>Reviewed plugin marketplace</strong><span>Browse catalog entries, verify access, and load verified plugin artifacts directly into the client.</span></figcaption>
-        </figure>
-        <figure class="showcase-card">
-          <img src="assets/showcase/automation.svg" alt="KLite automation workspace" width="1440" height="900" loading="lazy">
-          <figcaption><strong>Automation and developer surfaces</strong><span>Task state, web-walker snapshots, cancellation controls, and detached client APIs in one workspace.</span></figcaption>
-        </figure>
+      <h2 id="showcase-title" class="sr-only">KLite capabilities</h2>
+      <div class="feature-grid">
+        <article class="brand-feature-card feature-cyan">
+          <div class="feature-emblem" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><path d="M18 8v8h-5a5 5 0 0 0-5 5v9h8v5a5 5 0 0 0 5 5h9v-8h5a5 5 0 0 0 5-5v-9h-8v-5a5 5 0 0 0-5-5Z"/></svg>
+          </div>
+          <div><h3>Marketplace Plugins</h3><p>Load reviewed plugins directly into the client. Verified artifacts remain under KLite control.</p><button type="button" data-site-route="marketplace" class="feature-link">Explore plugins <span>›</span></button></div>
+        </article>
+        <article class="brand-feature-card feature-orange">
+          <div class="feature-emblem" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><path d="M24 9v5m0 20v5M9 24h5m20 0h5M13.4 13.4l3.5 3.5m14.2 14.2 3.5 3.5m0-21.2-3.5 3.5M16.9 31.1l-3.5 3.5"/><circle cx="24" cy="24" r="10"/><circle cx="24" cy="24" r="4"/></svg>
+          </div>
+          <div><h3>Automation &amp; Tools</h3><p>Use integrated web walking, task controls, runtime status, and focused automation surfaces.</p><a href="/api/" class="feature-link">View capabilities <span>›</span></a></div>
+        </article>
+        <article class="brand-feature-card feature-violet">
+          <div class="feature-emblem" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><path d="m18 15-9 9 9 9m12-18 9 9-9 9M27 10l-6 28"/></svg>
+          </div>
+          <div><h3>Developer API</h3><p>Extend KLite with documented APIs and submit reviewed plugins through the developer workspace.</p><a href="/api/" class="feature-link">Open API reference <span>›</span></a></div>
+        </article>
       </div>
     </section>
 
     <section id="download-card" class="download-card" data-site-section="home" aria-labelledby="download-title">
       <div>
         <p class="eyebrow">Windows download</p>
-        <h2 id="download-title">Install KLite as a normal Windows application.</h2>
-        <p>The installer bundles the required runtime, creates the KLite application entry, and can add Start Menu and desktop shortcuts.</p>
+        <h2 id="download-title">Ready to enhance your OSRS experience?</h2>
+        <p>Install KLite for Windows and start using a client built for control, safety, and extensibility.</p>
       </div>
-      <a class="button button-primary download-button" href="/download/windows">Download KLite-Setup.exe</a>
+      <div class="download-card-action">
+        <a class="button button-primary download-button" href="/download/windows">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>
+          Download KLite .exe
+        </a>
+        <small>Windows 10/11 • Self-contained installer</small>
+      </div>
+    </section>
+
+    <section class="trust-strip" data-site-section="home" aria-label="KLite platform qualities">
+      <article><span class="trust-icon">◇</span><div><strong>Secure &amp; Verified</strong><small>Reviewed plugins and controlled publishing.</small></div></article>
+      <article><span class="trust-icon">ϟ</span><div><strong>Automation Ready</strong><small>Integrated tools designed for focused workflows.</small></div></article>
+      <article><span class="trust-icon">↻</span><div><strong>Always Current</strong><small>One release channel for client and marketplace updates.</small></div></article>
+      <article><span class="trust-icon">◎</span><div><strong>Owner Controlled</strong><small>Access, reviews, and publishing remain centrally managed.</small></div></article>
     </section>
 
     <section id="workspace-heading" class="workspace-heading" hidden>
