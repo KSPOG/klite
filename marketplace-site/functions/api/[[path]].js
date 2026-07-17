@@ -1,4 +1,4 @@
-import marketplaceWorker from "../../worker/discord-worker.js";
+import marketplaceWorker from "../../worker/entry.js";
 import { handlePagesAuth } from "../../worker/pages-auth.js";
 import { handlePasswordReset } from "../../worker/pages-password-reset.js";
 import { handleControlPlane } from "../../worker/pages-control-plane.js";
