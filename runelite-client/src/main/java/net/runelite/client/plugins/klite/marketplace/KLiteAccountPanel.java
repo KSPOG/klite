@@ -8,6 +8,7 @@ package net.runelite.client.plugins.klite.marketplace;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.util.Arrays;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.BorderFactory;
@@ -21,7 +22,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import net.runelite.client.ui.ColorScheme;
 
-/** Session-only KLite marketplace account login and developer controls. */
+/** KLite marketplace account login, restored session, and developer controls. */
 @Singleton
 class KLiteAccountPanel extends JPanel
 {
@@ -29,7 +30,7 @@ class KLiteAccountPanel extends JPanel
 	private final KLiteDeveloperHotReloadService hotReloadService;
 	private final JTextField email = new JTextField();
 	private final JPasswordField password = new JPasswordField();
-	private final JLabel status = new JLabel("Sign in to access paid plugins");
+	private final JLabel status = new JLabel("Restoring marketplace account...");
 	private final JButton action = new JButton("Sign in");
 	private final JButton hotReload = new JButton("Enable hot reload");
 
@@ -73,6 +74,10 @@ class KLiteAccountPanel extends JPanel
 		add(actionRow);
 		add(Box.createVerticalStrut(7));
 		add(hotReload);
+
+		accountService.addChangeListener(account ->
+			SwingUtilities.invokeLater(() -> renderAccount(account)));
+		SwingUtilities.invokeLater(() -> renderAccount(accountService.currentAccount()));
 	}
 
 	private void authenticate()
@@ -81,8 +86,14 @@ class KLiteAccountPanel extends JPanel
 		{
 			hotReloadService.disable();
 			action.setEnabled(false);
-			accountService.logout().whenComplete((ignored, error) ->
-				SwingUtilities.invokeLater(this::showSignedOut));
+			accountService.logout().whenComplete((ignored, error) -> SwingUtilities.invokeLater(() ->
+			{
+				action.setEnabled(true);
+				if (error != null)
+				{
+					status.setText("Sign out failed: " + rootMessage(error));
+				}
+			}));
 			return;
 		}
 
@@ -106,30 +117,39 @@ class KLiteAccountPanel extends JPanel
 				if (error != null)
 				{
 					status.setText("Sign in failed: " + rootMessage(error));
-					return;
 				}
-				email.setEnabled(false);
-				password.setEnabled(false);
-				action.setText("Sign out");
-				hotReload.setVisible(account.hasCapability("plugin_dev"));
-				hotReload.setText("Enable hot reload");
-				status.setText("Signed in as " + account.getUsername()
-					+ " - " + account.getEntitlementPluginIds().size() + " paid plugin(s)");
 			});
 		});
 	}
 
-	private void showSignedOut()
+	private void renderAccount(Optional<KLiteAccountState> account)
 	{
-		email.setText("");
-		email.setEnabled(true);
+		if (account.isEmpty())
+		{
+			email.setText("");
+			email.setEnabled(true);
+			password.setText("");
+			password.setEnabled(true);
+			action.setText("Sign in");
+			action.setEnabled(true);
+			hotReloadService.disable();
+			hotReload.setVisible(false);
+			status.setText("Sign in to access paid plugins");
+			return;
+		}
+
+		KLiteAccountState current = account.get();
+		email.setText(current.getEmail());
+		email.setEnabled(false);
 		password.setText("");
-		password.setEnabled(true);
-		action.setText("Sign in");
+		password.setEnabled(false);
+		action.setText("Sign out");
 		action.setEnabled(true);
-		hotReloadService.disable();
-		hotReload.setVisible(false);
-		status.setText("Sign in to access paid plugins");
+		hotReload.setVisible(current.hasCapability("plugin_dev"));
+		hotReload.setText(hotReloadService.isEnabled()
+			? "Disable hot reload" : "Enable hot reload");
+		status.setText("Signed in as " + current.getUsername()
+			+ " - " + current.getEntitlementPluginIds().size() + " paid plugin(s)");
 	}
 
 	private void toggleHotReload()
