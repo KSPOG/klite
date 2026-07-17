@@ -156,8 +156,11 @@ tasks.withType<net.runelite.gradle.index.IndexTask> {
     indexFile = archiveOverlayDirectory.file("index")
 }
 
+val pluginHubVersion = project.version.toString().removeSuffix("-SNAPSHOT")
+
 tasks.processResources {
     inputs.property("projectVersion", project.version)
+    inputs.property("pluginHubVersion", pluginHubVersion)
 
     val commit = ByteArrayOutputStream()
     exec {
@@ -173,6 +176,7 @@ tasks.processResources {
 
     filesMatching("net/runelite/client/runelite.properties") {
         filter { it.replace("\${project.version}", project.version.toString()) }
+        filter { it.replace("\${pluginhub.version}", pluginHubVersion) }
         filter { it.replace("\${git.commit.id.abbrev}", commit.toString().trim()) }
         filter { it.replace("\${git.dirty}", dirty.toString().isNotBlank().toString()) }
     }
