@@ -8,6 +8,7 @@ on:
       - Build KLite Windows client
       - Publish KLite Plugin SDK
       - Synchronize KLite Windows release
+      - Apply verified KLite PMD fixes
     types:
       - completed
   push:
@@ -115,8 +116,8 @@ jobs:
               selected_indices: set[int] = set()
               for index, raw_line in enumerate(raw_lines):
                   if error_pattern.search(raw_line):
-                      selected_indices.update(range(max(0, index - 4), min(len(raw_lines), index + 7)))
-              matched = [raw_lines[index].rstrip() for index in sorted(selected_indices)][-240:]
+                      selected_indices.update(range(max(0, index - 20), min(len(raw_lines), index + 8)))
+              matched = [raw_lines[index].rstrip() for index in sorted(selected_indices)][-320:]
 
               lines.extend([
                   f"## {item.get('workflowName')}: {item.get('displayTitle')}",
