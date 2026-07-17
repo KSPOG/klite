@@ -25,6 +25,7 @@ import net.runelite.client.plugins.klite.marketplace.KLiteMarketplaceWindow;
 import net.runelite.client.plugins.klite.marketplace.KLitePluginPanel;
 import net.runelite.client.plugins.klite.update.KLiteUpdateService;
 import net.runelite.client.plugins.klite.walker.DefaultWebWalker;
+import net.runelite.client.plugins.klite.walker.KLiteShortestPathOverlay;
 import net.runelite.client.plugins.klite.walker.WebWalkBankCache;
 import net.runelite.client.plugins.klite.walker.WebWalker;
 import net.runelite.client.ui.ClientToolbar;
@@ -47,6 +48,9 @@ public class KLitePlugin extends Plugin
 
 	@Inject
 	private KLiteOverlay overlay;
+
+	@Inject
+	private KLiteShortestPathOverlay shortestPathOverlay;
 
 	@Inject
 	private KLiteConfig config;
@@ -127,6 +131,7 @@ public class KLitePlugin extends Plugin
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
+		overlayManager.add(shortestPathOverlay);
 		automationManager.setEnabled(config.enableAutomation());
 		bankCache.onAccountChanged();
 
@@ -165,6 +170,7 @@ public class KLitePlugin extends Plugin
 		automationManager.setEnabled(false);
 		webWalker.shutdown();
 		bankCache.clearMemory();
+		overlayManager.remove(shortestPathOverlay);
 		overlayManager.remove(overlay);
 	}
 }
