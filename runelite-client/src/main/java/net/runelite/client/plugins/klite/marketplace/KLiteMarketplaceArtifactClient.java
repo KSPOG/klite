@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -61,6 +62,14 @@ class KLiteMarketplaceArtifactClient
 		}
 
 		CompletableFuture<byte[]> result = new CompletableFuture<>();
+		execute(request, plugin, artifact, true, result);
+		return result;
+	}
+
+	private void execute(Request request, KLiteMarketplacePlugin plugin,
+		KLiteMarketplaceArtifact artifact, boolean allowPublicFallback,
+		CompletableFuture<byte[]> result)
+	{
 		httpClient.newCall(request).enqueue(new Callback()
 		{
 			@Override
@@ -72,6 +81,27 @@ class KLiteMarketplaceArtifactClient
 			@Override
 			public void onResponse(Call call, Response response)
 			{
+				if (response.code() == 404 && allowPublicFallback && isPublicArtifact(plugin))
+				{
+					response.close();
+					HttpUrl fallbackUrl = request.url().resolve(
+						"/artifacts/" + plugin.getId() + "-" + artifact.getVersion() + ".jar");
+					if (fallbackUrl == null)
+					{
+						result.completeExceptionally(
+							new IOException("Marketplace artifact URL is invalid"));
+						return;
+					}
+					Request fallbackRequest = new Request.Builder()
+						.url(fallbackUrl)
+						.get()
+						.header("Accept", "application/java-archive")
+						.header("Cache-Control", "no-store")
+						.build();
+					execute(fallbackRequest, plugin, artifact, false, result);
+					return;
+				}
+
 				try (Response closeable = response)
 				{
 					result.complete(readArtifact(closeable, artifact));
@@ -82,7 +112,12 @@ class KLiteMarketplaceArtifactClient
 				}
 			}
 		});
-		return result;
+	}
+
+	private static boolean isPublicArtifact(KLiteMarketplacePlugin plugin)
+	{
+		return KLiteMarketplacePlugin.TYPE_FREE.equals(plugin.getType())
+			|| KLiteMarketplacePlugin.TYPE_PUBLIC.equals(plugin.getType());
 	}
 
 	private static byte[] readArtifact(Response response, KLiteMarketplaceArtifact artifact)
