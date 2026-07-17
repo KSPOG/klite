@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Java 11 for the KLite build
         uses: actions/setup-java@v4
@@ -90,6 +92,7 @@ jobs:
             --win-menu `
             --win-menu-group KLite `
             --win-shortcut `
+            --win-upgrade-uuid "8f8e4eb1-3d18-4aac-8f86-6ab22b8a5c17" `
             --java-options "-Xmx1024m"
 
           $installer = Get-ChildItem "dist\*.exe" | Select-Object -First 1
@@ -124,3 +127,38 @@ jobs:
               --latest `
               --repo $env:GITHUB_REPOSITORY
           }
+
+      - name: Generate verified update manifest
+        shell: pwsh
+        run: |
+          $installer = Get-Item "dist\KLite-Setup.exe"
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $manifest = [ordered]@{
+            schemaVersion = 1
+            platform = "windows-x64"
+            version = "1.0.0"
+            buildSha = $env:GITHUB_SHA
+            downloadUrl = "https://klite-marketplace.pages.dev/download/windows"
+            sha256 = $hash
+            size = $installer.Length
+            publishedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+          }
+          $directory = "marketplace-site\public\client\windows"
+          New-Item -ItemType Directory -Force -Path $directory | Out-Null
+          $manifest | ConvertTo-Json | Set-Content `
+            -Path "$directory\latest.json" `
+            -Encoding utf8
+          Get-Content "$directory\latest.json"
+
+      - name: Commit update manifest
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add marketplace-site/public/client/windows/latest.json
+          if (git diff --cached --quiet) {
+            Write-Host "The update manifest is already current."
+            exit 0
+          }
+          git commit -m "Publish KLite Windows update manifest"
+          git push origin HEAD:main
