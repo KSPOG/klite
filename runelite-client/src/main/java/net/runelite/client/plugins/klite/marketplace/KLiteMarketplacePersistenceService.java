@@ -16,9 +16,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import javax.inject.Inject;
@@ -38,6 +40,7 @@ public final class KLiteMarketplacePersistenceService
 	private final KLiteAccountService accountService;
 	private final KLiteMarketplaceClient marketplaceClient;
 	private final KLiteStreamedPluginService streamedPluginService;
+	private volatile boolean started;
 	private volatile boolean restoring;
 	private volatile String activeAccountKey;
 
@@ -52,11 +55,31 @@ public final class KLiteMarketplacePersistenceService
 		this.streamedPluginService = streamedPluginService;
 	}
 
-	public void start()
+	public synchronized void start()
 	{
+		if (started)
+		{
+			return;
+		}
+		started = true;
 		streamedPluginService.addChangeListener(this::saveCurrentState);
 		accountService.addChangeListener(this::accountChanged);
-		accountService.restoreSession();
+		log.info("Restoring the protected KLite marketplace account session");
+		accountService.restoreSession().whenComplete((account, error) ->
+		{
+			if (error != null)
+			{
+				log.warn("Unable to restore the protected KLite account session", unwrap(error));
+			}
+			else if (account.isPresent())
+			{
+				log.info("Restored KLite marketplace account {}", account.get().getUsername());
+			}
+			else
+			{
+				log.info("No saved KLite marketplace account session was available");
+			}
+		});
 	}
 
 	public void shutdown()
@@ -69,35 +92,64 @@ public final class KLiteMarketplacePersistenceService
 		if (account.isEmpty())
 		{
 			activeAccountKey = null;
-			unloadAll();
+			restoring = true;
+			unloadAll().whenComplete((ignored, error) ->
+			{
+				restoring = false;
+				if (error != null)
+				{
+					log.warn("Unable to unload marketplace plugins after account sign-out", unwrap(error));
+				}
+			});
 			return;
 		}
+
 		String accountKey = accountKey(account.get().getEmail());
-		if (accountKey.equals(activeAccountKey)
-			&& (restoring || !streamedPluginService.loadedMarketplacePlugins().isEmpty()))
+		if (accountKey.equals(activeAccountKey) && restoring)
 		{
 			return;
 		}
+
+		StoredPluginState state = readState();
+		StoredAccountPlugins saved = state.accounts.get(accountKey);
+		StoredAccountPlugins currentlyLoaded = snapshotCurrentPlugins();
+		StoredAccountPlugins desired = merge(saved, currentlyLoaded);
 		activeAccountKey = accountKey;
-		restore(accountKey);
+
+		// Plugins loaded before sign-in are adopted by the account instead of being
+		// discarded. Existing account preferences are merged with the current list.
+		if (!currentlyLoaded.loaded.isEmpty())
+		{
+			state.accounts.put(accountKey, desired);
+			writeState(state);
+			log.info("Associated {} currently loaded marketplace plugin(s) with account {}",
+				currentlyLoaded.loaded.size(), account.get().getUsername());
+		}
+
+		if (desired.loaded.isEmpty())
+		{
+			log.info("Account {} has no saved marketplace plugins to restore",
+				account.get().getUsername());
+			return;
+		}
+		restore(accountKey, desired);
 	}
 
-	private void restore(String accountKey)
+	private void restore(String accountKey, StoredAccountPlugins saved)
 	{
 		restoring = true;
-		StoredAccountPlugins saved = readState().accounts.get(accountKey);
-		CompletableFuture<Void> clear = unloadAll();
-		if (saved == null || saved.loaded.isEmpty())
-		{
-			clear.whenComplete((ignored, error) -> restoring = false);
-			return;
-		}
-
-		clear.thenCompose(ignored -> marketplaceClient.fetchCatalog())
+		log.info("Restoring {} marketplace plugin(s) for the signed-in KLite account",
+			saved.loaded.size());
+		unloadAll()
+			.thenCompose(ignored -> marketplaceClient.fetchCatalog())
 			.thenCompose(catalog -> restorePlugins(catalog, saved))
 			.whenComplete((ignored, error) ->
 			{
 				restoring = false;
+				if (!accountKey.equals(activeAccountKey))
+				{
+					return;
+				}
 				if (error != null)
 				{
 					log.warn("Unable to restore saved KLite marketplace plugins", unwrap(error));
@@ -105,6 +157,7 @@ public final class KLiteMarketplacePersistenceService
 				else
 				{
 					saveCurrentState();
+					log.info("Saved KLite marketplace plugins were restored successfully");
 				}
 			});
 	}
@@ -124,6 +177,7 @@ public final class KLiteMarketplacePersistenceService
 			KLiteMarketplacePlugin plugin = pluginsById.get(pluginId);
 			if (plugin == null || !"available".equals(plugin.getStatus()))
 			{
+				log.warn("Saved marketplace plugin {} is no longer available and was skipped", pluginId);
 				continue;
 			}
 			chain = chain.thenCompose(ignored -> streamedPluginService.load(plugin));
@@ -159,6 +213,13 @@ public final class KLiteMarketplacePersistenceService
 			return;
 		}
 		String key = accountKey(account.get().getEmail());
+		StoredPluginState state = readState();
+		state.accounts.put(key, snapshotCurrentPlugins());
+		writeState(state);
+	}
+
+	private StoredAccountPlugins snapshotCurrentPlugins()
+	{
 		List<String> loaded = new ArrayList<>();
 		List<String> enabled = new ArrayList<>();
 		for (KLiteStreamedPluginService.LoadedMarketplacePlugin plugin
@@ -173,9 +234,26 @@ public final class KLiteMarketplacePersistenceService
 		}
 		Collections.sort(loaded);
 		Collections.sort(enabled);
-		StoredPluginState state = readState();
-		state.accounts.put(key, new StoredAccountPlugins(loaded, enabled));
-		writeState(state);
+		return new StoredAccountPlugins(loaded, enabled);
+	}
+
+	private static StoredAccountPlugins merge(StoredAccountPlugins saved,
+		StoredAccountPlugins currentlyLoaded)
+	{
+		Set<String> loaded = new LinkedHashSet<>();
+		Set<String> enabled = new LinkedHashSet<>();
+		if (saved != null)
+		{
+			loaded.addAll(saved.loaded);
+			enabled.addAll(saved.enabled);
+		}
+		loaded.addAll(currentlyLoaded.loaded);
+		enabled.addAll(currentlyLoaded.enabled);
+		List<String> loadedList = new ArrayList<>(loaded);
+		List<String> enabledList = new ArrayList<>(enabled);
+		Collections.sort(loadedList);
+		Collections.sort(enabledList);
+		return new StoredAccountPlugins(loadedList, enabledList);
 	}
 
 	private StoredPluginState readState()
@@ -244,7 +322,7 @@ public final class KLiteMarketplacePersistenceService
 	private static Throwable unwrap(Throwable error)
 	{
 		Throwable current = error;
-		while ((current instanceof CompletionException) && current.getCause() != null)
+		while (current instanceof CompletionException && current.getCause() != null)
 		{
 			current = current.getCause();
 		}
