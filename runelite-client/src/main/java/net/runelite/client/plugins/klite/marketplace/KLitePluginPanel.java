@@ -88,7 +88,7 @@ public class KLitePluginPanel extends PluginPanel
 		return header;
 	}
 
-	private JPanel createPluginList()
+	private JScrollPane createPluginList()
 	{
 		pluginList.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		pluginList.setLayout(new BoxLayout(pluginList, BoxLayout.Y_AXIS));
