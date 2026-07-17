@@ -1,0 +1,159 @@
+name: Diagnose failed workflow runs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/diagnose-failed-runs.yml"
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: klite-workflow-diagnostics
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect recent failure details
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          python3 <<'PY'
+          from __future__ import annotations
+
+          import datetime as dt
+          import json
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          current_run = int(os.environ["GITHUB_RUN_ID"])
+
+          def run(*args: str, allow_failure: bool = False) -> subprocess.CompletedProcess[str]:
+              result = subprocess.run(args, text=True, capture_output=True)
+              if result.returncode and not allow_failure:
+                  raise SystemExit(
+                      f"Command failed ({result.returncode}): {' '.join(args)}\n"
+                      f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+                  )
+              return result
+
+          listing = run(
+              "gh", "run", "list",
+              "--repo", repo,
+              "--limit", "50",
+              "--json", "databaseId,workflowName,displayTitle,conclusion,status,createdAt,updatedAt,url,headSha,event"
+          )
+          runs = json.loads(listing.stdout)
+          failed = [
+              item for item in runs
+              if int(item["databaseId"]) != current_run
+              and item.get("status") == "completed"
+              and item.get("conclusion") in {
+                  "failure", "timed_out", "startup_failure", "action_required", "cancelled"
+              }
+          ][:15]
+
+          error_pattern = re.compile(
+              r"(?i)(error|exception|failed|failure|cannot|could not|missing|not found|unresolved|exit code|process completed)"
+          )
+
+          lines = [
+              "# Recent GitHub Actions failures",
+              "",
+              f"Generated: {dt.datetime.now(dt.timezone.utc).isoformat()}",
+              f"Repository: `{repo}`",
+              f"Failed runs inspected: **{len(failed)}**",
+              "",
+          ]
+
+          for item in failed:
+              run_id = int(item["databaseId"])
+              jobs_result = run(
+                  "gh", "run", "view", str(run_id),
+                  "--repo", repo,
+                  "--json", "jobs",
+                  allow_failure=True,
+              )
+              jobs_payload = json.loads(jobs_result.stdout or '{"jobs": []}')
+              jobs = jobs_payload.get("jobs", [])
+              failed_jobs = [job for job in jobs if job.get("conclusion") not in {"success", "skipped", None}]
+
+              log_result = run(
+                  "gh", "run", "view", str(run_id),
+                  "--repo", repo,
+                  "--log-failed",
+                  allow_failure=True,
+              )
+              raw_log = (log_result.stdout or "") + ("\n" + log_result.stderr if log_result.stderr else "")
+              matched = []
+              for raw_line in raw_log.splitlines():
+                  clean = raw_line.rstrip()
+                  if error_pattern.search(clean):
+                      matched.append(clean)
+              matched = matched[-100:]
+
+              lines.extend([
+                  f"## {item.get('workflowName')}: {item.get('displayTitle')}",
+                  "",
+                  f"- Run: [{run_id}]({item.get('url')})",
+                  f"- Conclusion: `{item.get('conclusion')}`",
+                  f"- Event: `{item.get('event')}`",
+                  f"- Commit: `{item.get('headSha')}`",
+                  f"- Created: `{item.get('createdAt')}`",
+                  "",
+                  "### Failed jobs and steps",
+                  "",
+              ])
+
+              if not failed_jobs:
+                  lines.append("No failed job metadata was returned.")
+              for job in failed_jobs:
+                  lines.append(f"- **{job.get('name')}** — `{job.get('conclusion')}`")
+                  for step in job.get("steps", []):
+                      if step.get("conclusion") not in {"success", "skipped", None}:
+                          lines.append(
+                              f"  - Step {step.get('number')}: **{step.get('name')}** — `{step.get('conclusion')}`"
+                          )
+
+              lines.extend(["", "### Relevant log lines", ""])
+              if matched:
+                  lines.append("```text")
+                  lines.extend(matched)
+                  lines.append("```")
+              else:
+                  lines.append("No matching error lines were available from `gh run view --log-failed`.")
+              lines.append("")
+
+          Path("diagnostics/latest-workflow-failures.md").write_text("\n".join(lines) + "\n", "utf-8")
+          PY
+
+      - name: Publish diagnostic report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/latest-workflow-failures.md
+          if git diff --cached --quiet; then
+            echo "The failure report did not change."
+            exit 0
+          fi
+          git commit -m "Update workflow failure diagnostics [skip ci]"
+          git push
