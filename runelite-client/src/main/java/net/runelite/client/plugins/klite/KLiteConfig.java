@@ -27,6 +27,13 @@ public interface KLiteConfig extends Config
 	)
 	String automationSection = "automation";
 
+	@ConfigSection(
+		name = "Plugin development",
+		description = "Load locally built development plugins without the KLite client source code.",
+		position = 2
+	)
+	String developmentSection = "development";
+
 	@ConfigItem(
 		keyName = "showStatusOverlay",
 		name = "Show status overlay",
@@ -73,5 +80,18 @@ public interface KLiteConfig extends Config
 	default boolean showWebWalkerPath()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "enableDevelopmentPlugins",
+		name = "Enable development plugins",
+		description = "Watch ~/.runelite/klite-dev-plugins and automatically reload locally built plugin JARs",
+		warning = "Development plugins are unreviewed local code and have the same permissions as the client. Only load JARs you trust.",
+		section = developmentSection,
+		position = 0
+	)
+	default boolean enableDevelopmentPlugins()
+	{
+		return false;
 	}
 }
