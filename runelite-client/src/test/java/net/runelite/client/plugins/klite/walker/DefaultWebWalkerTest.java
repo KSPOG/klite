@@ -15,7 +15,7 @@ import org.junit.Test;
 public class DefaultWebWalkerTest
 {
 	@Test
-	public void selectsShortOrderedLookAheadOnRoute()
+	public void selectsOnlyNextAdjacentRouteTile()
 	{
 		List<WorldPoint> path = new ArrayList<>();
 		for (int x = 3200; x <= 3220; x++)
@@ -26,8 +26,8 @@ public class DefaultWebWalkerTest
 		int selected = DefaultWebWalker.selectRouteTargetIndex(
 			path, 0, new WorldPoint(3200, 3200, 0));
 
-		assertEquals(6, selected);
-		assertEquals(new WorldPoint(3206, 3200, 0), path.get(selected));
+		assertEquals(1, selected);
+		assertEquals(new WorldPoint(3201, 3200, 0), path.get(selected));
 	}
 
 	@Test
