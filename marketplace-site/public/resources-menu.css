@@ -1,0 +1,179 @@
+.klite-resources-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.klite-resources-menu[hidden],
+.klite-resources-list[hidden] {
+  display: none !important;
+}
+
+.klite-resources-menu > #api-button {
+  min-width: 108px;
+  justify-content: center;
+  border-color: rgba(19, 217, 255, 0.42);
+  color: var(--klite-cyan, #13d9ff);
+}
+
+.klite-resources-menu > #api-button::after {
+  content: "";
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-left: 0.1rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.klite-resources-menu > #api-button[aria-expanded="true"]::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.klite-resources-list {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 120;
+  width: min(360px, calc(100vw - 32px));
+  padding: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(143, 174, 195, 0.3);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(14, 25, 35, 0.99), rgba(5, 10, 16, 0.99)),
+    #071019;
+  box-shadow:
+    0 28px 75px rgba(0, 0, 0, 0.58),
+    0 0 0 1px rgba(19, 217, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.klite-resources-list::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-top: 1px solid rgba(19, 217, 255, 0.42);
+  background: radial-gradient(circle at 78% -20%, rgba(19, 217, 255, 0.13), transparent 42%);
+}
+
+.klite-resources-heading {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid rgba(143, 174, 195, 0.16);
+}
+
+.klite-resources-heading strong {
+  color: #f5fbff;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+
+.klite-resources-heading small {
+  color: var(--klite-muted, #91a5b5);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.klite-resources-list > a {
+  position: relative;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #f2f7fb;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.klite-resources-list > a:hover,
+.klite-resources-list > a:focus-visible {
+  outline: none;
+  border-color: rgba(19, 217, 255, 0.25);
+  background: rgba(19, 217, 255, 0.075);
+  transform: translateX(2px);
+}
+
+.klite-resources-list > a:nth-of-type(2):hover,
+.klite-resources-list > a:nth-of-type(2):focus-visible {
+  border-color: rgba(255, 106, 31, 0.28);
+  background: rgba(255, 106, 31, 0.075);
+}
+
+.klite-resource-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(19, 217, 255, 0.28);
+  border-radius: 8px;
+  color: var(--klite-cyan, #13d9ff);
+  background: rgba(19, 217, 255, 0.075);
+  font-family: Consolas, "Cascadia Code", monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.klite-resources-list > a:nth-of-type(2) .klite-resource-icon {
+  border-color: rgba(255, 106, 31, 0.3);
+  color: #ff9a59;
+  background: rgba(255, 106, 31, 0.075);
+}
+
+.klite-resources-list > a > span:nth-child(2) {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.klite-resources-list > a strong {
+  color: #f5fbff;
+  font-size: 0.86rem;
+}
+
+.klite-resources-list > a small {
+  overflow: hidden;
+  color: var(--klite-muted, #91a5b5);
+  font-size: 0.73rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.klite-resource-arrow {
+  color: rgba(214, 226, 235, 0.48);
+  font-size: 1.45rem;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.klite-resources-list > a:hover .klite-resource-arrow,
+.klite-resources-list > a:focus-visible .klite-resource-arrow {
+  color: #fff;
+  transform: translateX(2px);
+}
+
+@media (max-width: 1120px) {
+  .klite-resources-menu > #api-button {
+    min-width: 0;
+    padding-inline: 0.72rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .klite-resources-list {
+    position: fixed;
+    top: 76px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+  }
+}
