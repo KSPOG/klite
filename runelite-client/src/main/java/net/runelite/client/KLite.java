@@ -6,7 +6,13 @@
 package net.runelite.client;
 
 import java.awt.Taskbar;
-import net.runelite.client.ui.ClientUI;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import javax.imageio.ImageIO;
 
 /**
  * Stable entry point for the KLite distribution.
@@ -16,6 +22,8 @@ import net.runelite.client.ui.ClientUI;
  */
 public final class KLite
 {
+	private static final String SPLASH_ICON_RESOURCE = "klite_splash_icon.b64";
+
 	private KLite()
 	{
 	}
@@ -27,10 +35,8 @@ public final class KLite
 	}
 
 	/**
-	 * Applies the KLite splash crest before RuneLite creates its first window.
-	 * The packaged KLite.exe also contains this icon, but setting it through the
-	 * Java Taskbar API prevents Windows from temporarily showing the generic Java
-	 * icon while the client starts or when Alt-Tab/taskbar metadata refreshes.
+	 * Applies the supplied KLite splash crest before RuneLite creates its first
+	 * window. The packaged KLite.exe contains the same image as a multi-size ICO.
 	 */
 	private static void applyWindowsTaskbarIcon()
 	{
@@ -41,14 +47,33 @@ public final class KLite
 				return;
 			}
 			Taskbar taskbar = Taskbar.getTaskbar();
-			if (taskbar.isSupported(Taskbar.Feature.ICON_IMAGE))
+			if (!taskbar.isSupported(Taskbar.Feature.ICON_IMAGE))
 			{
-				taskbar.setIconImage(ClientUI.ICON_128);
+				return;
+			}
+			BufferedImage icon = loadSplashIcon();
+			if (icon != null)
+			{
+				taskbar.setIconImage(icon);
 			}
 		}
-		catch (RuntimeException ignored)
+		catch (IOException | RuntimeException ignored)
 		{
-			// Window creation still applies the same icon through JFrame#setIconImages.
+			// Failure to apply branding must never prevent the client from starting.
+		}
+	}
+
+	private static BufferedImage loadSplashIcon() throws IOException
+	{
+		try (InputStream input = KLite.class.getResourceAsStream(SPLASH_ICON_RESOURCE))
+		{
+			if (input == null)
+			{
+				return null;
+			}
+			String encoded = new String(input.readAllBytes(), StandardCharsets.US_ASCII);
+			byte[] png = Base64.getMimeDecoder().decode(encoded);
+			return ImageIO.read(new ByteArrayInputStream(png));
 		}
 	}
 }
