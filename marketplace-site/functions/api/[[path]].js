@@ -2,6 +2,7 @@ import marketplaceWorker from "../../worker/index.js";
 import { handlePagesAuth } from "../../worker/pages-auth.js";
 import { handlePasswordReset } from "../../worker/pages-password-reset.js";
 import { handleControlPlane } from "../../worker/pages-control-plane.js";
+import { handlePublicArtifact } from "../../worker/pages-public-artifacts.js";
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -59,6 +60,11 @@ export async function onRequest(context) {
     const controlPlaneResponse = await handleControlPlane(request, env, requestUrl);
     if (controlPlaneResponse) {
       return controlPlaneResponse;
+    }
+
+    const publicArtifactResponse = await handlePublicArtifact(request, env, requestUrl);
+    if (publicArtifactResponse) {
+      return publicArtifactResponse;
     }
 
     const response = await marketplaceWorker.fetch(request, env);
