@@ -2,7 +2,7 @@ const siteRouteDefinitions = {
   home: {
     eyebrow: "KLite desktop client",
     title: "KLite for Windows",
-    description: "Preview the client and explore its core features while the Windows release is under construction.",
+    description: "Download the released Windows client, preview its core features, and explore the reviewed KLite plugin marketplace.",
     subcategories: [
       { label: "Overview", target: "hero-title" },
       { label: "Client previews", target: "client-showcase" },
@@ -184,19 +184,6 @@ function setSiteRoute(route, options = {}) {
     history.pushState({}, "", `${window.location.pathname}${window.location.search}#${selected}`);
   }
   if (!options.preserveScroll) window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function createDownloadNoticeDialog() {
-  const dialog = document.createElement("dialog");
-  dialog.id = "download-notice-dialog";
-  dialog.className = "auth-dialog";
-  dialog.innerHTML = `<div class="auth-form"><div class="dialog-heading"><div><p class="eyebrow">Development notice</p><h2>KLite is under construction</h2></div><button class="dialog-close" type="button" aria-label="Close">&times;</button></div><p>The KLite client is currently under construction. Downloads will become available after the current development and testing work is complete.</p><button class="button button-primary button-wide" type="button" data-download-notice-close>Got it</button></div>`;
-  const close = () => dialog.close();
-  dialog.querySelector(".dialog-close")?.addEventListener("click", close);
-  dialog.querySelector("[data-download-notice-close]")?.addEventListener("click", close);
-  dialog.addEventListener("click", (event) => { if (event.target === dialog) close(); });
-  document.body.append(dialog);
-  return dialog;
 }
 
 function ensureResourcesMenuStyles() {
@@ -399,13 +386,6 @@ function configureDiscordLogin() {
   }
 }
 
-const downloadNoticeDialog = createDownloadNoticeDialog();
-for (const link of document.querySelectorAll('a[href="/download/windows"], .download-button')) {
-  link.addEventListener("click", (event) => {
-    event.preventDefault();
-    if (!downloadNoticeDialog.open) downloadNoticeDialog.showModal();
-  });
-}
 createResourcesMenu();
 configureDiscordLogin();
 for (const button of primaryRouteButtons) button.addEventListener("click", () => setSiteRoute(button.dataset.siteRoute));
