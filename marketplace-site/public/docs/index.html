@@ -3,40 +3,105 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Build, test, package, and publish a KLite marketplace plugin using the complete Copper and Tin Miner example.">
   <meta name="theme-color" content="#05090f">
-  <title>KLite Plugin Documentation</title>
+  <title>KLite Plugin Development Guide</title>
   <link rel="icon" type="image/png" href="../assets/klite-marketplace.png">
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="../site-shell.css">
-  <style>
-    body{margin:0}.docs-shell{width:min(1280px,calc(100% - 40px));margin:36px auto 80px;display:grid;grid-template-columns:260px minmax(0,1fr);gap:28px}.docs-nav{position:sticky;top:110px;align-self:start;padding:20px;border:1px solid var(--klite-border);background:rgba(10,17,25,.96)}.docs-nav strong{display:block;margin-bottom:12px}.docs-nav a{display:block;padding:8px 0;color:var(--klite-muted);text-decoration:none}.docs-nav a:hover{color:var(--klite-cyan)}.docs-content{min-width:0}.docs-hero,.docs-section{padding:30px;border:1px solid var(--klite-border);background:linear-gradient(145deg,rgba(13,24,34,.98),rgba(6,11,17,.98));margin-bottom:22px}.docs-hero h1{font-size:clamp(2.2rem,5vw,4.4rem);margin:.3rem 0 1rem}.docs-section h2{margin-top:0;color:var(--klite-cyan)}.docs-section h3{color:#ff9a59;margin-top:1.8rem}.docs-section p,.docs-section li{color:#b9c9d4;line-height:1.7}.docs-section code{font-family:Consolas,monospace;color:#dff8ff}.docs-section pre{overflow:auto;padding:18px;border:1px solid rgba(19,217,255,.18);background:#05090f;color:#dff8ff}.docs-callout{padding:16px;border-left:3px solid var(--klite-orange);background:rgba(255,106,31,.08)}.docs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.docs-card{padding:18px;border:1px solid var(--klite-border);background:rgba(255,255,255,.02)}.docs-card strong{color:#fff}.docs-table{width:100%;border-collapse:collapse}.docs-table th,.docs-table td{text-align:left;padding:11px;border-bottom:1px solid var(--klite-border);vertical-align:top}.docs-table th{color:var(--klite-cyan)}@media(max-width:850px){.docs-shell{grid-template-columns:1fr}.docs-nav{position:static}.docs-grid{grid-template-columns:1fr}}
-  </style>
+  <link rel="stylesheet" href="docs.css">
+  <script src="docs.js" defer></script>
 </head>
 <body>
-  <header class="site-header">
-    <a class="brand" href="/" aria-label="KLite home"><img src="../assets/klite-marketplace.png" alt="" width="48" height="48"><span><strong>KLite</strong><small>Plugin DOC's</small></span></a>
-    <nav class="primary-site-nav" aria-label="Documentation navigation"><a href="/">Website</a><a href="/api/">API</a><a class="is-active" href="/docs/">DOC's</a></nav>
-    <div class="account-actions"><a class="button button-secondary" href="https://github.com/KSPOG/klite/tree/main/examples/klite-copper-tin-miner">Example source</a></div>
+  <header class="site-header docs-site-header">
+    <a class="brand" href="/" aria-label="KLite home">
+      <img src="../assets/klite-marketplace.png" alt="" width="48" height="48">
+      <span><strong>KLite</strong><small>Plugin Documentation</small></span>
+    </a>
+    <nav class="primary-site-nav" aria-label="Documentation navigation">
+      <a href="/">Website</a>
+      <a href="/api/">API Reference</a>
+      <a class="is-active" href="/docs/" aria-current="page">Plugin Guide</a>
+    </nav>
+    <div class="account-actions">
+      <a class="button button-secondary" href="https://github.com/KSPOG/klite/tree/main/examples/klite-copper-tin-miner">Example Source</a>
+    </div>
   </header>
 
-  <div class="docs-shell">
-    <aside class="docs-nav">
-      <strong>Copper &amp; Tin Miner</strong>
-      <a href="#overview">Overview</a><a href="#structure">Project structure</a><a href="#descriptor">Plugin entrypoint</a><a href="#config">Configuration</a><a href="#task">Automation task</a><a href="#mining">Mining lifecycle</a><a href="#banking">Banking lifecycle</a><a href="#walker">Web walker</a><a href="#overlay">Overlay</a><a href="#logging">Diagnostics</a><a href="#build">Build and publish</a><a href="#checklist">Review checklist</a>
+  <div class="docs-layout">
+    <aside class="docs-sidebar" aria-label="On this page">
+      <div class="docs-sidebar-heading">
+        <span class="docs-kicker">Worked example</span>
+        <strong>Copper &amp; Tin Miner</strong>
+      </div>
+      <nav class="docs-toc">
+        <a href="#overview"><span>01</span> Overview</a>
+        <a href="#project-structure"><span>02</span> Project structure</a>
+        <a href="#plugin-entrypoint"><span>03</span> Plugin entrypoint</a>
+        <a href="#configuration"><span>04</span> Configuration</a>
+        <a href="#automation-task"><span>05</span> Automation task</a>
+        <a href="#mining-lifecycle"><span>06</span> Mining lifecycle</a>
+        <a href="#banking-lifecycle"><span>07</span> Banking lifecycle</a>
+        <a href="#web-walker"><span>08</span> Web walker</a>
+        <a href="#overlay"><span>09</span> Overlay</a>
+        <a href="#diagnostics"><span>10</span> Diagnostics</a>
+        <a href="#build-publish"><span>11</span> Build and publish</a>
+        <a href="#review-checklist"><span>12</span> Review checklist</a>
+      </nav>
     </aside>
 
     <main class="docs-content">
-      <section class="docs-hero" id="overview"><p class="eyebrow">Complete worked example</p><h1>Build a KLite marketplace plugin.</h1><p>The Copper &amp; Tin Miner demonstrates the complete plugin lifecycle: dependency injection from KLite Core, cooperative automation, integrated Shortest Path walking, object interaction, full-inventory banking, configuration, overlay rendering, diagnostics, packaging, verification, and marketplace publication.</p><div class="docs-callout">Marketplace plugins are loaded into memory, remain disabled until the user presses <strong>Enable</strong>, and must declare a dependency on KLite Core when they inject KLite services.</div></section>
+      <section class="docs-hero" id="overview" aria-labelledby="docs-title">
+        <div class="docs-breadcrumbs" aria-label="Breadcrumb">
+          <a href="/docs/">Plugin Documentation</a><span>/</span><span>Copper &amp; Tin Miner</span>
+        </div>
+        <p class="eyebrow">Complete plugin development guide</p>
+        <h1 id="docs-title">Build a KLite marketplace plugin.</h1>
+        <p class="docs-lead">Use the Copper &amp; Tin Miner as a complete reference implementation for dependency injection, cooperative automation, Shortest Path walking, object interaction, banking, configuration, overlays, diagnostics, packaging, and marketplace publication.</p>
+        <div class="docs-summary-grid" aria-label="Guide summary">
+          <article><strong>4</strong><span>Java components</span></article>
+          <article><strong>12</strong><span>Implementation stages</span></article>
+          <article><strong>1</strong><span>Publishable plugin JAR</span></article>
+        </div>
+        <aside class="docs-callout docs-callout-important">
+          <strong>Core requirement</strong>
+          <p>A marketplace plugin that injects KLite services must declare <code>@PluginDependency(KLitePlugin.class)</code>. The plugin is loaded into memory but remains disabled until the user explicitly enables it.</p>
+        </aside>
+      </section>
 
-      <section class="docs-section" id="structure"><h2>1. Project structure</h2><pre><code>examples/klite-copper-tin-miner/
+      <section class="docs-section" id="project-structure" aria-labelledby="project-structure-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">02</span>
+          <div><p class="docs-kicker">Foundation</p><h2 id="project-structure-title">Project structure</h2></div>
+        </header>
+        <p>Keep the plugin entrypoint, configuration, automation state machine, and overlay in separate classes. This makes shutdown behavior, testing, and marketplace review easier to reason about.</p>
+        <div class="code-block">
+          <div class="code-block-header"><span>Project tree</span><button type="button" data-copy-code>Copy</button></div>
+          <pre><code>examples/klite-copper-tin-miner/
 ├── build.gradle.kts
 └── src/main/java/net/runelite/client/plugins/klite/examples/miner/
     ├── CopperTinMinerPlugin.java
     ├── CopperTinMinerConfig.java
     ├── CopperTinMinerTask.java
-    └── CopperTinMinerOverlay.java</code></pre><div class="docs-grid"><div class="docs-card"><strong>Plugin</strong><p>Owns startup, shutdown, dependency injection, overlay registration and task registration.</p></div><div class="docs-card"><strong>Task</strong><p>Contains the cooperative mining, walking and banking state machine.</p></div><div class="docs-card"><strong>Config</strong><p>Exposes user-controlled settings through RuneLite's normal configuration system.</p></div><div class="docs-card"><strong>Overlay</strong><p>Displays activity, mode, target, route status, runtime and failures.</p></div></div></section>
+    └── CopperTinMinerOverlay.java</code></pre>
+        </div>
+        <div class="docs-card-grid">
+          <article><span>Plugin</span><h3>Lifecycle owner</h3><p>Registers dependencies, the automation task, and the plugin-owned overlay.</p></article>
+          <article><span>Task</span><h3>State machine</h3><p>Coordinates mining, walking, banking, cancellation, and bounded API waits.</p></article>
+          <article><span>Config</span><h3>User settings</h3><p>Exposes supported options through RuneLite's normal configuration system.</p></article>
+          <article><span>Overlay</span><h3>Runtime visibility</h3><p>Shows current mode, destination, route status, runtime, and failures.</p></article>
+        </div>
+      </section>
 
-      <section class="docs-section" id="descriptor"><h2>2. Plugin entrypoint and dependency</h2><pre><code>@PluginDependency(KLitePlugin.class)
+      <section class="docs-section" id="plugin-entrypoint" aria-labelledby="plugin-entrypoint-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">03</span>
+          <div><p class="docs-kicker">Lifecycle</p><h2 id="plugin-entrypoint-title">Plugin entrypoint and dependency</h2></div>
+        </header>
+        <p>The entrypoint connects the external plugin to KLite Core and owns every resource that must be released during shutdown.</p>
+        <div class="code-block">
+          <div class="code-block-header"><span>CopperTinMinerPlugin.java</span><button type="button" data-copy-code>Copy</button></div>
+          <pre><code>@PluginDependency(KLitePlugin.class)
 @PluginDescriptor(
     name = "Copper and Tin Miner",
     description = "Mines copper and tin near Varrock and banks only when full",
@@ -44,46 +109,205 @@
     enabledByDefault = false,
     isExternal = true
 )
-public class CopperTinMinerPlugin extends Plugin</code></pre><p><code>@PluginDependency(KLitePlugin.class)</code> is essential. It causes RuneLite to create the marketplace plugin from the KLite Core injector, where <code>KLiteClientApi</code>, <code>AutomationManager</code> and <code>WebWalker</code> are bound.</p><h3>Startup</h3><ol><li>Create the automation task.</li><li>Create and register the plugin-owned overlay.</li><li>Enable the global automation manager.</li><li>Start the task.</li><li>Reject startup when another KLite automation task is active.</li></ol><h3>Shutdown</h3><ol><li>Stop the automation task.</li><li>Clear the active web-walker route.</li><li>Remove the overlay.</li><li>Release task references so the marketplace class loader can unload.</li></ol></section>
+public class CopperTinMinerPlugin extends Plugin
+{
+    // Inject KLite services and own startup/shutdown here.
+}</code></pre>
+        </div>
+        <div class="docs-two-column">
+          <div>
+            <h3>Startup sequence</h3>
+            <ol class="docs-steps">
+              <li><span>1</span><p>Create the automation task.</p></li>
+              <li><span>2</span><p>Create and register the plugin overlay.</p></li>
+              <li><span>3</span><p>Enable the shared automation manager.</p></li>
+              <li><span>4</span><p>Start the task after checking for conflicts.</p></li>
+            </ol>
+          </div>
+          <div>
+            <h3>Shutdown sequence</h3>
+            <ol class="docs-steps">
+              <li><span>1</span><p>Stop and cancel the automation task.</p></li>
+              <li><span>2</span><p>Clear the active web-walker route.</p></li>
+              <li><span>3</span><p>Remove the overlay from the manager.</p></li>
+              <li><span>4</span><p>Release references so the class loader can unload.</p></li>
+            </ol>
+          </div>
+        </div>
+      </section>
 
-      <section class="docs-section" id="config"><h2>3. Configuration</h2><p>The example exposes a <strong>Show overlay</strong> setting enabled by default. Configuration is provided through <code>ConfigManager.getConfig(...)</code>, allowing KLite to discover the configuration before the external plugin starts.</p><pre><code>@Provides
-CopperTinMinerConfig provideConfig(ConfigManager configManager) {
+      <section class="docs-section" id="configuration" aria-labelledby="configuration-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">04</span>
+          <div><p class="docs-kicker">Settings</p><h2 id="configuration-title">Configuration</h2></div>
+        </header>
+        <p>Provide configuration through <code>ConfigManager</code>. The example exposes a <strong>Show overlay</strong> option enabled by default, while operational constants remain in the task implementation.</p>
+        <div class="code-block">
+          <div class="code-block-header"><span>Configuration provider</span><button type="button" data-copy-code>Copy</button></div>
+          <pre><code>@Provides
+CopperTinMinerConfig provideConfig(ConfigManager configManager)
+{
     return configManager.getConfig(CopperTinMinerConfig.class);
-}</code></pre></section>
+}</code></pre>
+        </div>
+      </section>
 
-      <section class="docs-section" id="task"><h2>4. Cooperative automation task</h2><p>The task implements <code>AutomationTask</code> and runs at a fixed interval. Every RuneLite API operation returns a <code>CompletableFuture</code>; the task waits through <code>AutomationContext.await</code> with a bounded timeout.</p><table class="docs-table"><tr><th>State</th><th>Responsibility</th></tr><tr><td>Mining</td><td>Walk to the mine, select the preferred ore and track the active rock.</td></tr><tr><td>Banking</td><td>Triggered only by 28 occupied inventory slots containing a non-pickaxe item.</td></tr><tr><td>Walking</td><td>Delegated to the integrated Shortest Path-backed <code>WebWalker</code>.</td></tr><tr><td>Stopping</td><td>Cancellation is treated as normal plugin shutdown, not a failure.</td></tr></table></section>
+      <section class="docs-section" id="automation-task" aria-labelledby="automation-task-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">05</span>
+          <div><p class="docs-kicker">Execution model</p><h2 id="automation-task-title">Cooperative automation task</h2></div>
+        </header>
+        <p>The task implements <code>AutomationTask</code> and advances one bounded unit of work per tick. RuneLite operations return <code>CompletableFuture</code> values; wait through <code>AutomationContext.await</code> with an explicit timeout.</p>
+        <div class="docs-table-wrap">
+          <table class="docs-table">
+            <thead><tr><th>State</th><th>Responsibility</th><th>Exit condition</th></tr></thead>
+            <tbody>
+              <tr><td><code>MINING</code></td><td>Move to the mine, select the preferred ore, and track the active rock.</td><td>Inventory becomes full.</td></tr>
+              <tr><td><code>BANKING</code></td><td>Move to the bank and deposit every non-pickaxe stack.</td><td>Only the pickaxe remains.</td></tr>
+              <tr><td><code>WALKING</code></td><td>Delegate route planning and progress to the shared web walker.</td><td>Arrival radius is reached.</td></tr>
+              <tr><td><code>STOPPING</code></td><td>Treat cancellation as normal shutdown rather than a task failure.</td><td>Resources are released.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-      <section class="docs-section" id="mining"><h2>5. Mining interaction lifecycle</h2><p>A successful Mine dispatch does not immediately permit another click. The task records the rock ID, world location, dispatch time and whether the mining animation was observed.</p><h3>Completion conditions</h3><ul><li>The tracked rock disappears or changes object ID at the same tile.</li><li>The mining animation was observed and then remains stopped for a confirmation interval.</li><li>The animation never starts within the startup timeout, allowing one controlled retry.</li></ul><pre><code>activeRockId = selected.getObjectId();
+      <section class="docs-section" id="mining-lifecycle" aria-labelledby="mining-lifecycle-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">06</span>
+          <div><p class="docs-kicker">Interaction control</p><h2 id="mining-lifecycle-title">Mining interaction lifecycle</h2></div>
+        </header>
+        <p>A successful <code>Mine</code> dispatch does not immediately permit another click. Track the rock ID, world location, dispatch time, and whether the mining animation has been observed.</p>
+        <h3>Completion conditions</h3>
+        <ul class="docs-check-list">
+          <li>The tracked rock disappears or changes object ID at the same tile.</li>
+          <li>The mining animation was observed and then remains stopped for a confirmation interval.</li>
+          <li>The animation never starts before the startup timeout, allowing one controlled retry.</li>
+        </ul>
+        <div class="code-block">
+          <div class="code-block-header"><span>Rock tracking state</span><button type="button" data-copy-code>Copy</button></div>
+          <pre><code>activeRockId = selected.getObjectId();
 activeRockLocation = selected.getLocation();
 miningAnimationObserved = false;
 
-// Each tick:
-// 1. Has the object ID at that tile changed?
-// 2. Is the player still animating?
-// 3. Has animation stopped long enough to confirm completion?</code></pre><p>This prevents repeated clicks while the character is already mining and also reacts immediately when the ore depletes.</p></section>
+// Every task tick:
+// 1. Check whether the object ID at the tile changed.
+// 2. Check whether the player is still animating.
+// 3. Confirm that animation has stopped before selecting another rock.</code></pre>
+        </div>
+      </section>
 
-      <section class="docs-section" id="banking"><h2>6. Full-inventory banking</h2><p>Banking begins only when the detached inventory snapshot contains all 28 occupied slots and at least one item whose definition is not a pickaxe.</p><pre><code>boolean inventoryFull = inventory.size() &gt;= 28;
-if (!banking &amp;&amp; inventoryFull &amp;&amp; depositable.isPresent()) {
+      <section class="docs-section" id="banking-lifecycle" aria-labelledby="banking-lifecycle-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">07</span>
+          <div><p class="docs-kicker">Inventory control</p><h2 id="banking-lifecycle-title">Full-inventory banking</h2></div>
+        </header>
+        <p>Begin banking only when all 28 inventory slots are occupied and at least one item is not a pickaxe. This prevents empty, partial, and pickaxe-only inventories from opening the bank.</p>
+        <div class="code-block">
+          <div class="code-block-header"><span>Banking transition</span><button type="button" data-copy-code>Copy</button></div>
+          <pre><code>boolean inventoryFull = inventory.size() &gt;= 28;
+Optional&lt;InventoryItem&gt; depositable = inventory.stream()
+    .filter(item -&gt; !isPickaxe(item))
+    .findFirst();
+
+if (!banking &amp;&amp; inventoryFull &amp;&amp; depositable.isPresent())
+{
     banking = true;
-}</code></pre><ul><li>Empty inventory never opens the bank.</li><li>Pickaxe-only inventory never opens the bank.</li><li>A partially filled inventory never opens the bank.</li><li>During a valid banking cycle, each non-pickaxe stack is deposited with quantity ALL.</li><li>When only the pickaxe remains, the route is cleared and mining resumes.</li></ul></section>
+}</code></pre>
+        </div>
+        <aside class="docs-callout">
+          <strong>Deposit rule</strong>
+          <p>Deposit each non-pickaxe stack with quantity <code>ALL</code>. Once only the pickaxe remains, clear the route and resume mining.</p>
+        </aside>
+      </section>
 
-      <section class="docs-section" id="walker"><h2>7. Integrated web walking</h2><p>The example only knows destinations and arrival radiuses. Route planning, collision data, path rendering and waypoint movement belong to KLite Core.</p><pre><code>WebWalkResult result = context.await(
-    webWalker.step(destination, arrivalDistance), API_TIMEOUT);
+      <section class="docs-section" id="web-walker" aria-labelledby="web-walker-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">08</span>
+          <div><p class="docs-kicker">Navigation</p><h2 id="web-walker-title">Integrated web walking</h2></div>
+        </header>
+        <p>The plugin owns destinations and arrival radiuses. KLite Core owns route planning, collision data, waypoint selection, scene and minimap rendering, progress tracking, and stall recovery.</p>
+        <div class="code-block">
+          <div class="code-block-header"><span>Web-walker step</span><button type="button" data-copy-code>Copy</button></div>
+          <pre><code>WebWalkResult result = context.await(
+    webWalker.step(destination, arrivalDistance),
+    API_TIMEOUT
+);
 
-if (result.getState() == WebWalkState.NO_PATH) {
+if (result.getState() == WebWalkState.NO_PATH)
+{
     throw new IllegalStateException(result.getMessage());
-}</code></pre><p>The integrated walker calculates an ordered path, renders it in the scene and minimap, selects forward minimap waypoints, tracks progress and replans after a genuine stall.</p></section>
+}</code></pre>
+        </div>
+      </section>
 
-      <section class="docs-section" id="overlay"><h2>8. Plugin overlay</h2><p>The overlay is owned by the plugin, not the global KLite status overlay. It displays:</p><div class="docs-grid"><div class="docs-card"><strong>Automation</strong><p>Activity, mining/banking mode, runtime and failure state.</p></div><div class="docs-card"><strong>Mining</strong><p>Preferred ore and current destination.</p></div><div class="docs-card"><strong>Walking</strong><p>Walker state, route length, next waypoint and route message.</p></div><div class="docs-card"><strong>Banking</strong><p>The explicit “Full inventory” trigger.</p></div></div></section>
+      <section class="docs-section" id="overlay" aria-labelledby="overlay-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">09</span>
+          <div><p class="docs-kicker">Observability</p><h2 id="overlay-title">Plugin-owned overlay</h2></div>
+        </header>
+        <p>Keep plugin-specific status separate from the global KLite status overlay. The user should be able to identify what the task is doing without opening logs.</p>
+        <div class="docs-card-grid">
+          <article><span>Automation</span><h3>Task status</h3><p>Activity, current mode, runtime, and failure state.</p></article>
+          <article><span>Mining</span><h3>Target state</h3><p>Preferred ore, active rock, and mining destination.</p></article>
+          <article><span>Walking</span><h3>Route state</h3><p>Walker state, route length, next waypoint, and route message.</p></article>
+          <article><span>Banking</span><h3>Transition reason</h3><p>The explicit full-inventory trigger and deposit progress.</p></article>
+        </div>
+      </section>
 
-      <section class="docs-section" id="logging"><h2>9. Diagnostics</h2><p>Use <strong>KLite Logs → Client / Plugin Debug</strong> for task and walker behavior. Use the <strong>Marketplace</strong> tab for download, hash verification, class loading, enable/disable and unload failures.</p><pre><code>[CopperTinMiner] Tracking rock ... until mining stops or object changes.
+      <section class="docs-section" id="diagnostics" aria-labelledby="diagnostics-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">10</span>
+          <div><p class="docs-kicker">Troubleshooting</p><h2 id="diagnostics-title">Diagnostics and logging</h2></div>
+        </header>
+        <p>Use <strong>KLite Logs → Client / Plugin Debug</strong> for task and walker behavior. Use the <strong>Marketplace</strong> tab for artifact download, hash verification, class loading, enable/disable, and unload failures.</p>
+        <div class="code-block">
+          <div class="code-block-header"><span>Representative log output</span><button type="button" data-copy-code>Copy</button></div>
+          <pre><code>[CopperTinMiner] Tracking rock ... until mining stops or object changes.
 [WebWalker] Integrated Shortest Path accepted route length=...
-[WebWalker] Clicking integrated Shortest Path waypoint ... surface=minimap
-[CopperTinMiner] Deposit result: status=...</code></pre></section>
+[WebWalker] Clicking waypoint ... surface=minimap
+[CopperTinMiner] Deposit result: status=...</code></pre>
+        </div>
+      </section>
 
-      <section class="docs-section" id="build"><h2>10. Build and publish</h2><pre><code>./gradlew :copper-tin-miner:clean :copper-tin-miner:jar --no-daemon</code></pre><ol><li>Build a reproducible JAR containing only the plugin implementation.</li><li>Copy it to <code>marketplace-site/public/artifacts/</code>.</li><li>Calculate SHA-256 and file size.</li><li>Update <code>plugins.json</code> with version, hash, size and entrypoint.</li><li>Deploy the static artifact and catalog together.</li><li>Unload the old in-memory plugin before testing the new artifact.</li></ol></section>
+      <section class="docs-section" id="build-publish" aria-labelledby="build-publish-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">11</span>
+          <div><p class="docs-kicker">Distribution</p><h2 id="build-publish-title">Build and publish</h2></div>
+        </header>
+        <div class="code-block">
+          <div class="code-block-header"><span>Gradle</span><button type="button" data-copy-code>Copy</button></div>
+          <pre><code>./gradlew :copper-tin-miner:clean :copper-tin-miner:jar --no-daemon</code></pre>
+        </div>
+        <ol class="docs-publish-list">
+          <li><strong>Build</strong><span>Create a reproducible JAR containing only the plugin implementation.</span></li>
+          <li><strong>Copy</strong><span>Place the JAR in <code>marketplace-site/public/artifacts/</code>.</span></li>
+          <li><strong>Verify</strong><span>Calculate the SHA-256 digest and exact file size.</span></li>
+          <li><strong>Catalog</strong><span>Update <code>plugins.json</code> with version, hash, size, and entrypoint.</span></li>
+          <li><strong>Deploy</strong><span>Publish the static artifact and catalog together.</span></li>
+          <li><strong>Test</strong><span>Unload the previous in-memory version before enabling the replacement.</span></li>
+        </ol>
+      </section>
 
-      <section class="docs-section" id="checklist"><h2>11. Marketplace review checklist</h2><ul><li>Uses <code>@PluginDependency(KLitePlugin.class)</code> for KLite services.</li><li>Does not bundle protected RuneLite or KLite classes.</li><li>Stops all automation and removes overlays during shutdown.</li><li>Uses bounded asynchronous API calls.</li><li>Does not retain passwords, secrets or unbounded logs.</li><li>Uses the shared <code>WebWalker</code> instead of implementing arbitrary movement.</li><li>Logs state transitions and actionable failure details.</li><li>Declares accurate version, minimum client version, authors and entrypoints.</li></ul></section>
+      <section class="docs-section" id="review-checklist" aria-labelledby="review-checklist-title">
+        <header class="docs-section-heading">
+          <span class="docs-section-number">12</span>
+          <div><p class="docs-kicker">Marketplace quality gate</p><h2 id="review-checklist-title">Review checklist</h2></div>
+        </header>
+        <ul class="docs-check-list docs-review-list">
+          <li>Declares <code>@PluginDependency(KLitePlugin.class)</code> when using KLite services.</li>
+          <li>Does not bundle protected RuneLite or KLite classes.</li>
+          <li>Stops automation and removes overlays during shutdown.</li>
+          <li>Uses bounded asynchronous API calls.</li>
+          <li>Does not retain passwords, secrets, or unbounded logs.</li>
+          <li>Uses the shared <code>WebWalker</code> instead of implementing arbitrary movement.</li>
+          <li>Logs state transitions and actionable failure details.</li>
+          <li>Declares accurate version, minimum client version, authors, and entrypoints.</li>
+        </ul>
+        <div class="docs-next">
+          <div><p class="docs-kicker">Next reference</p><h2>Explore the callable API.</h2><p>Use the API reference to inspect public KLite types and method signatures available to marketplace plugins.</p></div>
+          <a class="button button-primary" href="/api/">Open API Reference <span aria-hidden="true">›</span></a>
+        </div>
+      </section>
     </main>
   </div>
 </body>
