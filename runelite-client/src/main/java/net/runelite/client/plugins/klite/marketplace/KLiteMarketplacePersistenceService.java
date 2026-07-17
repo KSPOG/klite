@@ -56,7 +56,7 @@ public final class KLiteMarketplacePersistenceService
 	{
 		streamedPluginService.addChangeListener(this::saveCurrentState);
 		accountService.addChangeListener(this::accountChanged);
-		accountService.restoreSession().thenAccept(this::accountChanged);
+		accountService.restoreSession();
 	}
 
 	public void shutdown()
@@ -73,7 +73,8 @@ public final class KLiteMarketplacePersistenceService
 			return;
 		}
 		String accountKey = accountKey(account.get().getEmail());
-		if (accountKey.equals(activeAccountKey) && !streamedPluginService.loadedMarketplacePlugins().isEmpty())
+		if (accountKey.equals(activeAccountKey)
+			&& (restoring || !streamedPluginService.loadedMarketplacePlugins().isEmpty()))
 		{
 			return;
 		}
@@ -250,6 +251,7 @@ public final class KLiteMarketplacePersistenceService
 		return current;
 	}
 
+	@SuppressWarnings("unused")
 	private static final class StoredPluginState
 	{
 		private int schemaVersion = 1;
