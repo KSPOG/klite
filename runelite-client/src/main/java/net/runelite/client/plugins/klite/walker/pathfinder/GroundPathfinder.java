@@ -38,8 +38,23 @@ public final class GroundPathfinder
 
 	public PathSearchResult find(WorldPoint start, WorldPoint destination)
 	{
+		return find(start, destination, 0);
+	}
+
+	/**
+	 * Finds a route to any reachable tile within the requested Chebyshev distance
+	 * of the destination. This allows callers to target banks, mines, objects, and
+	 * other destination centers whose exact world tile may not be walkable.
+	 */
+	public PathSearchResult find(WorldPoint start, WorldPoint destination, int arrivalDistance)
+	{
 		Objects.requireNonNull(start, "start");
 		Objects.requireNonNull(destination, "destination");
+		if (arrivalDistance < 0)
+		{
+			throw new IllegalArgumentException("Arrival distance cannot be negative");
+		}
+
 		long startedAt = System.currentTimeMillis();
 		int startPacked = WorldPointCodec.pack(start);
 		int destinationPacked = WorldPointCodec.pack(destination);
@@ -55,7 +70,7 @@ public final class GroundPathfinder
 		int best = startPacked;
 		long bestDistance = WorldPointCodec.distanceSquared(startPacked, destinationPacked);
 		long cutoffAt = startedAt + NO_PROGRESS_CUTOFF_MILLIS;
-		boolean reached = startPacked == destinationPacked;
+		boolean reached = withinArrivalDistance(startPacked, destinationPacked, arrivalDistance);
 
 		while (!reached && !boundary.isEmpty() && parents.size() < MAX_VISITED_TILES)
 		{
@@ -89,7 +104,7 @@ public final class GroundPathfinder
 					best = neighbor;
 					cutoffAt = System.currentTimeMillis() + NO_PROGRESS_CUTOFF_MILLIS;
 				}
-				if (neighbor == destinationPacked)
+				if (withinArrivalDistance(neighbor, destinationPacked, arrivalDistance))
 				{
 					best = neighbor;
 					reached = true;
@@ -100,6 +115,14 @@ public final class GroundPathfinder
 
 		List<WorldPoint> path = reconstruct(parents, startPacked, best);
 		return result(reached, path, parents.size(), startedAt);
+	}
+
+	private static boolean withinArrivalDistance(int point, int destination, int arrivalDistance)
+	{
+		return WorldPointCodec.plane(point) == WorldPointCodec.plane(destination)
+			&& Math.max(
+				Math.abs(WorldPointCodec.x(point) - WorldPointCodec.x(destination)),
+				Math.abs(WorldPointCodec.y(point) - WorldPointCodec.y(destination))) <= arrivalDistance;
 	}
 
 	private static List<WorldPoint> reconstruct(IntParents parents, int start, int end)
