@@ -102,12 +102,12 @@ jobs:
                   allow_failure=True,
               )
               raw_log = (log_result.stdout or "") + ("\n" + log_result.stderr if log_result.stderr else "")
-              matched = []
-              for raw_line in raw_log.splitlines():
-                  clean = raw_line.rstrip()
-                  if error_pattern.search(clean):
-                      matched.append(clean)
-              matched = matched[-100:]
+              raw_lines = raw_log.splitlines()
+              selected_indices: set[int] = set()
+              for index, raw_line in enumerate(raw_lines):
+                  if error_pattern.search(raw_line):
+                      selected_indices.update(range(max(0, index - 4), min(len(raw_lines), index + 7)))
+              matched = [raw_lines[index].rstrip() for index in sorted(selected_indices)][-240:]
 
               lines.extend([
                   f"## {item.get('workflowName')}: {item.get('displayTitle')}",
@@ -132,7 +132,7 @@ jobs:
                               f"  - Step {step.get('number')}: **{step.get('name')}** — `{step.get('conclusion')}`"
                           )
 
-              lines.extend(["", "### Relevant log lines", ""])
+              lines.extend(["", "### Relevant log context", ""])
               if matched:
                   lines.append("```text")
                   lines.extend(matched)
