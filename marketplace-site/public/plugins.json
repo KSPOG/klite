@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-07-16T18:49:21Z",
+  "updatedAt": "2026-07-17T00:20:51Z",
   "categories": [
     "Agility",
     "Bossing",
@@ -30,21 +30,34 @@
     "Thieving",
     "Woodcutting"
   ],
-  "types": ["Public", "Supporter", "Free", "Premium"],
+  "types": [
+    "Public",
+    "Supporter",
+    "Free",
+    "Premium"
+  ],
   "plugins": [
     {
       "id": "klite-example",
       "descriptor": {
         "name": "KLite Example",
         "description": "A source-only example plugin that displays a small overlay and demonstrates the future KLite marketplace installation format.",
-        "tags": ["klite", "example", "marketplace"],
-        "authors": ["KSP"],
+        "tags": [
+          "klite",
+          "example",
+          "marketplace"
+        ],
+        "authors": [
+          "KSP"
+        ],
         "version": "1.0.0",
         "minClientVersion": "1.0.0",
         "enabledByDefault": false,
         "isExternal": true
       },
-      "categories": ["Other"],
+      "categories": [
+        "Other"
+      ],
       "type": "Free",
       "access": "Free",
       "status": "coming-soon",
@@ -61,14 +74,25 @@
       "descriptor": {
         "name": "Copper and Tin Miner",
         "description": "Alternates copper and tin at the Varrock south-east mine, then banks every inventory item except pickaxes.",
-        "tags": ["mining", "copper", "tin", "automation", "example"],
-        "authors": ["KSP"],
+        "tags": [
+          "mining",
+          "copper",
+          "tin",
+          "automation",
+          "example"
+        ],
+        "authors": [
+          "KSP"
+        ],
         "version": "1.0.0",
         "minClientVersion": "1.0.0",
         "enabledByDefault": false,
         "isExternal": true
       },
-      "categories": ["Mining", "Moneymaking"],
+      "categories": [
+        "Mining",
+        "Moneymaking"
+      ],
       "type": "Free",
       "access": "Free",
       "status": "available",
@@ -82,7 +106,7 @@
       },
       "homepageUrl": "https://github.com/KSPOG/klite/tree/main/examples/klite-copper-tin-miner",
       "releasedAt": "2026-07-16T18:49:21Z",
-      "updatedAt": "2026-07-16T18:49:21Z",
+      "updatedAt": "2026-07-17T00:20:51Z",
       "trendingDay": 0,
       "trendingWeek": 0,
       "trendingMonth": 0
