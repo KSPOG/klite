@@ -1,0 +1,137 @@
+name: Verify live KLite Windows update
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/verify-live-windows-update.yml"
+      - "marketplace-site/functions/download/windows.js"
+      - "marketplace-site/public/client/windows/latest.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: klite-live-windows-update-verification
+  cancel-in-progress: true
+
+jobs:
+  verify-live-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Wait for the Pages deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_asset="$(jq -r '.assetName' marketplace-site/public/client/windows/latest.json)"
+
+          for attempt in $(seq 1 20); do
+            headers="$(mktemp)"
+            if curl --silent --show-error --fail --head \
+              --header 'Cache-Control: no-store' \
+              --output /dev/null \
+              --dump-header "$headers" \
+              "https://klite-marketplace.pages.dev/download/windows?deployment_probe=${GITHUB_RUN_ID}-${attempt}"; then
+              live_asset="$(awk -F': ' 'tolower($1) == "x-klite-installer-asset" {gsub("\\r", "", $2); print $2}' "$headers" | tail -n 1)"
+              if [ "$live_asset" = "$expected_asset" ]; then
+                echo "The live Pages Function is serving the expected asset: $live_asset"
+                rm -f "$headers"
+                exit 0
+              fi
+              echo "Attempt $attempt: live asset '$live_asset' does not yet match '$expected_asset'."
+            else
+              echo "Attempt $attempt: the live download endpoint is not ready yet."
+            fi
+            rm -f "$headers"
+            sleep 15
+          done
+
+          echo "Cloudflare Pages did not publish the expected download function in time." >&2
+          exit 1
+
+      - name: Download and verify the live installer
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="marketplace-site/public/client/windows/latest.json"
+          expected_sha256="$(jq -r '.sha256' "$manifest")"
+          expected_size="$(jq -r '.size' "$manifest")"
+          expected_asset="$(jq -r '.assetName' "$manifest")"
+          expected_build="$(jq -r '.buildSha' "$manifest")"
+          expected_version="$(jq -r '.version' "$manifest")"
+
+          curl --fail --location --silent --show-error --no-compressed \
+            --header 'Accept: application/octet-stream' \
+            --header 'Cache-Control: no-store' \
+            --output live-installer.exe \
+            "https://klite-marketplace.pages.dev/download/windows?verification=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          actual_sha256="$(sha256sum live-installer.exe | awk '{print $1}')"
+          actual_size="$(stat -c '%s' live-installer.exe)"
+
+          echo "Expected size:   $expected_size"
+          echo "Actual size:     $actual_size"
+          echo "Expected SHA256: $expected_sha256"
+          echo "Actual SHA256:   $actual_sha256"
+
+          if [ "$actual_size" != "$expected_size" ] || [ "$actual_sha256" != "$expected_sha256" ]; then
+            echo "The live update endpoint does not match the published manifest." >&2
+            exit 1
+          fi
+
+          echo "asset=$expected_asset" >> "$GITHUB_OUTPUT"
+          echo "build=$expected_build" >> "$GITHUB_OUTPUT"
+          echo "version=$expected_version" >> "$GITHUB_OUTPUT"
+          echo "sha256=$actual_sha256" >> "$GITHUB_OUTPUT"
+          echo "size=$actual_size" >> "$GITHUB_OUTPUT"
+
+      - name: Publish live verification record
+        shell: bash
+        env:
+          VERIFIED_ASSET: ${{ steps.verify.outputs.asset }}
+          VERIFIED_BUILD: ${{ steps.verify.outputs.build }}
+          VERIFIED_VERSION: ${{ steps.verify.outputs.version }}
+          VERIFIED_SHA256: ${{ steps.verify.outputs.sha256 }}
+          VERIFIED_SIZE: ${{ steps.verify.outputs.size }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          record = {
+              "verified": True,
+              "checkedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "endpoint": "https://klite-marketplace.pages.dev/download/windows",
+              "version": os.environ["VERIFIED_VERSION"],
+              "buildSha": os.environ["VERIFIED_BUILD"],
+              "assetName": os.environ["VERIFIED_ASSET"],
+              "sha256": os.environ["VERIFIED_SHA256"],
+              "size": int(os.environ["VERIFIED_SIZE"]),
+          }
+          path = Path("marketplace-site/public/client/windows/live-verification.json")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add marketplace-site/public/client/windows/live-verification.json
+          if git diff --cached --quiet; then
+            echo "The live verification record is already current."
+            exit 0
+          fi
+          git commit -m "Verify live KLite Windows update bytes"
+          git pull --rebase origin main
+          git push origin HEAD:main
