@@ -7,11 +7,14 @@ package net.runelite.client.plugins.klite.examples.miner;
 
 import javax.inject.Inject;
 import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.klite.KLitePlugin;
 import net.runelite.client.plugins.klite.automation.AutomationManager;
 import net.runelite.client.plugins.klite.walker.WebWalker;
 
 /** Marketplace example which runs the copper and tin mining automation task. */
+@PluginDependency(KLitePlugin.class)
 @PluginDescriptor(
 	name = "Copper and Tin Miner",
 	description = "Mines copper and tin near Varrock and banks everything except pickaxes",
