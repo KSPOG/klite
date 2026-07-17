@@ -1,0 +1,90 @@
+name: Publish free marketplace artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/publish-free-marketplace-artifacts.yml"
+      - "examples/klite-copper-tin-miner/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-free-marketplace-artifacts
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+
+      - name: Build Copper and Tin Miner
+        run: |
+          chmod +x gradlew
+          ./gradlew :copper-tin-miner:clean :copper-tin-miner:jar --no-daemon
+
+      - name: Publish verified Pages artifact
+        run: |
+          node <<'NODE'
+          const crypto = require('node:crypto');
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const source = path.join(
+            'examples',
+            'klite-copper-tin-miner',
+            'build',
+            'libs',
+            'klite-copper-tin-miner-1.0.0.jar'
+          );
+          const targetDirectory = path.join('marketplace-site', 'public', 'artifacts');
+          const target = path.join(targetDirectory, 'copper-tin-miner-1.0.0.jar');
+          const catalogPath = path.join('marketplace-site', 'public', 'plugins.json');
+
+          const bytes = fs.readFileSync(source);
+          const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+          const size = bytes.length;
+          const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
+          const plugin = catalog.plugins.find((entry) => entry.id === 'copper-tin-miner');
+          if (!plugin || !plugin.artifact || plugin.artifact.version !== '1.0.0') {
+            throw new Error('Copper and Tin Miner catalog metadata is missing or has an unexpected version');
+          }
+
+          fs.mkdirSync(targetDirectory, { recursive: true });
+          fs.copyFileSync(source, target);
+          plugin.artifact.sha256 = sha256;
+          plugin.artifact.size = size;
+          const now = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+          plugin.updatedAt = now;
+          catalog.updatedAt = now;
+          fs.writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
+
+          console.log(`Published ${target}`);
+          console.log(`size=${size}`);
+          console.log(`sha256=${sha256}`);
+          NODE
+
+      - name: Commit generated artifact
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add marketplace-site/public/artifacts/copper-tin-miner-1.0.0.jar marketplace-site/public/plugins.json
+          if git diff --cached --quiet; then
+            echo "Artifact and catalog are already current."
+            exit 0
+          fi
+          git commit -m "Publish Copper and Tin Miner marketplace artifact"
+          git push origin HEAD:main
