@@ -1,0 +1,126 @@
+name: Build KLite Windows client
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-windows-client.yml"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "runelite-client/**"
+      - "runelite-api/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: klite-windows-client
+  cancel-in-progress: true
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 11 for the KLite build
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+          cache: gradle
+
+      - name: Build the executable KLite JAR
+        shell: pwsh
+        run: .\gradlew.bat :client:shadowJar --no-daemon
+
+      - name: Prepare packaging input
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem "runelite-client\build\libs\klite-*.jar" |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $jar) {
+            throw "The KLite shaded JAR was not produced."
+          }
+          New-Item -ItemType Directory -Force -Path "package-input" | Out-Null
+          Copy-Item $jar.FullName "package-input\KLite.jar"
+          Write-Host "Packaging $($jar.FullName)"
+
+      - name: Set up Java 21 for jpackage
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install WiX Toolset
+        shell: pwsh
+        run: |
+          choco install wixtoolset --no-progress -y
+          $wix = "C:\Program Files (x86)\WiX Toolset v3.14\bin"
+          if (-not (Test-Path $wix)) {
+            $wix = "C:\Program Files (x86)\WiX Toolset v3.11\bin"
+          }
+          if (Test-Path $wix) {
+            $wix | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+
+      - name: Package KLite installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "dist" | Out-Null
+          jpackage `
+            --type exe `
+            --dest dist `
+            --input package-input `
+            --name KLite `
+            --main-jar KLite.jar `
+            --main-class net.runelite.client.KLite `
+            --app-version 1.0.0 `
+            --vendor KLite `
+            --description "KLite RuneLite-based desktop client" `
+            --win-per-user-install `
+            --win-dir-chooser `
+            --win-menu `
+            --win-menu-group KLite `
+            --win-shortcut `
+            --java-options "-Xmx1024m"
+
+          $installer = Get-ChildItem "dist\*.exe" | Select-Object -First 1
+          if (-not $installer) {
+            throw "jpackage did not produce a Windows installer."
+          }
+          Move-Item $installer.FullName "dist\KLite-Setup.exe" -Force
+          Get-FileHash "dist\KLite-Setup.exe" -Algorithm SHA256
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KLite-Windows-Installer
+          path: dist/KLite-Setup.exe
+          if-no-files-found: error
+
+      - name: Publish rolling Windows release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $asset = (Resolve-Path "dist\KLite-Setup.exe").Path
+          gh release view windows-client --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload windows-client $asset --clobber --repo $env:GITHUB_REPOSITORY
+            gh release edit windows-client --latest --repo $env:GITHUB_REPOSITORY
+          } else {
+            gh release create windows-client $asset `
+              --target $env:GITHUB_SHA `
+              --title "KLite Windows Client" `
+              --notes "Rolling Windows installer for the current KLite main branch. Download KLite-Setup.exe and run it to install the client." `
+              --latest `
+              --repo $env:GITHUB_REPOSITORY
+          }
