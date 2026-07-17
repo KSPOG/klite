@@ -7,6 +7,10 @@ package net.runelite.client.plugins.klite.walker;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.awt.Canvas;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -18,8 +22,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.MenuAction;
+import net.runelite.api.Perspective;
 import net.runelite.api.Player;
+import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.klite.api.KLiteThreadGateway;
@@ -317,16 +322,89 @@ public class DefaultWebWalker implements WebWalker
 			return false;
 		}
 
-		diagnostics.debug(LOG_SOURCE, "Dispatching adjacent route tile " + targetIndex + '/'
+		Point canvasPoint = Perspective.localToCanvas(client, local,
+			client.getTopLevelWorldView().getPlane());
+		if (canvasPoint == null)
+		{
+			diagnostics.warn(LOG_SOURCE, "Route tile " + formatPoint(target)
+				+ " could not be projected onto the game canvas.");
+			return false;
+		}
+		Point dispatchPoint = scaleForDispatch(canvasPoint);
+		if (!insideCanvas(dispatchPoint))
+		{
+			diagnostics.warn(LOG_SOURCE, "Projected route tile " + formatPoint(target)
+				+ " is outside the canvas at " + dispatchPoint.getX() + ',' + dispatchPoint.getY() + '.');
+			return false;
+		}
+
+		diagnostics.debug(LOG_SOURCE, "Clicking adjacent route tile " + targetIndex + '/'
 			+ routeSize + ": current=" + formatPoint(current)
 			+ ", target=" + formatPoint(target)
 			+ ", scene=" + local.getSceneX() + ',' + local.getSceneY()
+			+ ", canvas=" + dispatchPoint.getX() + ',' + dispatchPoint.getY()
 			+ ", previousLocalDestination=" + formatLocalPoint(client.getLocalDestinationLocation()) + '.');
-		client.menuAction(local.getSceneX(), local.getSceneY(), MenuAction.WALK,
-			0, -1, "Walk here", "");
+		EventQueue.invokeLater(() -> dispatchCanvasClick(dispatchPoint));
 		clickTarget = target;
 		lastClickAt = System.currentTimeMillis();
 		return true;
+	}
+
+	private Point scaleForDispatch(Point point)
+	{
+		if (!client.isStretchedEnabled())
+		{
+			return point;
+		}
+		Dimension stretched = client.getStretchedDimensions();
+		Dimension real = client.getRealDimensions();
+		if (stretched == null || real == null || real.width <= 0 || real.height <= 0)
+		{
+			return point;
+		}
+		return new Point(
+			(int) ((long) point.getX() * stretched.width / real.width),
+			(int) ((long) point.getY() * stretched.height / real.height));
+	}
+
+	private boolean insideCanvas(Point point)
+	{
+		return point.getX() >= 0 && point.getY() >= 0
+			&& point.getX() < client.getCanvasWidth()
+			&& point.getY() < client.getCanvasHeight();
+	}
+
+	private void dispatchCanvasClick(Point point)
+	{
+		Canvas canvas = client.getCanvas();
+		dispatchMouse(canvas, MouseEvent.MOUSE_ENTERED, point, MouseEvent.NOBUTTON, 0);
+		dispatchMouse(canvas, MouseEvent.MOUSE_MOVED, point, MouseEvent.NOBUTTON, 0);
+		dispatchMouse(canvas, MouseEvent.MOUSE_PRESSED, point, MouseEvent.BUTTON1, 1);
+		dispatchMouse(canvas, MouseEvent.MOUSE_RELEASED, point, MouseEvent.BUTTON1, 1);
+		dispatchMouse(canvas, MouseEvent.MOUSE_CLICKED, point, MouseEvent.BUTTON1, 1);
+	}
+
+	private static void dispatchMouse(Canvas canvas, int id, Point point, int button, int clickCount)
+	{
+		boolean focused = canvas.isFocusOwner();
+		boolean focusable = canvas.isFocusable();
+		boolean guardFocus = focusable && !focused;
+		if (guardFocus)
+		{
+			canvas.setFocusable(false);
+		}
+		try
+		{
+			canvas.dispatchEvent(new MouseEvent(canvas, id, System.currentTimeMillis(), 0,
+				point.getX(), point.getY(), clickCount, false, button));
+		}
+		finally
+		{
+			if (guardFocus)
+			{
+				canvas.setFocusable(true);
+			}
+		}
 	}
 
 	private boolean shouldWaitForCurrentMovement(WorldPoint current, long now)
