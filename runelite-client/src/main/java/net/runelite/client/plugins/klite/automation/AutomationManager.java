@@ -8,6 +8,7 @@ package net.runelite.client.plugins.klite.automation;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -151,6 +152,13 @@ public class AutomationManager
 					() -> tick(task, context), 0L, interval.toMillis(), TimeUnit.MILLISECONDS);
 			}
 		}
+		catch (CancellationException exception)
+		{
+			if (!context.isCancellationRequested())
+			{
+				fail(task, context, exception);
+			}
+		}
 		catch (Exception exception)
 		{
 			fail(task, context, exception);
@@ -169,6 +177,13 @@ public class AutomationManager
 			if (task.tick(context) == AutomationResult.STOP)
 			{
 				finish(task, context, AutomationState.IDLE, null);
+			}
+		}
+		catch (CancellationException exception)
+		{
+			if (!context.isCancellationRequested())
+			{
+				fail(task, context, exception);
 			}
 		}
 		catch (Exception exception)
