@@ -76,6 +76,23 @@ jobs:
           unzip -l "$STARTER" | grep -q "src/main/resources/runelite_plugin.json"
           sha256sum "$SDK" "$STARTER"
 
+      - name: Compile generated standalone starter
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build/sdk-starter-verification
+          mkdir -p build/sdk-starter-verification
+          unzip -q dist/plugin-sdk/KLite-Plugin-Starter.zip -d build/sdk-starter-verification
+          cd build/sdk-starter-verification
+          chmod +x gradlew
+          ./gradlew clean build --no-daemon
+          test -f build/libs/starter-plugin-0.1.0.jar
+          if unzip -l build/libs/starter-plugin-0.1.0.jar | grep -q "net/runelite/"; then
+            echo "Generated starter bundled KLite or RuneLite runtime classes." >&2
+            exit 1
+          fi
+          unzip -l build/libs/starter-plugin-0.1.0.jar | grep -q "runelite_plugin.json"
+
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
