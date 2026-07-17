@@ -9,6 +9,7 @@ import com.example.StreamedFixture;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import org.junit.Test;
@@ -41,6 +42,25 @@ public class KLiteInMemoryPluginClassLoaderTest
 			{
 				assertEquals("loaded=true", new String(resource.readAllBytes()));
 			}
+		}
+	}
+
+	@Test
+	public void allowsDeclaredPluginClassesInsideRuneLiteNamespace() throws Exception
+	{
+		String className = KLiteMarketplacePlugin.class.getName();
+		String classPath = className.replace('.', '/') + ".class";
+		byte[] classBytes;
+		try (InputStream input = KLiteMarketplacePlugin.class.getClassLoader().getResourceAsStream(classPath))
+		{
+			classBytes = input.readAllBytes();
+		}
+		byte[] jar = jar(classPath, classBytes, "marker.txt", new byte[]{1});
+
+		try (KLiteInMemoryPluginClassLoader loader = new KLiteInMemoryPluginClassLoader(
+			jar, getClass().getClassLoader(), List.of(className)))
+		{
+			assertNotSame(KLiteMarketplacePlugin.class, loader.loadClass(className));
 		}
 	}
 
