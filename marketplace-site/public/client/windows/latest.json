@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "platform": "windows-x64",
-  "version": "1.0.56",
-  "buildSha": "1d150d33d6c87022f6122dd450dbd1abc9daf7e3",
+  "version": "1.0.57",
+  "buildSha": "40c89fcb195172125c51b3c2756609a92b7ea9a0",
   "downloadUrl": "https://klite-marketplace.pages.dev/download/windows",
-  "sha256": "c0b423494b65172946f62020985afea7ef8a8847b2f797472de5693b8eed015d",
+  "sha256": "61ca87303c3bed7d85b3a8b78be407e2454f085a13abfe223a394f5cc4c6972b",
   "size": 88577536,
-  "publishedAt": "2026-07-17T18:44:56Z"
+  "publishedAt": "2026-07-17T18:57:27Z"
 }
