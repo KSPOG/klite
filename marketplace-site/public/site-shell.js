@@ -28,7 +28,7 @@ const siteRouteDefinitions = {
       { label: "Submit a plugin", target: "submission-form" },
       { label: "Submission history", target: "submission-list" },
       { label: "API reference", href: "/api/" },
-      { label: "Plugin DOC's", href: "/docs/" }
+      { label: "Plugin documentation", href: "/docs/" }
     ]
   },
   community: {
@@ -199,58 +199,118 @@ function createDownloadNoticeDialog() {
   return dialog;
 }
 
+function ensureResourcesMenuStyles() {
+  if (document.querySelector('link[data-klite-resources-menu]')) return;
+  const stylesheet = document.createElement("link");
+  stylesheet.rel = "stylesheet";
+  stylesheet.href = "/resources-menu.css";
+  stylesheet.dataset.kliteResourcesMenu = "";
+  document.head.append(stylesheet);
+}
+
 function createResourcesMenu() {
-  const legacyApiButton = document.querySelector("#api-button");
-  if (!legacyApiButton) return;
+  const trigger = document.querySelector("#api-button");
+  if (!trigger || trigger.closest(".klite-resources-menu")) return;
+
+  ensureResourcesMenuStyles();
 
   const wrapper = document.createElement("div");
   wrapper.className = "klite-resources-menu";
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "button button-secondary";
-  button.textContent = "API / DOC's ▾";
-  button.setAttribute("aria-haspopup", "menu");
-  button.setAttribute("aria-expanded", "false");
+  wrapper.hidden = trigger.hidden;
+
+  const menuId = "klite-developer-resources";
+  trigger.textContent = "Resources";
+  trigger.href = "#developer-resources";
+  trigger.setAttribute("role", "button");
+  trigger.setAttribute("aria-haspopup", "menu");
+  trigger.setAttribute("aria-controls", menuId);
+  trigger.setAttribute("aria-expanded", "false");
 
   const menu = document.createElement("div");
+  menu.id = menuId;
   menu.className = "klite-resources-list";
   menu.setAttribute("role", "menu");
+  menu.setAttribute("aria-label", "Developer resources");
   menu.hidden = true;
-  menu.innerHTML = '<a role="menuitem" href="/api/"><strong>API</strong><small>Client and automation API reference</small></a><a role="menuitem" href="/docs/"><strong>DOC\'s</strong><small>Complete Copper &amp; Tin plugin guide</small></a>';
+  menu.innerHTML = `
+    <div class="klite-resources-heading">
+      <strong>Developer resources</strong>
+      <small>Reference material for KLite integrations and plugins.</small>
+    </div>
+    <a role="menuitem" href="/api/">
+      <span class="klite-resource-icon" aria-hidden="true">{ }</span>
+      <span><strong>API reference</strong><small>Client and automation interfaces</small></span>
+      <span class="klite-resource-arrow" aria-hidden="true">›</span>
+    </a>
+    <a role="menuitem" href="/docs/">
+      <span class="klite-resource-icon" aria-hidden="true">&lt;/&gt;</span>
+      <span><strong>Plugin development guide</strong><small>Complete Copper &amp; Tin example</small></span>
+      <span class="klite-resource-arrow" aria-hidden="true">›</span>
+    </a>`;
 
-  button.addEventListener("click", (event) => {
+  const closeMenu = ({ restoreFocus = false } = {}) => {
+    menu.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    if (restoreFocus) trigger.focus();
+  };
+
+  const openMenu = ({ focusFirst = false } = {}) => {
+    menu.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    if (focusFirst) menu.querySelector('[role="menuitem"]')?.focus();
+  };
+
+  const toggleMenu = () => {
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  };
+
+  trigger.addEventListener("click", (event) => {
+    event.preventDefault();
     event.stopPropagation();
-    menu.hidden = !menu.hidden;
-    button.setAttribute("aria-expanded", String(!menu.hidden));
+    toggleMenu();
   });
-  button.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      menu.hidden = true;
-      button.setAttribute("aria-expanded", "false");
-    }
-  });
-  document.addEventListener("click", (event) => {
-    if (!wrapper.contains(event.target)) {
-      menu.hidden = true;
-      button.setAttribute("aria-expanded", "false");
+
+  trigger.addEventListener("keydown", (event) => {
+    if (["Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      toggleMenu();
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      openMenu({ focusFirst: true });
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      closeMenu();
     }
   });
 
-  wrapper.append(button, menu);
-  legacyApiButton.replaceWith(wrapper);
+  menu.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeMenu({ restoreFocus: true });
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!wrapper.contains(event.target)) closeMenu();
+  });
+
+  new MutationObserver(() => {
+    wrapper.hidden = trigger.hidden;
+    if (wrapper.hidden) closeMenu();
+  }).observe(trigger, { attributes: true, attributeFilter: ["hidden"] });
+
+  trigger.before(wrapper);
+  wrapper.append(trigger, menu);
 
   const accountMenu = document.querySelector("#account-menu");
   const logout = document.querySelector("#account-menu-logout");
   if (accountMenu && logout && !accountMenu.querySelector('a[href="/docs/"]')) {
     const docsLink = document.createElement("a");
     docsLink.href = "/docs/";
-    docsLink.textContent = "Plugin DOC's";
+    docsLink.textContent = "Plugin documentation";
     accountMenu.insertBefore(docsLink, logout);
   }
-
-  const style = document.createElement("style");
-  style.textContent = `.klite-resources-menu{position:relative}.klite-resources-menu>.button{border-color:rgba(19,217,255,.4);color:#13d9ff}.klite-resources-list{position:absolute;right:0;top:calc(100% + 8px);z-index:100;min-width:270px;padding:8px;border:1px solid rgba(143,174,195,.28);background:#09111a;box-shadow:0 20px 50px rgba(0,0,0,.45)}.klite-resources-list a{display:flex;flex-direction:column;gap:3px;padding:11px 12px;color:#f2f7fb;text-decoration:none;border-radius:6px}.klite-resources-list a:hover,.klite-resources-list a:focus{outline:0;background:rgba(19,217,255,.08)}.klite-resources-list small{color:#91a5b5}`;
-  document.head.append(style);
 }
 
 const downloadNoticeDialog = createDownloadNoticeDialog();
