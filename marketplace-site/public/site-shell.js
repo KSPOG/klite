@@ -202,21 +202,32 @@ function createDownloadNoticeDialog() {
 function createResourcesMenu() {
   const legacyApiButton = document.querySelector("#api-button");
   if (!legacyApiButton) return;
+
   const wrapper = document.createElement("div");
   wrapper.className = "klite-resources-menu";
   const button = document.createElement("button");
   button.type = "button";
   button.className = "button button-secondary";
-  button.textContent = "Resources ▾";
+  button.textContent = "API / DOC's ▾";
+  button.setAttribute("aria-haspopup", "menu");
   button.setAttribute("aria-expanded", "false");
+
   const menu = document.createElement("div");
   menu.className = "klite-resources-list";
+  menu.setAttribute("role", "menu");
   menu.hidden = true;
-  menu.innerHTML = '<a href="/api/"><strong>API</strong><small>Authenticated API reference</small></a><a href="/docs/"><strong>DOC\'s</strong><small>Complete plugin development guide</small></a>';
+  menu.innerHTML = '<a role="menuitem" href="/api/"><strong>API</strong><small>Client and automation API reference</small></a><a role="menuitem" href="/docs/"><strong>DOC\'s</strong><small>Complete Copper &amp; Tin plugin guide</small></a>';
+
   button.addEventListener("click", (event) => {
     event.stopPropagation();
     menu.hidden = !menu.hidden;
     button.setAttribute("aria-expanded", String(!menu.hidden));
+  });
+  button.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      menu.hidden = true;
+      button.setAttribute("aria-expanded", "false");
+    }
   });
   document.addEventListener("click", (event) => {
     if (!wrapper.contains(event.target)) {
@@ -224,11 +235,21 @@ function createResourcesMenu() {
       button.setAttribute("aria-expanded", "false");
     }
   });
+
   wrapper.append(button, menu);
   legacyApiButton.replaceWith(wrapper);
 
+  const accountMenu = document.querySelector("#account-menu");
+  const logout = document.querySelector("#account-menu-logout");
+  if (accountMenu && logout && !accountMenu.querySelector('a[href="/docs/"]')) {
+    const docsLink = document.createElement("a");
+    docsLink.href = "/docs/";
+    docsLink.textContent = "Plugin DOC's";
+    accountMenu.insertBefore(docsLink, logout);
+  }
+
   const style = document.createElement("style");
-  style.textContent = `.klite-resources-menu{position:relative}.klite-resources-list{position:absolute;right:0;top:calc(100% + 8px);z-index:100;min-width:245px;padding:8px;border:1px solid rgba(143,174,195,.28);background:#09111a;box-shadow:0 20px 50px rgba(0,0,0,.45)}.klite-resources-list a{display:flex;flex-direction:column;gap:3px;padding:11px 12px;color:#f2f7fb;text-decoration:none;border-radius:6px}.klite-resources-list a:hover{background:rgba(19,217,255,.08)}.klite-resources-list small{color:#91a5b5}`;
+  style.textContent = `.klite-resources-menu{position:relative}.klite-resources-menu>.button{border-color:rgba(19,217,255,.4);color:#13d9ff}.klite-resources-list{position:absolute;right:0;top:calc(100% + 8px);z-index:100;min-width:270px;padding:8px;border:1px solid rgba(143,174,195,.28);background:#09111a;box-shadow:0 20px 50px rgba(0,0,0,.45)}.klite-resources-list a{display:flex;flex-direction:column;gap:3px;padding:11px 12px;color:#f2f7fb;text-decoration:none;border-radius:6px}.klite-resources-list a:hover,.klite-resources-list a:focus{outline:0;background:rgba(19,217,255,.08)}.klite-resources-list small{color:#91a5b5}`;
   document.head.append(style);
 }
 
