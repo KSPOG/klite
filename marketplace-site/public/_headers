@@ -30,6 +30,16 @@
   Pragma: no-cache
   Expires: 0
 
+/resources-menu.css
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+
+/obsidian-release-theme.css
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+
 /api/
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
   Pragma: no-cache
