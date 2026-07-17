@@ -1,4 +1,5 @@
 const RELEASE_BASE = "https://github.com/KSPOG/klite/releases/download/windows-client/";
+const BROWSER_SETUP_URL = `${RELEASE_BASE}KLite-Setup.exe`;
 const VERSION_PATTERN = /^1\.0\.\d+$/;
 const BUILD_SHA_PATTERN = /^[a-f0-9]{40}$/i;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
@@ -12,6 +13,26 @@ export async function onRequest(context) {
     });
   }
 
+  const requestUrl = new URL(context.request.url);
+
+  // Website downloads must never depend on Cloudflare being able to fetch its
+  // own update manifest or proxy a large binary. The rolling GitHub release
+  // asset is replaced by the Windows release workflow whenever a newer setup
+  // is published. The verified manifest/proxy path below remains available to
+  // installed clients that validate the expected size and SHA-256 themselves.
+  if (requestUrl.searchParams.get("browser") === "1") {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        location: BROWSER_SETUP_URL,
+        "cache-control": "private, no-store, no-cache, must-revalidate, max-age=0",
+        pragma: "no-cache",
+        expires: "0",
+        "x-content-type-options": "nosniff"
+      }
+    });
+  }
+
   const manifest = await loadManifest(context);
   const validationError = validateManifest(manifest);
   if (validationError) {
@@ -22,23 +43,6 @@ export async function onRequest(context) {
   // The content hash is part of both the filename and query string. The query
   // prevents an intermediary from reusing a cached response for an older asset.
   assetUrl.searchParams.set("klite_sha256", manifest.sha256.toLowerCase());
-
-  const requestUrl = new URL(context.request.url);
-  if (requestUrl.searchParams.get("browser") === "1") {
-    return new Response(null, {
-      status: 302,
-      headers: {
-        location: assetUrl.toString(),
-        "cache-control": "private, no-store, no-cache, must-revalidate, max-age=0",
-        pragma: "no-cache",
-        expires: "0",
-        "x-content-type-options": "nosniff",
-        "x-klite-build-sha": manifest.buildSha,
-        "x-klite-installer-sha256": manifest.sha256.toLowerCase(),
-        "x-klite-installer-asset": manifest.assetName
-      }
-    });
-  }
 
   const responseHeaders = installerHeaders(manifest);
   if (context.request.method === "HEAD") {
