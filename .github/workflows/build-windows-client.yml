@@ -38,18 +38,26 @@ jobs:
           java-version: "11"
           cache: gradle
 
-      - name: Apply supplied KLite splash icon to client resources
+      - name: Validate committed KLite splash icon
         shell: pwsh
         run: |
-          $encoded = Get-Content `
-            "runelite-client\src\main\resources\net\runelite\client\klite_splash_icon.b64" `
-            -Raw
-          [IO.File]::WriteAllBytes(
-            "runelite-client\src\main\resources\net\runelite\client\ui\klite_icon.png",
-            [Convert]::FromBase64String($encoded)
-          )
-          $icon = Get-Item "runelite-client\src\main\resources\net\runelite\client\ui\klite_icon.png"
-          Write-Host "Applied supplied splash crest to client resources: $($icon.Length) bytes"
+          $iconPath = "runelite-client\src\main\resources\net\runelite\client\ui\klite_icon.png"
+          if (-not (Test-Path $iconPath -PathType Leaf)) {
+            throw "The committed KLite splash icon is missing: $iconPath"
+          }
+
+          $bytes = [IO.File]::ReadAllBytes($iconPath)
+          $pngSignature = [byte[]](137, 80, 78, 71, 13, 10, 26, 10)
+          if ($bytes.Length -lt $pngSignature.Length) {
+            throw "The committed KLite splash icon is empty or truncated."
+          }
+          for ($index = 0; $index -lt $pngSignature.Length; $index++) {
+            if ($bytes[$index] -ne $pngSignature[$index]) {
+              throw "The committed KLite splash icon is not a valid PNG file."
+            }
+          }
+
+          Write-Host "Validated committed KLite splash icon: $($bytes.Length) bytes"
 
       - name: Verify Discord-only marketplace login
         shell: pwsh
