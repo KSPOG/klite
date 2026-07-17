@@ -22,6 +22,7 @@ import net.runelite.client.plugins.klite.api.KLiteClientApi;
 import net.runelite.client.plugins.klite.automation.AutomationManager;
 import net.runelite.client.plugins.klite.marketplace.KLiteMarketplaceWindow;
 import net.runelite.client.plugins.klite.marketplace.KLitePluginPanel;
+import net.runelite.client.plugins.klite.update.KLiteUpdateService;
 import net.runelite.client.plugins.klite.walker.DefaultWebWalker;
 import net.runelite.client.plugins.klite.walker.WebWalkBankCache;
 import net.runelite.client.plugins.klite.walker.WebWalker;
@@ -65,6 +66,9 @@ public class KLitePlugin extends Plugin
 
 	@Inject
 	private KLitePluginPanel pluginPanel;
+
+	@Inject
+	private KLiteUpdateService updateService;
 
 	private NavigationButton marketplaceButton;
 
@@ -134,11 +138,17 @@ public class KLitePlugin extends Plugin
 			.panel(pluginPanel)
 			.build();
 		clientToolbar.addNavigation(marketplaceButton);
+
+		if (config.checkForClientUpdates())
+		{
+			updateService.checkForUpdates(pluginPanel, false);
+		}
 	}
 
 	@Override
 	protected void shutDown()
 	{
+		updateService.cancel();
 		clientToolbar.removeNavigation(marketplaceButton);
 		marketplaceWindow.close();
 		automationManager.setEnabled(false);
