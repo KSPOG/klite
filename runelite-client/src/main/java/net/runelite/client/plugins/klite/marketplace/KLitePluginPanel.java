@@ -32,10 +32,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.JTextArea;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
 import net.runelite.client.plugins.Plugin;
@@ -255,7 +255,7 @@ public class KLitePluginPanel extends PluginPanel
 		card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		card.setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-			BorderFactory.createEmptyBorder(10, 8, 10, 8)));
+			BorderFactory.createEmptyBorder(10, 6, 10, 6)));
 
 		JPanel heading = new JPanel(new BorderLayout(6, 0));
 		heading.setOpaque(false);
@@ -275,8 +275,12 @@ public class KLitePluginPanel extends PluginPanel
 		card.add(metadata, BorderLayout.CENTER);
 
 		int columns = loaded.isConfigurable() ? 3 : 2;
-		JPanel controls = new JPanel(new GridLayout(1, columns, 4, 0));
+		JPanel controls = new JPanel(new GridLayout(1, columns, 2, 0));
 		controls.setOpaque(false);
+		controls.setMinimumSize(new Dimension(0, 24));
+		controls.setPreferredSize(new Dimension(0, 24));
+		controls.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+
 		JButton toggle = compactControlButton(loaded.isRunning() ? "Disable" : "Enable");
 		toggle.addActionListener(event -> runOperation(
 			loaded.isRunning() ? "Disabling " : "Enabling ", marketplacePlugin.getName(),
@@ -307,10 +311,12 @@ public class KLitePluginPanel extends PluginPanel
 	private static JButton compactControlButton(String text)
 	{
 		JButton button = new JButton(text);
-		button.setMargin(new Insets(2, 4, 2, 4));
-		button.setFont(button.getFont().deriveFont(11f));
-		button.setMinimumSize(new Dimension(0, button.getPreferredSize().height));
-		button.setMaximumSize(new Dimension(Integer.MAX_VALUE, button.getPreferredSize().height));
+		button.setMargin(new Insets(1, 1, 1, 1));
+		button.setFont(button.getFont().deriveFont(9.5f));
+		button.setHorizontalAlignment(SwingConstants.CENTER);
+		button.setMinimumSize(new Dimension(0, 24));
+		button.setPreferredSize(new Dimension(0, 24));
+		button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
 		return button;
 	}
 
