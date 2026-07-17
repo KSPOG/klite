@@ -36,9 +36,9 @@ import net.runelite.client.plugins.klite.walker.pathfinder.ShortestPathRoutePlan
  * KLite web walker backed by the bundled Shortest Path route planner.
  *
  * <p>The planner supplies a complete ordered route. Movement advances through
- * that route monotonically and dispatches one adjacent route tile at a time.
- * This deliberately avoids skipping across walls, corners, doors, or a later
- * section of a route which happens to pass nearby.</p>
+ * that route in order and dispatches a nearby route tile at a time. A route
+ * cursor may roll back by one tile when the server corrects the player to the
+ * previous route tile.</p>
  */
 @Singleton
 public class DefaultWebWalker implements WebWalker
@@ -48,7 +48,8 @@ public class DefaultWebWalker implements WebWalker
 	private static final int ROUTE_CLICK_STEPS = 1;
 	private static final int ROUTE_PROGRESS_WINDOW = 8;
 	private static final int REPLAN_DISTANCE = 4;
-	private static final long MOVEMENT_RETRY_MILLIS = 1_200L;
+	private static final long MOVEMENT_RETRY_MILLIS = 1_500L;
+	private static final long TARGET_SETTLE_MILLIS = 700L;
 	private static final long STALL_TIMEOUT_MILLIS = 8_000L;
 
 	private final Client client;
@@ -60,6 +61,7 @@ public class DefaultWebWalker implements WebWalker
 
 	private volatile WebWalkResult status = new WebWalkResult(
 		WebWalkState.IDLE, null, null, 0, null);
+	private volatile boolean clearRequested;
 	@Nullable
 	private WorldPoint destination;
 	private int arrivalDistance;
@@ -73,6 +75,7 @@ public class DefaultWebWalker implements WebWalker
 	private WorldPoint lastLocation;
 	private long lastProgressAt;
 	private long lastClickAt;
+	private long settleUntil;
 
 	@Inject
 	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway,
@@ -112,12 +115,14 @@ public class DefaultWebWalker implements WebWalker
 		{
 			throw new IllegalArgumentException("Arrival distance cannot be negative");
 		}
+		clearRequested = false;
 		return threadGateway.submit(() -> advance(destination, arrivalDistance));
 	}
 
 	@Override
 	public CompletableFuture<Void> clear()
 	{
+		clearRequested = true;
 		return threadGateway.execute(this::clearOnClientThread);
 	}
 
@@ -135,12 +140,18 @@ public class DefaultWebWalker implements WebWalker
 
 	public void shutdown()
 	{
+		clearRequested = true;
 		clearOnClientThread();
 		pathExecutor.shutdownNow();
 	}
 
 	private WebWalkResult advance(WorldPoint requestedDestination, int requestedArrivalDistance)
 	{
+		if (clearRequested)
+		{
+			return update(WebWalkState.IDLE, null, null, 0, null);
+		}
+
 		Player player = client.getLocalPlayer();
 		if (client.getGameState() != GameState.LOGGED_IN || player == null)
 		{
@@ -173,6 +184,21 @@ public class DefaultWebWalker implements WebWalker
 			diagnostics.info(LOG_SOURCE, "New destination " + formatPoint(destination)
 				+ " with arrivalDistance=" + arrivalDistance
 				+ " from " + formatPoint(current) + '.');
+		}
+
+		if (clickTarget != null && current.equals(clickTarget))
+		{
+			diagnostics.debug(LOG_SOURCE, "Reached dispatched route tile "
+				+ formatPoint(clickTarget) + "; allowing movement to settle before advancing.");
+			clickTarget = null;
+			settleUntil = now + TARGET_SETTLE_MILLIS;
+			lastProgressAt = now;
+		}
+
+		if (now < settleUntil)
+		{
+			return update(WebWalkState.MOVING, destination, null, path.size(),
+				"Settling on the current Shortest Path tile");
 		}
 
 		if (clickTarget != null && now - lastProgressAt >= STALL_TIMEOUT_MILLIS)
@@ -226,6 +252,11 @@ public class DefaultWebWalker implements WebWalker
 			requestPath(current, requestedDestination, requestedArrivalDistance);
 			return update(WebWalkState.PATHFINDING, destination, null, 0,
 				"Player moved away from the Shortest Path route");
+		}
+		if (advancedIndex < pathIndex)
+		{
+			diagnostics.debug(LOG_SOURCE, "Server correction moved the player back from route index "
+				+ pathIndex + " to " + advancedIndex + '.');
 		}
 		pathIndex = advancedIndex;
 
@@ -301,6 +332,10 @@ public class DefaultWebWalker implements WebWalker
 
 	private boolean walk(WorldPoint target, WorldPoint current, int targetIndex, int routeSize)
 	{
+		if (clearRequested)
+		{
+			return false;
+		}
 		if (client.getTopLevelWorldView() == null)
 		{
 			diagnostics.warn(LOG_SOURCE, "Cannot dispatch " + formatPoint(target)
@@ -344,7 +379,13 @@ public class DefaultWebWalker implements WebWalker
 			+ ", scene=" + local.getSceneX() + ',' + local.getSceneY()
 			+ ", canvas=" + dispatchPoint.getX() + ',' + dispatchPoint.getY()
 			+ ", previousLocalDestination=" + formatLocalPoint(client.getLocalDestinationLocation()) + '.');
-		EventQueue.invokeLater(() -> dispatchCanvasClick(dispatchPoint));
+		EventQueue.invokeLater(() ->
+		{
+			if (!clearRequested)
+			{
+				dispatchCanvasClick(dispatchPoint);
+			}
+		});
 		clickTarget = target;
 		lastClickAt = System.currentTimeMillis();
 		return true;
@@ -409,9 +450,15 @@ public class DefaultWebWalker implements WebWalker
 
 	private boolean shouldWaitForCurrentMovement(WorldPoint current, long now)
 	{
-		return client.getLocalDestinationLocation() != null && clickTarget != null
-			&& !current.equals(clickTarget)
-			&& now - lastClickAt < MOVEMENT_RETRY_MILLIS;
+		if (clickTarget == null || current.equals(clickTarget))
+		{
+			return false;
+		}
+		if (now - lastClickAt < MOVEMENT_RETRY_MILLIS)
+		{
+			return true;
+		}
+		return client.getLocalDestinationLocation() != null;
 	}
 
 	private void updateProgress(WorldPoint current, long now)
@@ -424,8 +471,9 @@ public class DefaultWebWalker implements WebWalker
 	}
 
 	/**
-	 * Advances only inside a small forward window. This prevents a route which
-	 * bends back near itself from jumping to a later crossing.
+	 * Advances only inside a small local route window. The cursor normally moves
+	 * forward, but may roll back one tile when the server corrects the player to
+	 * the immediately preceding route tile.
 	 */
 	static int advancePathIndex(List<WorldPoint> route, WorldPoint current, int previousIndex)
 	{
@@ -451,10 +499,14 @@ public class DefaultWebWalker implements WebWalker
 		{
 			return -1;
 		}
+		if (best == base - 1 && bestDistance == 0)
+		{
+			return best;
+		}
 		return Math.max(base, best);
 	}
 
-	/** Selects only the next adjacent route point. */
+	/** Selects only the next nearby route point. */
 	static int selectRouteTargetIndex(List<WorldPoint> route, int fromIndex, WorldPoint current)
 	{
 		if (route.isEmpty())
@@ -495,6 +547,7 @@ public class DefaultWebWalker implements WebWalker
 		arrivalDistance = 0;
 		lastLocation = null;
 		lastProgressAt = 0L;
+		settleUntil = 0L;
 		update(WebWalkState.IDLE, null, null, 0, null);
 	}
 
@@ -509,6 +562,7 @@ public class DefaultWebWalker implements WebWalker
 		pathIndex = 0;
 		clickTarget = null;
 		lastClickAt = 0L;
+		settleUntil = 0L;
 	}
 
 	private static String formatPoint(@Nullable WorldPoint point)
