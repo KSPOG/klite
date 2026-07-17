@@ -24,7 +24,7 @@ import net.runelite.client.plugins.klite.automation.AutomationManager;
 import net.runelite.client.plugins.klite.marketplace.KLiteMarketplaceWindow;
 import net.runelite.client.plugins.klite.marketplace.KLitePluginPanel;
 import net.runelite.client.plugins.klite.update.KLiteUpdateService;
-import net.runelite.client.plugins.klite.walker.DefaultWebWalker;
+import net.runelite.client.plugins.klite.walker.IntegratedShortestPathWebWalker;
 import net.runelite.client.plugins.klite.walker.KLiteShortestPathOverlay;
 import net.runelite.client.plugins.klite.walker.WebWalkBankCache;
 import net.runelite.client.plugins.klite.walker.WebWalker;
@@ -59,7 +59,7 @@ public class KLitePlugin extends Plugin
 	private AutomationManager automationManager;
 
 	@Inject
-	private DefaultWebWalker webWalker;
+	private IntegratedShortestPathWebWalker webWalker;
 
 	@Inject
 	private WebWalkBankCache bankCache;
@@ -92,9 +92,9 @@ public class KLitePlugin extends Plugin
 	}
 
 	@Provides
-	WebWalker provideWebWalker(DefaultWebWalker defaultWebWalker)
+	WebWalker provideWebWalker(IntegratedShortestPathWebWalker integratedWebWalker)
 	{
-		return defaultWebWalker;
+		return integratedWebWalker;
 	}
 
 	@Subscribe
