@@ -21,6 +21,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.klite.api.DefaultKLiteClientApi;
 import net.runelite.client.plugins.klite.api.KLiteClientApi;
 import net.runelite.client.plugins.klite.automation.AutomationManager;
+import net.runelite.client.plugins.klite.marketplace.KLiteMarketplacePersistenceService;
 import net.runelite.client.plugins.klite.marketplace.KLiteMarketplaceWindow;
 import net.runelite.client.plugins.klite.marketplace.KLitePluginPanel;
 import net.runelite.client.plugins.klite.update.KLiteUpdateService;
@@ -69,6 +70,9 @@ public class KLitePlugin extends Plugin
 
 	@Inject
 	private KLiteMarketplaceWindow marketplaceWindow;
+
+	@Inject
+	private KLiteMarketplacePersistenceService marketplacePersistenceService;
 
 	@Inject
 	private KLitePluginPanel pluginPanel;
@@ -134,6 +138,7 @@ public class KLitePlugin extends Plugin
 		overlayManager.add(shortestPathOverlay);
 		automationManager.setEnabled(config.enableAutomation());
 		bankCache.onAccountChanged();
+		marketplacePersistenceService.start();
 
 		BufferedImage sourceIcon = ImageUtil.loadImageResource(
 			KLitePlugin.class, "marketplace/klite_marketplace.png");
@@ -164,6 +169,7 @@ public class KLitePlugin extends Plugin
 			startupUpdateTimer.stop();
 			startupUpdateTimer = null;
 		}
+		marketplacePersistenceService.shutdown();
 		updateService.cancel();
 		clientToolbar.removeNavigation(marketplaceButton);
 		marketplaceWindow.close();
