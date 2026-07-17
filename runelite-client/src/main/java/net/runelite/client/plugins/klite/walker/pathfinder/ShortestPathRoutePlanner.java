@@ -2,6 +2,10 @@
  * Copyright (c) 2026, KLite contributors
  * All rights reserved.
  * BSD 2-Clause License; see LICENSE in the project root.
+ *
+ * This implementation and its bundled collision-map format are adapted from
+ * Skretzo's Shortest Path plugin and Microbot's maintained Shortest Path fork,
+ * both distributed under the BSD 2-Clause License.
  */
 package net.runelite.client.plugins.klite.walker.pathfinder;
 
@@ -26,7 +30,7 @@ import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
  * octile A* search. It is the primary and unconditional route source for
  * {@code DefaultWebWalker}; no separately installed RuneLite plugin is needed.
  * Routes contain every adjacent ground tile in traversal order so movement can
- * follow the calculated path rather than selecting arbitrary nearby tiles.</p>
+ * follow and render the calculated route.</p>
  */
 @Singleton
 public final class ShortestPathRoutePlanner
@@ -42,6 +46,7 @@ public final class ShortestPathRoutePlanner
 	private final TraversalMap map;
 	@Nullable
 	private final KLiteClientLogBuffer diagnostics;
+	private volatile List<WorldPoint> latestPath = ImmutableList.of();
 
 	@Inject
 	ShortestPathRoutePlanner(StaticCollisionMap map, KLiteClientLogBuffer diagnostics)
@@ -54,6 +59,12 @@ public final class ShortestPathRoutePlanner
 	{
 		this.map = Objects.requireNonNull(map, "map");
 		this.diagnostics = null;
+	}
+
+	/** Returns an immutable snapshot used by the integrated Shortest Path overlays. */
+	public List<WorldPoint> pathSnapshot()
+	{
+		return latestPath;
 	}
 
 	public PathSearchResult find(WorldPoint start, WorldPoint destination)
@@ -71,6 +82,7 @@ public final class ShortestPathRoutePlanner
 			throw new IllegalArgumentException("Arrival distance cannot be negative");
 		}
 
+		latestPath = ImmutableList.of();
 		long startedAt = System.currentTimeMillis();
 		debug("Route search started: start=" + formatPoint(start)
 			+ ", destination=" + formatPoint(destination)
@@ -91,7 +103,8 @@ public final class ShortestPathRoutePlanner
 		if (withinArrivalDistance(startPacked, destinationPacked, arrivalDistance))
 		{
 			debug("The player is already inside the destination radius.");
-			return result(true, ImmutableList.of(start), 1, startedAt);
+			latestPath = ImmutableList.of(start);
+			return result(true, latestPath, 1, startedAt);
 		}
 
 		PriorityQueue<SearchNode> boundary = new PriorityQueue<>();
@@ -160,10 +173,11 @@ public final class ShortestPathRoutePlanner
 			return result(false, ImmutableList.of(), visited, startedAt);
 		}
 		List<WorldPoint> route = reconstruct(parents, startPacked, reached);
+		latestPath = ImmutableList.copyOf(route);
 		debug("Route found: length=" + route.size() + ", visited=" + visited
 			+ ", elapsed=" + elapsed + "ms, reached="
 			+ formatPoint(route.get(route.size() - 1)) + '.');
-		return result(true, route, visited, startedAt);
+		return result(true, latestPath, visited, startedAt);
 	}
 
 	private static int heuristic(int point, int destination, int arrivalDistance)
