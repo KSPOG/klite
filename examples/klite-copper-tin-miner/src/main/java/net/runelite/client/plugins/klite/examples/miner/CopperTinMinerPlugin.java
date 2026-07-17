@@ -5,13 +5,17 @@
  */
 package net.runelite.client.plugins.klite.examples.miner;
 
+import com.google.inject.Provides;
 import javax.inject.Inject;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.klite.KLitePlugin;
 import net.runelite.client.plugins.klite.automation.AutomationManager;
+import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
 import net.runelite.client.plugins.klite.walker.WebWalker;
+import net.runelite.client.ui.overlay.OverlayManager;
 
 /** Marketplace example which runs the copper and tin mining automation task. */
 @PluginDependency(KLitePlugin.class)
@@ -28,6 +32,7 @@ import net.runelite.client.plugins.klite.walker.WebWalker;
 public class CopperTinMinerPlugin extends Plugin
 {
 	public static final String VERSION = "1.0.0";
+	private static final String LOG_SOURCE = "CopperTinMiner";
 
 	@Inject
 	private AutomationManager automationManager;
@@ -35,26 +40,60 @@ public class CopperTinMinerPlugin extends Plugin
 	@Inject
 	private WebWalker webWalker;
 
+	@Inject
+	private OverlayManager overlayManager;
+
+	@Inject
+	private CopperTinMinerConfig config;
+
+	@Inject
+	private KLiteClientLogBuffer diagnostics;
+
+	private CopperTinMinerTask task;
+	private CopperTinMinerOverlay overlay;
 	private boolean taskStarted;
+
+	@Provides
+	CopperTinMinerConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(CopperTinMinerConfig.class);
+	}
 
 	@Override
 	protected void startUp()
 	{
+		diagnostics.info(LOG_SOURCE, "Plugin startup requested.");
+		task = new CopperTinMinerTask(webWalker, diagnostics);
+		overlay = new CopperTinMinerOverlay(config, task, automationManager, webWalker);
+		overlayManager.add(overlay);
 		automationManager.setEnabled(true);
-		taskStarted = automationManager.start(new CopperTinMinerTask(webWalker));
+		taskStarted = automationManager.start(task);
 		if (!taskStarted)
 		{
+			overlayManager.remove(overlay);
+			overlay = null;
+			task = null;
+			diagnostics.warn(LOG_SOURCE, "Startup was rejected because another KLite automation task is running.");
 			throw new IllegalStateException("Another KLite automation task is already running");
 		}
+		diagnostics.info(LOG_SOURCE, "Plugin enabled. Overlay registered and automation task started.");
 	}
 
 	@Override
 	protected void shutDown()
 	{
+		diagnostics.info(LOG_SOURCE, "Plugin shutdown requested.");
 		if (taskStarted)
 		{
 			automationManager.stop();
 			taskStarted = false;
 		}
+		if (overlay != null)
+		{
+			overlayManager.remove(overlay);
+			overlay = null;
+		}
+		task = null;
+		diagnostics.info(LOG_SOURCE, "Plugin disabled. Overlay removed and automation task stopped.");
 	}
 }
