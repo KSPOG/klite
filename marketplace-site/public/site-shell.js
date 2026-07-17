@@ -45,10 +45,10 @@ const siteRouteDefinitions = {
   account: {
     eyebrow: "KLite membership",
     title: "Account and access",
-    description: "Manage marketplace membership, Discord linking, paid-plugin entitlements, and account recovery.",
+    description: "Sign in with Discord to manage marketplace membership, paid-plugin entitlements, and account access.",
     subcategories: [
       { label: "Membership", target: "account-title" },
-      { label: "Discord linking", target: "discord-status" },
+      { label: "Discord identity", target: "discord-status" },
       { label: "Entitlements", target: "entitlement-count" }
     ]
   },
@@ -149,13 +149,13 @@ function renderRouteEmpty(route) {
   }
   routeEmpty.hidden = false;
   if (route === "account") {
-    routeEmptyTitle.textContent = "Sign in to open your account";
-    routeEmptyDescription.textContent = "Your membership, Discord link, and plugin entitlements appear here after signing in.";
-    routeEmptyAction.textContent = "Sign in";
+    routeEmptyTitle.textContent = "Sign in with Discord";
+    routeEmptyDescription.textContent = "Your Discord identity, membership, and plugin entitlements appear here after signing in.";
+    routeEmptyAction.textContent = "Continue with Discord";
     routeEmptyAction.onclick = () => document.querySelector("#sign-in-button")?.click();
   } else {
     routeEmptyTitle.textContent = "This category requires additional access";
-    routeEmptyDescription.textContent = "Sign in with an account that has the required capability.";
+    routeEmptyDescription.textContent = "Sign in with a Discord account that has the required capability.";
     routeEmptyAction.textContent = "Open account";
     routeEmptyAction.onclick = () => setSiteRoute("account");
   }
@@ -248,6 +248,20 @@ function createResourcesMenu() {
       <span class="klite-resource-arrow" aria-hidden="true">›</span>
     </a>`;
 
+  const positionMenu = () => {
+    if (menu.hidden) return;
+    const triggerRect = trigger.getBoundingClientRect();
+    const padding = 16;
+    const width = Math.min(360, Math.max(260, window.innerWidth - padding * 2));
+    const left = Math.min(
+      Math.max(padding, triggerRect.right - width),
+      Math.max(padding, window.innerWidth - width - padding)
+    );
+    menu.style.width = `${width}px`;
+    menu.style.left = `${Math.round(left)}px`;
+    menu.style.top = `${Math.round(triggerRect.bottom + 10)}px`;
+  };
+
   const closeMenu = ({ restoreFocus = false } = {}) => {
     menu.hidden = true;
     trigger.setAttribute("aria-expanded", "false");
@@ -257,6 +271,7 @@ function createResourcesMenu() {
   const openMenu = ({ focusFirst = false } = {}) => {
     menu.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
+    positionMenu();
     if (focusFirst) menu.querySelector('[role="menuitem"]')?.focus();
   };
 
@@ -292,8 +307,10 @@ function createResourcesMenu() {
   });
 
   document.addEventListener("click", (event) => {
-    if (!wrapper.contains(event.target)) closeMenu();
+    if (!wrapper.contains(event.target) && !menu.contains(event.target)) closeMenu();
   });
+  window.addEventListener("resize", positionMenu);
+  window.addEventListener("scroll", positionMenu, true);
 
   new MutationObserver(() => {
     wrapper.hidden = trigger.hidden;
@@ -301,7 +318,8 @@ function createResourcesMenu() {
   }).observe(trigger, { attributes: true, attributeFilter: ["hidden"] });
 
   trigger.before(wrapper);
-  wrapper.append(trigger, menu);
+  wrapper.append(trigger);
+  document.body.append(menu);
 
   const accountMenu = document.querySelector("#account-menu");
   const logout = document.querySelector("#account-menu-logout");
@@ -313,6 +331,74 @@ function createResourcesMenu() {
   }
 }
 
+function showDiscordLoginNotice(message, error = false) {
+  const notice = document.createElement("div");
+  notice.className = `discord-login-notice${error ? " is-error" : ""}`;
+  notice.setAttribute("role", error ? "alert" : "status");
+  notice.textContent = message;
+  document.body.append(notice);
+  window.setTimeout(() => notice.remove(), 6000);
+}
+
+function configureDiscordLogin() {
+  const signInButton = document.querySelector("#sign-in-button");
+  const registerButton = document.querySelector("#register-button");
+  if (!signInButton) return;
+
+  ensureResourcesMenuStyles();
+  signInButton.textContent = "Continue with Discord";
+  signInButton.classList.add("discord-login-button");
+
+  const keepRegistrationHidden = () => {
+    if (registerButton && !registerButton.hidden) registerButton.hidden = true;
+  };
+  keepRegistrationHidden();
+  if (registerButton) {
+    registerButton.setAttribute("aria-hidden", "true");
+    new MutationObserver(keepRegistrationHidden)
+      .observe(registerButton, { attributes: true, attributeFilter: ["hidden"] });
+  }
+
+  signInButton.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (signInButton.disabled) return;
+
+    const originalText = signInButton.textContent;
+    signInButton.disabled = true;
+    signInButton.textContent = "Opening Discord...";
+    try {
+      const response = await fetch("/api/auth/discord/start", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: "{}"
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.authorizeUrl) {
+        throw new Error(payload.error?.message || "Discord login could not be started.");
+      }
+      window.location.assign(payload.authorizeUrl);
+    } catch (error) {
+      signInButton.disabled = false;
+      signInButton.textContent = originalText;
+      showDiscordLoginNotice(error.message || "Discord login could not be started.", true);
+    }
+  }, true);
+
+  const loginResult = new URLSearchParams(window.location.search).get("login");
+  if (loginResult) {
+    history.replaceState({}, "", `${window.location.pathname}#account`);
+    const messages = {
+      discord_cancelled: "Discord login was cancelled.",
+      discord_verified_email_required: "Discord must provide a verified email address for KLite login.",
+      discord_authorization_failed: "Discord authorization could not be completed.",
+      discord_login_failed: "Discord login failed. Please try again."
+    };
+    showDiscordLoginNotice(messages[loginResult] || "Discord login could not be completed.", true);
+  }
+}
+
 const downloadNoticeDialog = createDownloadNoticeDialog();
 for (const link of document.querySelectorAll('a[href="/download/windows"], .download-button')) {
   link.addEventListener("click", (event) => {
@@ -321,6 +407,7 @@ for (const link of document.querySelectorAll('a[href="/download/windows"], .down
   });
 }
 createResourcesMenu();
+configureDiscordLogin();
 for (const button of primaryRouteButtons) button.addEventListener("click", () => setSiteRoute(button.dataset.siteRoute));
 document.querySelector("#explore-marketplace-button")?.addEventListener("click", () => setSiteRoute("marketplace"));
 document.querySelector("#footer-marketplace-link")?.addEventListener("click", (event) => { event.preventDefault(); setSiteRoute("marketplace"); });
@@ -338,5 +425,10 @@ function scheduleShellUpdate() {
     renderRouteEmpty(currentSiteRoute);
   });
 }
-new MutationObserver(scheduleShellUpdate).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden"] });
+new MutationObserver(scheduleShellUpdate).observe(document.body, {
+  subtree: true,
+  childList: true,
+  attributes: true,
+  attributeFilter: ["hidden"]
+});
 setSiteRoute(requestedSiteRoute(), { preserveHash: true, preserveScroll: true });
