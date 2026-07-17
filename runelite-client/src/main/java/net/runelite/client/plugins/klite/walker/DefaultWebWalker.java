@@ -16,7 +16,6 @@ import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.MenuAction;
@@ -24,6 +23,7 @@ import net.runelite.api.Player;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.klite.api.KLiteThreadGateway;
+import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
 import net.runelite.client.plugins.klite.walker.pathfinder.PathSearchResult;
 import net.runelite.client.plugins.klite.walker.pathfinder.ShortestPathRoutePlanner;
 
@@ -31,24 +31,26 @@ import net.runelite.client.plugins.klite.walker.pathfinder.ShortestPathRoutePlan
  * KLite web walker backed by the bundled Shortest Path route planner.
  *
  * <p>The planner supplies a complete ordered route. Movement advances through
- * that route monotonically and clicks only a small number of route steps ahead,
- * preventing turns and route crossings from being skipped.</p>
+ * that route monotonically and dispatches one adjacent route tile at a time.
+ * This deliberately avoids skipping across walls, corners, doors, or a later
+ * section of a route which happens to pass nearby.</p>
  */
 @Singleton
-@Slf4j
 public class DefaultWebWalker implements WebWalker
 {
-	private static final int MAX_CLICK_DISTANCE = 8;
-	private static final int ROUTE_CLICK_STEPS = 6;
+	private static final String LOG_SOURCE = "WebWalker";
+	private static final int MAX_CLICK_DISTANCE = 2;
+	private static final int ROUTE_CLICK_STEPS = 1;
 	private static final int ROUTE_PROGRESS_WINDOW = 8;
 	private static final int REPLAN_DISTANCE = 4;
-	private static final int MOVEMENT_RECLICK_DISTANCE = 2;
+	private static final long MOVEMENT_RETRY_MILLIS = 1_200L;
 	private static final long STALL_TIMEOUT_MILLIS = 8_000L;
 
 	private final Client client;
 	private final KLiteThreadGateway threadGateway;
 	private final ShortestPathRoutePlanner pathfinder;
 	private final WebWalkBankCache bankCache;
+	private final KLiteClientLogBuffer diagnostics;
 	private final ExecutorService pathExecutor;
 
 	private volatile WebWalkResult status = new WebWalkResult(
@@ -65,22 +67,29 @@ public class DefaultWebWalker implements WebWalker
 	@Nullable
 	private WorldPoint lastLocation;
 	private long lastProgressAt;
+	private long lastClickAt;
 
 	@Inject
 	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway,
-		ShortestPathRoutePlanner pathfinder, WebWalkBankCache bankCache)
+		ShortestPathRoutePlanner pathfinder, WebWalkBankCache bankCache,
+		KLiteClientLogBuffer diagnostics)
 	{
-		this(client, threadGateway, pathfinder, bankCache, Executors.newSingleThreadExecutor(
-			new ThreadFactoryBuilder().setDaemon(true).setNameFormat("klite-shortest-path-%d").build()));
+		this(client, threadGateway, pathfinder, bankCache, diagnostics,
+			Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+				.setDaemon(true)
+				.setNameFormat("klite-shortest-path-%d")
+				.build()));
 	}
 
 	DefaultWebWalker(Client client, KLiteThreadGateway threadGateway,
-		ShortestPathRoutePlanner pathfinder, WebWalkBankCache bankCache, ExecutorService pathExecutor)
+		ShortestPathRoutePlanner pathfinder, WebWalkBankCache bankCache,
+		KLiteClientLogBuffer diagnostics, ExecutorService pathExecutor)
 	{
 		this.client = client;
 		this.threadGateway = threadGateway;
 		this.pathfinder = pathfinder;
 		this.bankCache = bankCache;
+		this.diagnostics = diagnostics;
 		this.pathExecutor = pathExecutor;
 	}
 
@@ -139,6 +148,12 @@ public class DefaultWebWalker implements WebWalker
 		updateProgress(current, now);
 		if (current.distanceTo(requestedDestination) <= requestedArrivalDistance)
 		{
+			if (destination != null)
+			{
+				diagnostics.info(LOG_SOURCE, "Arrived within " + requestedArrivalDistance
+					+ " tile(s) of " + formatPoint(requestedDestination)
+					+ " at " + formatPoint(current) + '.');
+			}
 			clearPlan();
 			return update(WebWalkState.ARRIVED, requestedDestination, null, 0, null);
 		}
@@ -150,21 +165,28 @@ public class DefaultWebWalker implements WebWalker
 			arrivalDistance = requestedArrivalDistance;
 			lastLocation = current;
 			lastProgressAt = now;
+			diagnostics.info(LOG_SOURCE, "New destination " + formatPoint(destination)
+				+ " with arrivalDistance=" + arrivalDistance
+				+ " from " + formatPoint(current) + '.');
 		}
 
-		if (shouldWaitForCurrentMovement(current))
+		if (clickTarget != null && now - lastProgressAt >= STALL_TIMEOUT_MILLIS)
 		{
-			return update(WebWalkState.MOVING, destination, clickTarget, path.size(),
-				followingMessage());
-		}
-
-		if (now - lastProgressAt >= STALL_TIMEOUT_MILLIS)
-		{
-			log.debug("KLite Shortest Path walker replanning after a movement stall at {}", current);
+			diagnostics.warn(LOG_SOURCE, "Movement stalled at " + formatPoint(current)
+				+ " while targeting " + formatPoint(clickTarget)
+				+ ", localDestination=" + formatLocalPoint(client.getLocalDestinationLocation())
+				+ ", routeIndex=" + pathIndex + '/' + path.size()
+				+ ". Recalculating from the current tile.");
 			clearPlan();
 			destination = requestedDestination;
 			arrivalDistance = requestedArrivalDistance;
 			lastProgressAt = now;
+		}
+
+		if (shouldWaitForCurrentMovement(current, now))
+		{
+			return update(WebWalkState.MOVING, destination, clickTarget, path.size(),
+				followingMessage());
 		}
 
 		if (pendingPath == null && path.isEmpty())
@@ -190,6 +212,9 @@ public class DefaultWebWalker implements WebWalker
 		int advancedIndex = advancePathIndex(path, current, pathIndex);
 		if (advancedIndex < 0)
 		{
+			diagnostics.warn(LOG_SOURCE, "Player at " + formatPoint(current)
+				+ " is no longer near route index " + pathIndex + '/' + path.size()
+				+ ". Recalculating.");
 			clearPlan();
 			destination = requestedDestination;
 			arrivalDistance = requestedArrivalDistance;
@@ -202,12 +227,15 @@ public class DefaultWebWalker implements WebWalker
 		WorldPoint next = walkNextRouteTile(path, pathIndex, current);
 		if (next == null)
 		{
+			diagnostics.warn(LOG_SOURCE, "No adjacent route tile could be dispatched from "
+				+ formatPoint(current) + " at route index " + pathIndex + '/' + path.size()
+				+ ". Recalculating.");
 			clearPlan();
 			destination = requestedDestination;
 			arrivalDistance = requestedArrivalDistance;
 			requestPath(current, requestedDestination, requestedArrivalDistance);
 			return update(WebWalkState.PATHFINDING, destination, null, 0,
-				"No loaded Shortest Path route tile is currently clickable; replanning");
+				"No adjacent Shortest Path route tile is currently clickable; replanning");
 		}
 		return update(WebWalkState.MOVING, destination, next, path.size(), followingMessage());
 	}
@@ -228,14 +256,16 @@ public class DefaultWebWalker implements WebWalker
 			}
 			path = result.getPath();
 			pathIndex = 0;
-			log.debug("Shortest Path route found: {} tiles, {} visited, {}ms",
-				path.size(), result.getVisitedTiles(), result.getElapsedMillis());
+			diagnostics.debug(LOG_SOURCE, "Accepted route length=" + path.size()
+				+ ", visited=" + result.getVisitedTiles()
+				+ ", elapsed=" + result.getElapsedMillis() + "ms, tiles="
+				+ summarizeRoute(path) + '.');
 			return true;
 		}
 		catch (CompletionException exception)
 		{
 			Throwable cause = exception.getCause() == null ? exception : exception.getCause();
-			log.warn("Shortest Path calculation failed", cause);
+			diagnostics.error(LOG_SOURCE, "Shortest Path calculation failed", cause);
 			update(WebWalkState.NO_PATH, destination, null, 0,
 				"Shortest Path calculation failed: " + cause.getClass().getSimpleName());
 			return false;
@@ -255,7 +285,7 @@ public class DefaultWebWalker implements WebWalker
 		while (targetIndex >= fromIndex)
 		{
 			WorldPoint candidate = route.get(targetIndex);
-			if (!candidate.equals(current) && walk(candidate))
+			if (!candidate.equals(current) && walk(candidate, current, targetIndex, route.size()))
 			{
 				return candidate;
 			}
@@ -264,28 +294,46 @@ public class DefaultWebWalker implements WebWalker
 		return null;
 	}
 
-	private boolean walk(WorldPoint target)
+	private boolean walk(WorldPoint target, WorldPoint current, int targetIndex, int routeSize)
 	{
+		if (client.getTopLevelWorldView() == null)
+		{
+			diagnostics.warn(LOG_SOURCE, "Cannot dispatch " + formatPoint(target)
+				+ " because no top-level world view is available.");
+			return false;
+		}
 		if (target.getPlane() != client.getTopLevelWorldView().getPlane()
 			|| !WorldPoint.isInScene(client.getTopLevelWorldView(), target.getX(), target.getY()))
 		{
+			diagnostics.warn(LOG_SOURCE, "Route tile " + formatPoint(target)
+				+ " is outside the currently loaded scene or on another plane.");
 			return false;
 		}
 		LocalPoint local = LocalPoint.fromWorld(client.getTopLevelWorldView(), target.getX(), target.getY());
 		if (local == null)
 		{
+			diagnostics.warn(LOG_SOURCE, "Unable to convert route tile " + formatPoint(target)
+				+ " to a local scene point.");
 			return false;
 		}
+
+		diagnostics.debug(LOG_SOURCE, "Dispatching adjacent route tile " + targetIndex + '/'
+			+ routeSize + ": current=" + formatPoint(current)
+			+ ", target=" + formatPoint(target)
+			+ ", scene=" + local.getSceneX() + ',' + local.getSceneY()
+			+ ", previousLocalDestination=" + formatLocalPoint(client.getLocalDestinationLocation()) + '.');
 		client.menuAction(local.getSceneX(), local.getSceneY(), MenuAction.WALK,
 			0, -1, "Walk here", "");
 		clickTarget = target;
+		lastClickAt = System.currentTimeMillis();
 		return true;
 	}
 
-	private boolean shouldWaitForCurrentMovement(WorldPoint current)
+	private boolean shouldWaitForCurrentMovement(WorldPoint current, long now)
 	{
 		return client.getLocalDestinationLocation() != null && clickTarget != null
-			&& current.distanceTo(clickTarget) > MOVEMENT_RECLICK_DISTANCE;
+			&& !current.equals(clickTarget)
+			&& now - lastClickAt < MOVEMENT_RETRY_MILLIS;
 	}
 
 	private void updateProgress(WorldPoint current, long now)
@@ -328,7 +376,7 @@ public class DefaultWebWalker implements WebWalker
 		return Math.max(base, best);
 	}
 
-	/** Selects a short, ordered look-ahead point which is always on the route. */
+	/** Selects only the next adjacent route point. */
 	static int selectRouteTargetIndex(List<WorldPoint> route, int fromIndex, WorldPoint current)
 	{
 		if (route.isEmpty())
@@ -352,7 +400,7 @@ public class DefaultWebWalker implements WebWalker
 	private String followingMessage()
 	{
 		return path.isEmpty() ? "Following Shortest Path route"
-			: "Following Shortest Path route " + Math.min(pathIndex + 1, path.size()) + "/" + path.size();
+			: "Following Shortest Path route " + Math.min(pathIndex + 1, path.size()) + '/' + path.size();
 	}
 
 	private WebWalkResult update(WebWalkState state, @Nullable WorldPoint target,
@@ -382,5 +430,45 @@ public class DefaultWebWalker implements WebWalker
 		path = ImmutableList.of();
 		pathIndex = 0;
 		clickTarget = null;
+		lastClickAt = 0L;
+	}
+
+	private static String formatPoint(@Nullable WorldPoint point)
+	{
+		return point == null ? "none"
+			: point.getX() + "," + point.getY() + "," + point.getPlane();
+	}
+
+	private static String formatLocalPoint(@Nullable LocalPoint point)
+	{
+		return point == null ? "none" : point.getSceneX() + "," + point.getSceneY();
+	}
+
+	private static String summarizeRoute(List<WorldPoint> route)
+	{
+		StringBuilder summary = new StringBuilder();
+		int head = Math.min(route.size(), 12);
+		for (int index = 0; index < head; index++)
+		{
+			if (summary.length() > 0)
+			{
+				summary.append(" -> ");
+			}
+			summary.append(formatPoint(route.get(index)));
+		}
+		if (route.size() > head)
+		{
+			summary.append(" -> ... -> ");
+			int tailStart = Math.max(head, route.size() - 4);
+			for (int index = tailStart; index < route.size(); index++)
+			{
+				if (index > tailStart)
+				{
+					summary.append(" -> ");
+				}
+				summary.append(formatPoint(route.get(index)));
+			}
+		}
+		return summary.toString();
 	}
 }
