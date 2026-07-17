@@ -36,6 +36,7 @@ final class CopperTinMinerTask implements AutomationTask
 	private static final Duration INTERVAL = Duration.ofMillis(600L);
 	private static final Duration API_TIMEOUT = Duration.ofSeconds(3L);
 	private static final long INTERACTION_COOLDOWN_MILLIS = 1_800L;
+	private static final int INVENTORY_CAPACITY = 28;
 	private static final WorldPoint MINE = new WorldPoint(3285, 3362, 0);
 	private static final WorldPoint VARROCK_EAST_BANK = new WorldPoint(3253, 3420, 0);
 	private static final Set<Integer> COPPER_ROCK_IDS = Set.of(10943, 11161);
@@ -75,7 +76,7 @@ final class CopperTinMinerTask implements AutomationTask
 	public void onStart(AutomationContext context)
 	{
 		diagnostics.info(LOG_SOURCE,
-			"Automation started. Banking is permitted only after inventoryFreeSlots reaches 0.");
+			"Automation started. Banking is permitted only when 28 occupied inventory slots are present.");
 	}
 
 	@Override
@@ -92,41 +93,32 @@ final class CopperTinMinerTask implements AutomationTask
 				return AutomationResult.CONTINUE;
 			}
 
-			int freeSlots = context.await(client.inventoryFreeSlots(), API_TIMEOUT);
-			if (!banking && freeSlots == 0)
+			List<KLiteItemStack> inventory = context.await(client.inventory(), API_TIMEOUT);
+			boolean inventoryFull = inventory.size() >= INVENTORY_CAPACITY;
+			Optional<KLiteItemStack> depositable = firstNonPickaxe(context, client, inventory);
+
+			if (!banking && inventoryFull && depositable.isPresent())
 			{
-				List<KLiteItemStack> inventory = context.await(client.inventory(), API_TIMEOUT);
-				Optional<KLiteItemStack> depositable = firstNonPickaxe(context, client, inventory);
-				if (depositable.isPresent())
-				{
-					banking = true;
-					setActivity("Inventory full; switching to banking");
-					diagnostics.info(LOG_SOURCE,
-						"Inventory is full and contains a non-pickaxe item. Starting a banking trip.");
-					context.await(webWalker.clear(), API_TIMEOUT);
-				}
-				else
-				{
-					diagnostics.warn(LOG_SOURCE,
-						"Inventory is full but contains no depositable non-pickaxe item; banking was not started.");
-				}
+				banking = true;
+				setActivity("Inventory full; switching to banking");
+				diagnostics.info(LOG_SOURCE,
+					"Inventory contains 28 occupied slots and at least one non-pickaxe item. Starting a banking trip.");
+				context.await(webWalker.clear(), API_TIMEOUT);
 			}
 
 			if (banking)
 			{
 				boolean bankOpen = context.await(client.isBankOpen(), API_TIMEOUT);
-				List<KLiteItemStack> inventory = context.await(client.inventory(), API_TIMEOUT);
-				Optional<KLiteItemStack> depositable = firstNonPickaxe(context, client, inventory);
 
 				// A bank trip may only continue while travelling with the same full inventory,
 				// or while the bank interface is open and the triggered deposit cycle is finishing.
-				if (!bankOpen && (freeSlots > 0 || depositable.isEmpty()))
+				if (!bankOpen && (!inventoryFull || depositable.isEmpty()))
 				{
 					banking = false;
 					target = MINE;
 					setActivity("Banking cancelled; returning to mine");
 					diagnostics.info(LOG_SOURCE,
-						"Banking cancelled before opening the bank because inventory is no longer full "
+						"Banking cancelled before opening the bank because the inventory is no longer full "
 							+ "or contains no non-pickaxe item.");
 					context.await(webWalker.clear(), API_TIMEOUT);
 					mine(context, client, playerLocation);
