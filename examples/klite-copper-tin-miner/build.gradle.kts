@@ -15,7 +15,7 @@ tasks.withType<org.gradle.api.plugins.quality.Checkstyle>().configureEach {
 }
 
 tasks.jar {
-    archiveFileName = "klite-copper-tin-miner-1.0.0.jar"
+    archiveFileName = "klite-copper-tin-miner-0.0.2.jar"
     isPreserveFileTimestamps = false
     isReproducibleFileOrder = true
 }
