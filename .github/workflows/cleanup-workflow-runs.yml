@@ -1,0 +1,187 @@
+name: Cleanup workflow run history
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Preview the candidates or permanently delete them
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - delete
+      keep_successful_per_workflow:
+        description: Number of successful runs to retain for each workflow
+        required: true
+        default: "5"
+        type: string
+      minimum_age_hours:
+        description: Ignore completed runs newer than this many hours
+        required: true
+        default: "1"
+        type: string
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Select and clean workflow runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLEANUP_MODE: ${{ inputs.mode }}
+          KEEP_SUCCESSFUL: ${{ inputs.keep_successful_per_workflow }}
+          MINIMUM_AGE_HOURS: ${{ inputs.minimum_age_hours }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          if ! [[ "$KEEP_SUCCESSFUL" =~ ^[0-9]+$ ]]; then
+            echo "keep_successful_per_workflow must be a non-negative integer" >&2
+            exit 1
+          fi
+          if ! [[ "$MINIMUM_AGE_HOURS" =~ ^[0-9]+$ ]]; then
+            echo "minimum_age_hours must be a non-negative integer" >&2
+            exit 1
+          fi
+
+          gh api --paginate --slurp \
+            "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" \
+            > workflow-run-pages.json
+
+          python3 <<'PY'
+          from __future__ import annotations
+
+          import datetime as dt
+          import json
+          import os
+          import subprocess
+          import sys
+          import time
+          from collections import defaultdict
+          from pathlib import Path
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          mode = os.environ["CLEANUP_MODE"]
+          keep_successful = int(os.environ["KEEP_SUCCESSFUL"])
+          minimum_age = dt.timedelta(hours=int(os.environ["MINIMUM_AGE_HOURS"]))
+          current_run_id = int(os.environ["CURRENT_RUN_ID"])
+          now = dt.datetime.now(dt.timezone.utc)
+
+          pages = json.loads(Path("workflow-run-pages.json").read_text("utf-8"))
+          runs = [run for page in pages for run in page.get("workflow_runs", [])]
+
+          completed = []
+          for run in runs:
+              if run.get("status") != "completed":
+                  continue
+              if int(run["id"]) == current_run_id:
+                  continue
+              created_at = dt.datetime.fromisoformat(run["created_at"].replace("Z", "+00:00"))
+              if now - created_at < minimum_age:
+                  continue
+              completed.append(run)
+
+          successful_by_workflow: dict[int, list[dict]] = defaultdict(list)
+          for run in completed:
+              if run.get("conclusion") == "success":
+                  successful_by_workflow[int(run["workflow_id"])].append(run)
+
+          successful_to_keep: set[int] = set()
+          for workflow_runs in successful_by_workflow.values():
+              workflow_runs.sort(key=lambda item: item["created_at"], reverse=True)
+              successful_to_keep.update(int(run["id"]) for run in workflow_runs[:keep_successful])
+
+          removable_conclusions = {
+              "action_required",
+              "cancelled",
+              "failure",
+              "neutral",
+              "skipped",
+              "stale",
+              "startup_failure",
+              "timed_out",
+          }
+
+          candidates = []
+          for run in completed:
+              conclusion = run.get("conclusion")
+              run_id = int(run["id"])
+              reason = None
+              if conclusion in removable_conclusions:
+                  reason = conclusion
+              elif conclusion == "success" and run_id not in successful_to_keep:
+                  reason = f"successful run beyond retained {keep_successful}"
+              if reason:
+                  candidates.append((run, reason))
+
+          candidates.sort(key=lambda item: item[0]["created_at"])
+
+          summary_lines = [
+              "# Workflow run cleanup",
+              "",
+              f"Mode: **{mode}**",
+              f"Completed runs inspected: **{len(completed)}**",
+              f"Runs selected: **{len(candidates)}**",
+              f"Successful runs retained per workflow: **{keep_successful}**",
+              "",
+              "| Workflow | Run | Conclusion | Created | Reason |",
+              "|---|---:|---|---|---|",
+          ]
+
+          for run, reason in candidates[:200]:
+              workflow = str(run.get("name") or run.get("workflow_id")).replace("|", "\\|")
+              title = str(run.get("display_title") or run.get("run_number")).replace("|", "\\|")
+              summary_lines.append(
+                  f"| {workflow} | {title} | {run.get('conclusion')} | {run.get('created_at')} | {reason} |"
+              )
+
+          if len(candidates) > 200:
+              summary_lines.append(f"\nOnly the first 200 of {len(candidates)} candidates are shown.")
+
+          Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(summary_lines) + "\n", "utf-8")
+
+          print(f"Inspected {len(completed)} completed runs; selected {len(candidates)} for {mode}.")
+          for run, reason in candidates:
+              print(
+                  f"{mode.upper():7} id={run['id']} workflow={run.get('name')} "
+                  f"run={run.get('run_number')} conclusion={run.get('conclusion')} reason={reason}"
+              )
+
+          if mode == "preview":
+              print("Preview complete. Run this workflow again with mode=delete to remove these runs.")
+              sys.exit(0)
+
+          deleted = 0
+          failed = 0
+          for run, _reason in candidates:
+              result = subprocess.run(
+                  [
+                      "gh",
+                      "api",
+                      "--method",
+                      "DELETE",
+                      f"repos/{repo}/actions/runs/{run['id']}",
+                  ],
+                  text=True,
+                  capture_output=True,
+              )
+              if result.returncode == 0:
+                  deleted += 1
+              else:
+                  failed += 1
+                  print(
+                      f"Unable to delete run {run['id']}: {result.stderr.strip()}",
+                      file=sys.stderr,
+                  )
+              time.sleep(0.05)
+
+          print(f"Deleted {deleted} workflow runs; {failed} deletions failed.")
+          if failed:
+              sys.exit(1)
+          PY
