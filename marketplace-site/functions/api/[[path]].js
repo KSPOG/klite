@@ -15,6 +15,13 @@ const JSON_HEADERS = {
   "x-content-type-options": "nosniff"
 };
 
+const STATIC_API_DOCUMENTATION_PATHS = new Set([
+  "/api/",
+  "/api/index.html",
+  "/api/styles.css",
+  "/api/app.js"
+]);
+
 function apiError(status, code, message) {
   return new Response(JSON.stringify({ error: { code, message } }), {
     status,
@@ -41,6 +48,14 @@ export async function onRequest(context) {
   const requestUrl = new URL(request.url);
 
   if (!requestUrl.pathname.startsWith("/api/")) {
+    return context.next();
+  }
+
+  // The API documentation page shares the /api prefix with the JSON backend.
+  // Let Pages serve these files from public/api instead of passing them into the
+  // worker, which would otherwise return JSON for CSS and JavaScript requests.
+  if ((request.method === "GET" || request.method === "HEAD")
+    && STATIC_API_DOCUMENTATION_PATHS.has(requestUrl.pathname)) {
     return context.next();
   }
 
