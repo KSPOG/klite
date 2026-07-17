@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,6 +26,7 @@ import net.runelite.client.plugins.klite.api.KLiteClientApi;
 public class AutomationManager
 {
 	public static final long MINIMUM_INTERVAL_MILLIS = 100L;
+	private static final int MAX_CONSECUTIVE_TIMEOUTS = 5;
 
 	private final Object lock = new Object();
 	private final KLiteClientApi clientApi;
@@ -40,6 +42,7 @@ public class AutomationManager
 	@Nullable
 	private String failureMessage;
 	private long startedAtMillis;
+	private int consecutiveTimeouts;
 
 	@Inject
 	AutomationManager(KLiteClientApi clientApi)
@@ -100,6 +103,7 @@ public class AutomationManager
 			activeContext = context;
 			failureMessage = null;
 			startedAtMillis = System.currentTimeMillis();
+			consecutiveTimeouts = 0;
 			state = AutomationState.RUNNING;
 		}
 
@@ -174,7 +178,9 @@ public class AutomationManager
 
 		try
 		{
-			if (task.tick(context) == AutomationResult.STOP)
+			AutomationResult result = task.tick(context);
+			consecutiveTimeouts = 0;
+			if (result == AutomationResult.STOP)
 			{
 				finish(task, context, AutomationState.IDLE, null);
 			}
@@ -184,6 +190,23 @@ public class AutomationManager
 			if (!context.isCancellationRequested())
 			{
 				fail(task, context, exception);
+			}
+		}
+		catch (TimeoutException exception)
+		{
+			if (context.isCancellationRequested())
+			{
+				return;
+			}
+			consecutiveTimeouts++;
+			log.warn("KLite automation task {} timed out waiting for the client thread ({}/{}); "
+				+ "the task will retry on its next tick", task.name(), consecutiveTimeouts,
+				MAX_CONSECUTIVE_TIMEOUTS);
+			if (consecutiveTimeouts >= MAX_CONSECUTIVE_TIMEOUTS)
+			{
+				fail(task, context, new TimeoutException(
+					"Client thread remained unresponsive for " + consecutiveTimeouts
+						+ " consecutive automation requests"));
 			}
 		}
 		catch (Exception exception)
@@ -239,6 +262,7 @@ public class AutomationManager
 			activeContext = null;
 			failureMessage = error;
 			state = targetState;
+			consecutiveTimeouts = 0;
 			if (targetState != AutomationState.FAILED)
 			{
 				startedAtMillis = 0L;
