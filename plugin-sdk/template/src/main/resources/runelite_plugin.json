@@ -1,0 +1,9 @@
+{
+  "internalName": "${pluginId}",
+  "displayName": "${pluginDisplayName}",
+  "version": "${pluginVersion}",
+  "author": "${pluginAuthor}",
+  "description": "${pluginDescription}",
+  "tags": ["klite", "starter"],
+  "plugins": ["${pluginMainClass}"]
+}
