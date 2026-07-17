@@ -27,7 +27,6 @@ package net.runelite.client.plugins.config;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.swing.SwingUtilities;
 import net.runelite.api.MenuAction;
 import net.runelite.client.config.ChatColorConfig;
 import net.runelite.client.config.ConfigManager;
@@ -66,6 +65,9 @@ public class ConfigPlugin extends Plugin
 	@Inject
 	private ChatColorConfig chatColorConfig;
 
+	@Inject
+	private PluginConfigurationNavigator configurationNavigator;
+
 	private TopLevelConfigPanel topLevelConfigPanel;
 	private NavigationButton navButton;
 
@@ -85,9 +87,7 @@ public class ConfigPlugin extends Plugin
 		pluginListPanel.rebuildPluginList();
 
 		topLevelConfigPanel = topLevelConfigPanelProvider.get();
-
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "config_icon.png");
-
 		navButton = NavigationButton.builder()
 			.tooltip("Configuration")
 			.icon(icon)
@@ -96,30 +96,20 @@ public class ConfigPlugin extends Plugin
 			.build();
 
 		clientToolbar.addNavigation(navButton);
+		configurationNavigator.register(navButton, topLevelConfigPanel);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
+		configurationNavigator.clear(navButton);
 		clientToolbar.removeNavigation(navButton);
 	}
 
 	/** Opens RuneLite's normal configuration panel for a loaded plugin. */
 	public void openPluginConfiguration(Plugin plugin)
 	{
-		if (plugin == null)
-		{
-			return;
-		}
-		SwingUtilities.invokeLater(() ->
-		{
-			if (navButton == null || topLevelConfigPanel == null)
-			{
-				return;
-			}
-			clientToolbar.openPanel(navButton);
-			topLevelConfigPanel.openConfigurationPanel(plugin.getName());
-		});
+		configurationNavigator.open(plugin);
 	}
 
 	@Subscribe
@@ -134,7 +124,7 @@ public class ConfigPlugin extends Plugin
 			{
 				return;
 			}
-			openPluginConfiguration(plugin);
+			configurationNavigator.open(plugin);
 		}
 	}
 }
