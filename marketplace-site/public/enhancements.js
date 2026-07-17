@@ -26,12 +26,21 @@ const passwordResetOwnerKey = passwordResetOwnerKeyField.querySelector("input");
 let latestDiscordDashboard = null;
 let ownerDashboard = null;
 
+accountButton.setAttribute("aria-haspopup", "menu");
+accountButton.setAttribute("aria-controls", "account-menu");
+accountButton.setAttribute("aria-expanded", "false");
+accountMenu.setAttribute("role", "menu");
+for (const item of accountMenu.querySelectorAll("a, button")) {
+  item.setAttribute("role", "menuitem");
+}
+document.body.append(accountMenu);
+
 const originalRenderSignedOut = renderSignedOut;
 renderSignedOut = function renderSignedOutEnhanced() {
   originalRenderSignedOut();
   apiButton.hidden = true;
   accountMenuWrapper.hidden = true;
-  accountMenu.hidden = true;
+  closeAccountMenu();
   if (ownerDashboard) ownerDashboard.hidden = true;
 };
 
@@ -41,7 +50,7 @@ renderAccount = function renderAccountEnhanced(payload) {
   apiReference.hidden = true;
   apiButton.hidden = false;
   accountMenuWrapper.hidden = false;
-  accountMenu.hidden = true;
+  closeAccountMenu();
 
   const capabilities = new Set(payload.account?.capabilities || []);
   if (capabilities.has("site_owner")) {
@@ -65,25 +74,89 @@ renderDiscordBotDashboard = function renderDiscordBotDashboardEnhanced(payload) 
   renderBotBootstrap(payload);
 };
 
+function positionAccountMenu() {
+  if (accountMenu.hidden || accountMenuWrapper.hidden || accountButton.hidden) return;
+
+  const trigger = accountButton.getBoundingClientRect();
+  const viewportPadding = 12;
+  const width = Math.min(
+    Math.max(220, trigger.width),
+    Math.max(180, window.innerWidth - viewportPadding * 2)
+  );
+  let left = trigger.right - width;
+  left = Math.min(
+    Math.max(viewportPadding, left),
+    Math.max(viewportPadding, window.innerWidth - width - viewportPadding)
+  );
+
+  accountMenu.style.position = "fixed";
+  accountMenu.style.zIndex = "1000";
+  accountMenu.style.right = "auto";
+  accountMenu.style.width = `${Math.round(width)}px`;
+  accountMenu.style.left = `${Math.round(left)}px`;
+  accountMenu.style.top = `${Math.round(trigger.bottom + 8)}px`;
+
+  const menuHeight = accountMenu.getBoundingClientRect().height;
+  if (trigger.bottom + 8 + menuHeight > window.innerHeight - viewportPadding
+      && trigger.top - 8 - menuHeight >= viewportPadding) {
+    accountMenu.style.top = `${Math.round(trigger.top - menuHeight - 8)}px`;
+  }
+}
+
+function closeAccountMenu({ restoreFocus = false } = {}) {
+  accountMenu.hidden = true;
+  accountButton.setAttribute("aria-expanded", "false");
+  if (restoreFocus && !accountButton.hidden) accountButton.focus();
+}
+
+function openAccountMenu({ focusFirst = false } = {}) {
+  accountMenu.hidden = false;
+  accountButton.setAttribute("aria-expanded", "true");
+  positionAccountMenu();
+  if (focusFirst) accountMenu.querySelector('[role="menuitem"]')?.focus();
+}
+
 accountButton.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopImmediatePropagation();
-  accountMenu.hidden = !accountMenu.hidden;
+  if (accountMenu.hidden) openAccountMenu();
+  else closeAccountMenu();
 }, true);
 
+accountButton.addEventListener("keydown", (event) => {
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    openAccountMenu({ focusFirst: true });
+  } else if (event.key === "Escape") {
+    event.preventDefault();
+    closeAccountMenu();
+  }
+});
+
+accountMenu.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeAccountMenu({ restoreFocus: true });
+  }
+});
+
 accountMenuAccount.addEventListener("click", () => {
-  accountMenu.hidden = true;
+  closeAccountMenu();
   accountPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 accountMenuLogout.addEventListener("click", () => {
-  accountMenu.hidden = true;
+  closeAccountMenu();
   signOutButton.click();
 });
 
 document.addEventListener("click", (event) => {
-  if (!accountMenuWrapper.contains(event.target)) accountMenu.hidden = true;
+  if (!accountMenuWrapper.contains(event.target) && !accountMenu.contains(event.target)) {
+    closeAccountMenu();
+  }
 });
+window.addEventListener("resize", positionAccountMenu);
+window.addEventListener("scroll", positionAccountMenu, true);
 
 authForm.addEventListener("submit", () => {
   window.setTimeout(() => loadAccount(), 700);
