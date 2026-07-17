@@ -31,6 +31,10 @@ public class KLiteThreadGateway
 		CompletableFuture<T> future = new CompletableFuture<>();
 		Runnable operation = () ->
 		{
+			if (future.isDone())
+			{
+				return;
+			}
 			try
 			{
 				future.complete(supplier.get());
