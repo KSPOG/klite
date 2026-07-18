@@ -52,7 +52,7 @@
         "authors": [
           "KSP"
         ],
-        "version": "1.0.0",
+        "version": "0.0.2",
         "minClientVersion": "1.0.0",
         "enabledByDefault": false,
         "isExternal": true
@@ -65,9 +65,9 @@
       "access": "Free",
       "status": "available",
       "artifact": {
-        "version": "1.0.0",
-        "sha256": "cfb6226c9bb6e0b052204846659e38604a337e7f51b87408f985bf40cf2ac805",
-        "size": 7490,
+        "version": "0.0.2",
+        "sha256": "b22bf114ca047de996dda2000a8b3bb5be206c6014e3a5279045bb61bb1d8d34",
+        "size": 15505,
         "entrypoints": [
           "net.runelite.client.plugins.klite.examples.miner.CopperTinMinerPlugin"
         ]
