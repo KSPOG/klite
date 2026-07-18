@@ -29,9 +29,11 @@ public final class KLiteLauncher
 		SwingUtilities.invokeLater(() ->
 		{
 			KLiteAccountVault vault = new KLiteAccountVault();
-			KLiteLauncherFrame frame = new KLiteLauncherFrame(vault, new KLiteProcessLauncher());
+			KLiteLauncherFrame frame = new KLiteLauncherFrame(vault,
+				new KLiteProcessLauncher(), new KLiteLauncherUpdateService());
 			frame.captureOfficialLauncherAccount(System.getenv());
 			frame.setVisible(true);
+			frame.startAutomaticUpdateCheck();
 		});
 	}
 

@@ -52,18 +52,22 @@ final class KLiteLauncherFrame extends JFrame
 
 	private final KLiteAccountVault vault;
 	private final KLiteProcessLauncher processLauncher;
+	private final KLiteLauncherUpdateService updateService;
 	private final DefaultListModel<KLiteAccountVault.AccountSummary> accountModel =
 		new DefaultListModel<>();
 	private final JList<KLiteAccountVault.AccountSummary> accountList = new JList<>(accountModel);
 	private final JLabel status = new JLabel("Ready");
 	private final JButton launchButton = new JButton("Launch KLite");
 	private final Map<String, Process> runningClients = new HashMap<>();
+	private boolean updateCheckComplete;
 
-	KLiteLauncherFrame(KLiteAccountVault vault, KLiteProcessLauncher processLauncher)
+	KLiteLauncherFrame(KLiteAccountVault vault, KLiteProcessLauncher processLauncher,
+		KLiteLauncherUpdateService updateService)
 	{
 		super("KLite Launcher");
 		this.vault = vault;
 		this.processLauncher = processLauncher;
+		this.updateService = updateService;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setMinimumSize(new Dimension(880, 560));
 		setSize(980, 620);
@@ -95,6 +99,69 @@ final class KLiteLauncherFrame extends JFrame
 			showError("KLite could not save the account supplied by the official Jagex Launcher.",
 				exception);
 		}
+	}
+
+	void startAutomaticUpdateCheck()
+	{
+		updateCheckComplete = false;
+		updateActions();
+		status.setText("Checking for KLite Launcher and client updates...");
+		new SwingWorker<KLiteLauncherUpdateService.UpdateResult, Void>()
+		{
+			@Override
+			protected KLiteLauncherUpdateService.UpdateResult doInBackground() throws Exception
+			{
+				return updateService.checkAndDownload();
+			}
+
+			@Override
+			protected void done()
+			{
+				try
+				{
+					handleUpdateResult(get());
+				}
+				catch (Exception exception)
+				{
+					updateCheckComplete = true;
+					status.setText("Update check failed; using the installed KLite version");
+					JOptionPane.showMessageDialog(KLiteLauncherFrame.this,
+						"KLite could not check or download updates. The installed version "
+							+ "can still be used.\n" + rootMessage(exception),
+						"KLite Update", JOptionPane.WARNING_MESSAGE);
+				}
+				updateActions();
+			}
+		}.execute();
+	}
+
+	private void handleUpdateResult(KLiteLauncherUpdateService.UpdateResult result)
+		throws IOException
+	{
+		if (result.getStatus() == KLiteLauncherUpdateService.Status.UPDATE_READY)
+		{
+			status.setText("KLite " + result.getVersion() + " is downloaded and verified");
+			int choice = JOptionPane.showConfirmDialog(this,
+				"KLite " + result.getVersion() + " is ready.\n\n"
+					+ "Install the update now? The launcher will close and restart through "
+					+ "the verified installer.",
+				"KLite Update", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
+			if (choice == JOptionPane.YES_OPTION)
+			{
+				updateService.installAfterExit(result.getInstaller());
+				dispose();
+				System.exit(0);
+			}
+		}
+		else if (result.getStatus() == KLiteLauncherUpdateService.Status.CURRENT)
+		{
+			status.setText("KLite Launcher and client are current at " + result.getVersion());
+		}
+		else
+		{
+			status.setText("Development build; automatic packaged updates are disabled");
+		}
+		updateCheckComplete = true;
 	}
 
 	private JPanel createSidebar()
@@ -309,7 +376,7 @@ final class KLiteLauncherFrame extends JFrame
 	private void showEnrollmentInstructions()
 	{
 		JOptionPane.showMessageDialog(this,
-			"1. In the official Jagex Launcher, set KLite.exe as the RuneLite executable.\n"
+			"1. In the official Jagex Launcher, set KLiteLauncher.exe as the RuneLite executable.\n"
 				+ "2. Select the character you want to add and press Play.\n"
 				+ "3. KLite saves that character for this Windows user automatically.\n\n"
 				+ "KLite never asks for or stores your Jagex password.",
@@ -331,7 +398,8 @@ final class KLiteLauncherFrame extends JFrame
 
 	private void updateActions()
 	{
-		launchButton.setEnabled(accountList.getSelectedValue() != null);
+		launchButton.setEnabled(updateCheckComplete
+			&& accountList.getSelectedValue() != null);
 	}
 
 	private void applyIcon()

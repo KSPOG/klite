@@ -28,4 +28,12 @@ public class KLiteLauncherTest
 	{
 		assertFalse(KLiteLauncher.isClientInvocation(new String[]{"--debug"}));
 	}
+
+	@Test
+	public void nativeClientAlwaysAddsInternalClientArgument()
+	{
+		assertArrayEquals(
+			new String[]{"--klite-client", "--profile", "account"},
+			KLiteClient.clientArguments(new String[]{"--profile", "account"}));
+	}
 }

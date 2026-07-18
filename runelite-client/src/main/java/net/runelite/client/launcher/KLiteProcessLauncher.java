@@ -7,6 +7,8 @@ package net.runelite.client.launcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +29,19 @@ final class KLiteProcessLauncher
 	}
 
 	private static List<String> command(KLiteAccountVault.AccountSummary account)
+		throws IOException
 	{
 		List<String> command = new ArrayList<>();
 		String packagedExecutable = System.getProperty("jpackage.app-path");
 		if (packagedExecutable != null && !packagedExecutable.isBlank())
 		{
-			command.add(packagedExecutable);
+			Path launcher = Path.of(packagedExecutable).toAbsolutePath();
+			Path client = launcher.resolveSibling("KLiteClient.exe");
+			if (!Files.isRegularFile(client))
+			{
+				throw new IOException("KLiteClient.exe is missing. Reinstall the KLite Launcher.");
+			}
+			command.add(client.toString());
 		}
 		else
 		{
@@ -40,8 +49,8 @@ final class KLiteProcessLauncher
 			command.add("-cp");
 			command.add(System.getProperty("java.class.path"));
 			command.add("net.runelite.client.KLite");
+			command.add(KLiteLauncher.CLIENT_ARGUMENT);
 		}
-		command.add(KLiteLauncher.CLIENT_ARGUMENT);
 		command.add("--profile");
 		command.add("klite-account-" + account.getId());
 		return command;

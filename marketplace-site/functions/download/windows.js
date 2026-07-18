@@ -142,6 +142,7 @@ function validateManifest(manifest) {
   if (manifest.schemaVersion !== 1
       || manifest.platform !== "windows-x64"
       || !VERSION_PATTERN.test(manifest.version || "")
+      || manifest.launcher !== "KLiteLauncher.exe"
       || !BUILD_SHA_PATTERN.test(manifest.buildSha || "")
       || !SHA256_PATTERN.test(manifest.sha256 || "")
       || !Number.isInteger(manifest.size)
