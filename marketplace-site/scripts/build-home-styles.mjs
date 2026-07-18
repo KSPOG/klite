@@ -5,16 +5,7 @@ import { fileURLToPath } from "node:url";
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const publicDirectory = path.resolve(scriptDirectory, "../public");
 const sourceFiles = [
-  "styles.css",
-  "filters.css",
-  "admin.css",
-  "site-shell.css",
-  "release-preview.css",
-  "obsidian-release.css",
-  "final-obsidian.css",
-  "preview-match.css",
-  "credits.css",
-  "resources-menu.css",
+  "mockup-theme.css",
 ];
 
 const sections = await Promise.all(sourceFiles.map(async (file) => {
