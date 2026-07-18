@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#020407">
   <title>KLite Plugin SDK and API Reference</title>
   <link rel="stylesheet" href="/home.css?v=20260718-5">
+  <link rel="stylesheet" href="api.css?v=20260718-1">
   <link rel="icon" type="image/png" href="../assets/klite-marketplace.png">
   <script src="/secondary-page-header.js?v=1" defer></script>
 </head>
@@ -113,6 +114,7 @@
         <div class="api-hero-actions">
           <a class="button button-primary" href="https://github.com/KSPOG/klite/releases/download/plugin-sdk/KLite-Plugin-Starter.zip">Download IntelliJ starter ZIP</a>
           <a class="button button-secondary" href="https://github.com/KSPOG/klite/releases/download/plugin-sdk/KLite-Plugin-SDK.jar">Download SDK JAR only</a>
+          <a class="button button-secondary" href="https://github.com/KSPOG/klite/releases/download/plugin-sdk/KLite-Public-API-Sources.zip">Download API source classes</a>
         </div>
       </section>
 
@@ -225,12 +227,20 @@ api.inventoryContains(995)
           </label>
         </div>
 
-        <p id="api-summary" class="account-note" aria-live="polite"></p>
+        <div class="api-reference-toolbar">
+          <p id="api-summary" class="account-note" aria-live="polite"></p>
+          <div class="api-reference-actions" aria-label="Reference display controls">
+            <button id="api-expand-all" type="button">Expand visible types</button>
+            <button id="api-collapse-all" type="button">Collapse all</button>
+            <button id="api-reset-filters" type="button">Reset filters</button>
+          </div>
+        </div>
         <div id="api-content" class="api-reference-content"></div>
       </section>
     </section>
   </main>
 
-  <script src="app.js?v=6" defer></script>
+  <script src="app.js?v=7" defer></script>
+  <script src="controls.js?v=1" defer></script>
 </body>
 </html>
