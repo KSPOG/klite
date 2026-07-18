@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import tempfile
 from pathlib import Path
 from zipfile import ZipFile
@@ -18,6 +19,14 @@ java)
 
 UNESCAPED_API_EXAMPLE = """clientApi.inventoryFreeSlots()
     .thenAccept(freeSlots -> log.info(\"Free slots: {}\", freeSlots));"""
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def main() -> int:
@@ -47,6 +56,7 @@ def main() -> int:
             raise SystemExit("Generated starter README did not receive the SDK version replacement")
 
         print(f"Verified escaped README example in {starter}")
+        print(f"Starter ZIP SHA-256: {sha256(starter)}")
     return 0
 
 
