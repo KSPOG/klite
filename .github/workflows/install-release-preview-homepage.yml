@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: klite-release-preview-homepage
+  cancel-in-progress: true
+
 jobs:
   install:
     runs-on: ubuntu-latest
@@ -29,9 +33,12 @@ jobs:
       - name: Verify generated homepage
         run: |
           grep -Fq '/release-preview.css?v=3' marketplace-site/public/index.html
+          grep -Fq '/obsidian-release.css?v=1' marketplace-site/public/index.html
+          grep -Fq '/homepage-featured.js?v=1' marketplace-site/public/index.html
           grep -Fq 'class="release-wordmark">KLite</h1>' marketplace-site/public/index.html
           grep -Fq 'class="client-window"' marketplace-site/public/index.html
-          grep -Fq 'id="release-status"' marketplace-site/public/index.html
+          grep -Fq 'id="featured-plugin-list"' marketplace-site/public/index.html
+          ! grep -Fq 'GPU Plugin' marketplace-site/public/index.html
           ! grep -Fq 'class="landing-hero"' marketplace-site/public/index.html
 
       - name: Commit generated homepage
@@ -43,7 +50,7 @@ jobs:
             echo "Homepage already matches the release preview."
             exit 0
           fi
-          git commit -m "Replace homepage with the approved KLite release preview"
+          git commit -m "Correct homepage navigation and marketplace content"
           git fetch origin main
           git rebase origin/main
           git push origin HEAD:main
