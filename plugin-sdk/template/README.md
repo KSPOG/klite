@@ -92,12 +92,14 @@ The main public entry point is:
 private KLiteClientApi clientApi;
 ```
 
-KLite API calls normally return `CompletableFuture<T>`. Chain asynchronous work rather than blocking the client thread:
+KLite API calls normally return `CompletableFuture<T>`. Chain asynchronous work rather than blocking the client thread. Keep the escaped example below exactly as written so documentation tooling cannot interpret the method-call parentheses as executable markup:
 
-```java
-clientApi.inventoryFreeSlots()
-    .thenAccept(freeSlots -> log.info("Free slots: {}", freeSlots));
-```
+/**: # (
+java)
+*: # (clientApi.inventoryFreeSlots&#40;&#41;)
+*: # (    .thenAccept&#40;freeSlots -> log.info&#40;"Free slots: {}", freeSlots&#41;&#41;;)
+*/: # (
+)
 
 Use the authenticated API reference on the KLite website for available types and methods.
 
