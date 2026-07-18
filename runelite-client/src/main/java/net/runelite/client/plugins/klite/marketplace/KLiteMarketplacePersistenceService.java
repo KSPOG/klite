@@ -336,6 +336,7 @@ public final class KLiteMarketplacePersistenceService
 	@SuppressWarnings("unused")
 	private static final class StoredPluginState
 	{
+		@SuppressWarnings("PMD.ImmutableField")
 		private int schemaVersion = 1;
 		private Map<String, StoredAccountPlugins> accounts = new HashMap<>();
 	}

@@ -287,12 +287,8 @@ class KLiteStreamedPluginService
 			}
 			notifyChanged();
 		}
-		catch (IOException | ClassNotFoundException | PluginInstantiationException ex)
-		{
-			cleanupFailedLoad(classLoader, plugins);
-			throw new IllegalStateException("Unable to load marketplace plugin: " + describe(ex), ex);
-		}
-		catch (RuntimeException | LinkageError ex)
+		catch (IOException | ClassNotFoundException | PluginInstantiationException
+			| RuntimeException | LinkageError ex)
 		{
 			cleanupFailedLoad(classLoader, plugins);
 			throw new IllegalStateException("Unable to load marketplace plugin: " + describe(ex), ex);
@@ -392,12 +388,7 @@ class KLiteStreamedPluginService
 		}
 		catch (InvocationTargetException ex)
 		{
-			Throwable cause = ex.getCause();
-			if (cause instanceof PluginOperationRuntimeException)
-			{
-				throw new PluginInstantiationException(cause.getCause());
-			}
-			throw new PluginInstantiationException(cause);
+			throw new PluginInstantiationException(ex);
 		}
 	}
 

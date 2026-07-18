@@ -242,7 +242,7 @@ public class KLiteDevelopmentPluginManager
 			pluginManager.loadDefaultPluginConfiguration(plugins);
 			startPlugins(plugins);
 			loadedPlugins.put(candidate.internalName,
-				new LoadedDevelopmentPlugin(candidate.jar, candidate.fingerprint, classLoader, plugins));
+				new LoadedDevelopmentPlugin(candidate.fingerprint, classLoader, plugins));
 			log.info("Loaded KLite development plugin \"{}\" from {}",
 				candidate.internalName, candidate.jar.getName());
 		}
@@ -444,15 +444,13 @@ public class KLiteDevelopmentPluginManager
 
 	private static final class LoadedDevelopmentPlugin
 	{
-		private final File jar;
 		private final String fingerprint;
 		private final DevelopmentPluginClassLoader classLoader;
 		private final List<Plugin> plugins;
 
-		private LoadedDevelopmentPlugin(File jar, String fingerprint,
+		private LoadedDevelopmentPlugin(String fingerprint,
 			DevelopmentPluginClassLoader classLoader, List<Plugin> plugins)
 		{
-			this.jar = jar;
 			this.fingerprint = fingerprint;
 			this.classLoader = classLoader;
 			this.plugins = plugins;

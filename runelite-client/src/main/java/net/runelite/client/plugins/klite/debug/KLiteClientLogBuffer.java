@@ -32,7 +32,7 @@ public final class KLiteClientLogBuffer
 	public KLiteClientLogBuffer()
 	{
 		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-		appender = new AppenderBase<ILoggingEvent>()
+		appender = new AppenderBase<>()
 		{
 			@Override
 			protected void append(ILoggingEvent event)
