@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/verify-marketplace-production.yml"
       - "marketplace-site/public/api/**"
+      - "marketplace-site/public/api-reference.css"
       - "marketplace-site/worker/**"
       - "marketplace-site/wrangler.jsonc"
   workflow_dispatch:
@@ -50,11 +51,13 @@ jobs:
             css_headers="$(mktemp)"
             css_body="$(mktemp)"
             app_body="$(mktemp)"
+            controls_body="$(mktemp)"
             page_body="$(mktemp)"
 
             api_status="$(curl --silent --show-error --output /dev/null --dump-header "$api_headers" --write-out '%{http_code}' "$origin/api" || true)"
-            css_status="$(curl --silent --show-error --output "$css_body" --dump-header "$css_headers" --write-out '%{http_code}' "$origin/api/api.css" || true)"
+            css_status="$(curl --silent --show-error --output "$css_body" --dump-header "$css_headers" --write-out '%{http_code}' "$origin/api-reference.css" || true)"
             app_status="$(curl --silent --show-error --output "$app_body" --write-out '%{http_code}' "$origin/api/app.js" || true)"
+            controls_status="$(curl --silent --show-error --output "$controls_body" --write-out '%{http_code}' "$origin/api/controls.js" || true)"
             page_status="$(curl --silent --show-error --output "$page_body" --write-out '%{http_code}' "$origin/api/" || true)"
 
             location="$(tr -d '\r' < "$api_headers" | awk 'BEGIN { IGNORECASE=1 } /^location:/ { sub(/^location:[[:space:]]*/, ""); print; exit }')"
@@ -63,6 +66,7 @@ jobs:
             redirect_ok=false
             css_marker=false
             app_marker=false
+            controls_marker=false
             page_marker=false
 
             if [[ "$api_status" == "308" ]] && [[ "$location" == "$origin/api/" || "$location" == "/api/" ]]; then
@@ -74,11 +78,14 @@ jobs:
             if grep --fixed-strings --quiet 'const accountStatus' "$app_body"; then
               app_marker=true
             fi
-            if grep --fixed-strings --quiet 'href="api.css?v=20260718-1"' "$page_body"; then
+            if grep --fixed-strings --quiet 'const apiStylesheetHref = "/api-reference.css?v=20260718-2"' "$controls_body"; then
+              controls_marker=true
+            fi
+            if grep --fixed-strings --quiet 'src="controls.js?v=1"' "$page_body"; then
               page_marker=true
             fi
 
-            last_diagnostic="/api=$api_status location=${location:-none}; css=$css_status type=${css_type:-none} marker=$css_marker; app=$app_status marker=$app_marker; page=$page_status marker=$page_marker"
+            last_diagnostic="/api=$api_status location=${location:-none}; root-css=$css_status type=${css_type:-none} marker=$css_marker; app=$app_status marker=$app_marker; controls=$controls_status marker=$controls_marker; page=$page_status marker=$page_marker"
 
             if [[ "$attempt" == "1" ]]; then
               gh issue comment 49 --repo "$GITHUB_REPOSITORY" --body "### Production API verification started\n\nCommit: \`$GITHUB_SHA\`\n\n\`$last_diagnostic\`"
@@ -90,15 +97,17 @@ jobs:
               && [[ "$css_marker" == true ]] \
               && [[ "$app_status" == "200" ]] \
               && [[ "$app_marker" == true ]] \
+              && [[ "$controls_status" == "200" ]] \
+              && [[ "$controls_marker" == true ]] \
               && [[ "$page_status" == "200" ]] \
               && [[ "$page_marker" == true ]]; then
-              echo "Production API page is serving the canonical page, dedicated stylesheet, and page script correctly."
+              echo "Production API page is loading the root stylesheet and page scripts correctly."
               gh issue comment 49 --repo "$GITHUB_REPOSITORY" --body "### Production API verification passed\n\nCommit: \`$GITHUB_SHA\`\n\n\`$last_diagnostic\`"
               exit 0
             fi
 
             echo "Not ready: $last_diagnostic"
-            rm -f "$api_headers" "$css_headers" "$css_body" "$app_body" "$page_body"
+            rm -f "$api_headers" "$css_headers" "$css_body" "$app_body" "$controls_body" "$page_body"
             sleep 10
           done
 
