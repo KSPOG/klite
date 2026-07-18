@@ -7,6 +7,8 @@
     "deploy": "wrangler deploy",
     "setup:production": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/setup-production.ps1",
     "fix:login-ui": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/apply-login-ui-fix.ps1",
+    "css:build": "node scripts/build-home-styles.mjs",
+    "css:check": "node scripts/build-home-styles.mjs --check",
     "api:generate": "node scripts/generate-api-reference.mjs",
     "db:migrate:local": "wrangler d1 migrations apply klite-marketplace --local",
     "db:migrate:remote": "wrangler d1 migrations apply klite-marketplace --remote",
