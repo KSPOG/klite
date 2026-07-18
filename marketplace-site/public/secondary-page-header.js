@@ -7,6 +7,51 @@
   const accountMenu = document.querySelector("#shared-account-menu");
   const logoutButton = document.querySelector("#shared-account-logout");
 
+  function initializeApiReferencePage() {
+    if (!document.querySelector(".api-page-main")) return;
+
+    if (!document.querySelector('link[data-api-reference-styles]')) {
+      const stylesheet = document.createElement("link");
+      stylesheet.rel = "stylesheet";
+      stylesheet.href = "/api-reference.css?v=20260718-3";
+      stylesheet.dataset.apiReferenceStyles = "true";
+      document.head.append(stylesheet);
+    }
+
+    const content = document.querySelector("#api-content");
+    const searchInput = document.querySelector("#api-search");
+    const sectionFilter = document.querySelector("#api-section-filter");
+    const kindFilter = document.querySelector("#api-kind-filter");
+    const methodsOnly = document.querySelector("#api-methods-only");
+
+    document.querySelector("#api-expand-all")?.addEventListener("click", () => {
+      for (const details of content?.querySelectorAll("details.api-type") || []) {
+        details.open = true;
+      }
+    });
+
+    document.querySelector("#api-collapse-all")?.addEventListener("click", () => {
+      for (const details of content?.querySelectorAll("details.api-type") || []) {
+        details.open = false;
+      }
+    });
+
+    document.querySelector("#api-reset-filters")?.addEventListener("click", () => {
+      if (!searchInput || !sectionFilter || !kindFilter || !methodsOnly) return;
+
+      searchInput.value = "";
+      sectionFilter.value = "Client API";
+      kindFilter.value = "";
+      methodsOnly.checked = true;
+
+      searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      sectionFilter.dispatchEvent(new Event("change", { bubbles: true }));
+      kindFilter.dispatchEvent(new Event("change", { bubbles: true }));
+      methodsOnly.dispatchEvent(new Event("change", { bubbles: true }));
+      searchInput.focus();
+    });
+  }
+
   function closeMenus() {
     if (resourcesMenu) resourcesMenu.hidden = true;
     if (resourcesTrigger) resourcesTrigger.setAttribute("aria-expanded", "false");
@@ -101,5 +146,6 @@
     }
   }
 
+  initializeApiReferencePage();
   loadHeaderAccount();
 })();
