@@ -6,9 +6,27 @@ import {
   startDiscordLogin
 } from "./discord-auth.js";
 
+const API_PAGE_ASSETS = new Set([
+  "/api/",
+  "/api/index.html",
+  "/api/api.css",
+  "/api/app.js",
+  "/api/controls.js"
+]);
+
 export default {
   async fetch(request, env, context) {
     const url = new URL(request.url);
+
+    if ((request.method === "GET" || request.method === "HEAD") && url.pathname === "/api") {
+      const target = new URL(request.url);
+      target.pathname = "/api/";
+      return Response.redirect(target.toString(), 308);
+    }
+
+    if ((request.method === "GET" || request.method === "HEAD") && API_PAGE_ASSETS.has(url.pathname)) {
+      return env.ASSETS.fetch(request);
+    }
 
     try {
       const creditResponse = await handleCredits(request, env, url);
