@@ -38,9 +38,11 @@ import net.runelite.client.plugins.klite.walker.pathfinder.ShortestPathRoutePlan
 /**
  * KLite's integrated Shortest Path web walker.
  *
- * <p>It follows the planner's ordered route with sticky forward minimap
- * waypoints. It does not depend on the separately installed RuneLite Shortest
- * Path plugin.</p>
+ * <p>It follows the planner's ordered route exclusively through sticky forward
+ * minimap waypoints. A tile which cannot be projected onto the minimap is not
+ * clicked; the walker selects a closer route tile or replans instead of falling
+ * back to a scene/viewport walk action. It does not depend on the separately
+ * installed RuneLite Shortest Path plugin.</p>
  */
 @Singleton
 public final class IntegratedShortestPathWebWalker implements WebWalker
@@ -354,31 +356,23 @@ public final class IntegratedShortestPathWebWalker implements WebWalker
 		{
 			return false;
 		}
-		Point dispatchPoint = projected.point == null ? null : scaleForDispatch(projected.point);
-		if (dispatchPoint != null && !insideCanvas(dispatchPoint))
+		Point dispatchPoint = scaleForDispatch(projected.point);
+		if (!insideCanvas(dispatchPoint))
 		{
 			return false;
 		}
 
 		diagnostics.debug(LOG_SOURCE, "Dispatching integrated Shortest Path waypoint "
 			+ targetIndex + '/' + route.size() + ": current=" + formatPoint(current)
-			+ ", target=" + formatPoint(target) + ", surface=" + projected.surface
-			+ (dispatchPoint == null ? "." : ", point="
-				+ dispatchPoint.getX() + ',' + dispatchPoint.getY() + '.'));
-		if (projected.surface == WalkSurface.SCENE)
+			+ ", target=" + formatPoint(target) + ", surface=minimap, point="
+			+ dispatchPoint.getX() + ',' + dispatchPoint.getY() + '.');
+		EventQueue.invokeLater(() ->
 		{
-			GroundWalkDispatcher.walk(client, projected.localPoint);
-		}
-		else
-		{
-			EventQueue.invokeLater(() ->
+			if (!clearRequested)
 			{
-				if (!clearRequested)
-				{
-					dispatchCanvasClick(dispatchPoint);
-				}
-			});
-		}
+				dispatchMinimapClick(dispatchPoint);
+			}
+		});
 		waypoint = target;
 		waypointIndex = targetIndex;
 		lastClickAt = System.currentTimeMillis();
@@ -403,11 +397,9 @@ public final class IntegratedShortestPathWebWalker implements WebWalker
 		Point minimap = Perspective.localToMinimap(client, local);
 		if (minimap != null && insideCanvas(scaleForDispatch(minimap)))
 		{
-			return new ProjectedWaypoint(local, minimap, WalkSurface.MINIMAP);
+			return new ProjectedWaypoint(minimap);
 		}
-		Point scene = Perspective.localToCanvas(client, local, target.getPlane());
-		return scene == null ? null
-			: new ProjectedWaypoint(local, null, WalkSurface.SCENE);
+		return null;
 	}
 
 	private Point scaleForDispatch(Point point)
@@ -434,7 +426,7 @@ public final class IntegratedShortestPathWebWalker implements WebWalker
 			&& point.getY() < client.getCanvasHeight();
 	}
 
-	private void dispatchCanvasClick(Point point)
+	private void dispatchMinimapClick(Point point)
 	{
 		Canvas canvas = client.getCanvas();
 		dispatchMouse(canvas, MouseEvent.MOUSE_ENTERED, point, MouseEvent.NOBUTTON, 0);
@@ -519,23 +511,11 @@ public final class IntegratedShortestPathWebWalker implements WebWalker
 
 	private static final class ProjectedWaypoint
 	{
-		private final LocalPoint localPoint;
-		@Nullable
 		private final Point point;
-		private final WalkSurface surface;
 
-		private ProjectedWaypoint(LocalPoint localPoint, @Nullable Point point,
-			WalkSurface surface)
+		private ProjectedWaypoint(Point point)
 		{
-			this.localPoint = localPoint;
 			this.point = point;
-			this.surface = surface;
 		}
-	}
-
-	private enum WalkSurface
-	{
-		MINIMAP,
-		SCENE
 	}
 }
