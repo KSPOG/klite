@@ -1,0 +1,110 @@
+name: Apply site-wide obsidian theme
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/apply-sitewide-obsidian-theme.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: klite-sitewide-obsidian-theme
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply theme to every public HTML entry point
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          public = Path("marketplace-site/public")
+          html_files = sorted(public.rglob("*.html"))
+          if not html_files:
+              raise SystemExit("No public HTML files were found")
+
+          global_links = [
+              '  <link rel="stylesheet" href="/obsidian-release-theme.css?v=release-20260718-3">',
+              '  <link rel="stylesheet" href="/obsidian-site-routes.css?v=1">',
+          ]
+
+          for path in html_files:
+              text = path.read_text("utf-8")
+              lines = [
+                  line for line in text.splitlines()
+                  if "obsidian-release-theme.css" not in line
+                  and "obsidian-site-routes.css" not in line
+                  and "api-obsidian-theme.css" not in line
+              ]
+              output = "\n".join(lines)
+              links = list(global_links)
+              if path.as_posix().endswith("/api/index.html"):
+                  links.append('  <link rel="stylesheet" href="/api-obsidian-theme.css?v=2">')
+              marker = "</head>"
+              if marker not in output:
+                  raise SystemExit(f"Missing </head> in {path}")
+              output = output.replace(marker, "\n".join(links) + "\n" + marker, 1)
+              path.write_text(output + "\n", "utf-8")
+              print(f"Themed {path}")
+
+          headers_path = public / "_headers"
+          headers = headers_path.read_text("utf-8")
+          cache_blocks = [
+              "/styles.css",
+              "/site-shell.css",
+              "/obsidian-release-theme.css",
+              "/obsidian-site-routes.css",
+              "/api-obsidian-theme.css",
+          ]
+          for route in cache_blocks:
+              block = (
+                  f"\n{route}\n"
+                  "  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n"
+                  "  Pragma: no-cache\n"
+                  "  Expires: 0\n"
+              )
+              if f"\n{route}\n" not in "\n" + headers:
+                  headers += block
+          headers_path.write_text(headers.rstrip() + "\n", "utf-8")
+          PY
+
+      - name: Verify theme references
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          public = Path("marketplace-site/public")
+          for path in sorted(public.rglob("*.html")):
+              text = path.read_text("utf-8")
+              for required in ("/obsidian-release-theme.css", "/obsidian-site-routes.css"):
+                  if required not in text:
+                      raise SystemExit(f"{path} does not load {required}")
+              if path.as_posix().endswith("/api/index.html") and "/api-obsidian-theme.css" not in text:
+                  raise SystemExit("API documentation is missing its API-specific release theme")
+          PY
+
+      - name: Commit site-wide theme wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-sitewide-obsidian-theme.yml
+          git add marketplace-site/public
+          git commit -m "Apply obsidian release theme to every website page"
+          git push
