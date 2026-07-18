@@ -8,7 +8,6 @@
   let accountData = null;
   let catalogPlugins = [];
   let prices = new Map();
-  let renderPending = false;
 
   async function creditApi(path, options = {}) {
     const response = await fetch(path, {
@@ -138,50 +137,69 @@
     }
   }
 
+  function configurePurchaseButton(button, plugin, priceCredits, owned) {
+    button.type = "button";
+    button.className = "button button-primary";
+    button.disabled = owned;
+    button.textContent = owned ? "Owned" : accountData ? "Buy with credits" : "Sign in to buy";
+    button.onclick = async () => {
+      if (!accountData) {
+        document.querySelector("#sign-in-button")?.click();
+        return;
+      }
+      if (!window.confirm(`Purchase ${plugin.descriptor.name} for ${creditsText(priceCredits)}?`)) return;
+      button.disabled = true;
+      button.textContent = "Purchasing…";
+      try {
+        await creditApi("/api/credits/purchase", {
+          method: "POST", body: JSON.stringify({ pluginId: plugin.id })
+        });
+        setCreditStatus(`${plugin.descriptor.name} was added to your account.`);
+        await loadCredits();
+        if (typeof loadAccount === "function") await loadAccount();
+      } catch (error) {
+        setCreditStatus(error.message, true);
+        button.disabled = false;
+        button.textContent = "Buy with credits";
+      }
+    };
+  }
+
   function renderPluginCreditActions() {
     if (!pluginGrid) return;
     for (const card of pluginGrid.querySelectorAll(".plugin-card")) {
-      card.querySelector(".plugin-credit-actions")?.remove();
       const title = card.querySelector("h3")?.textContent?.trim();
       const plugin = catalogPlugins.find((item) => item.descriptor?.name === title);
-      if (!plugin || !["Premium", "Supporter"].includes(plugin.type || plugin.access)) continue;
-      const priceCredits = prices.get(plugin.id);
-      if (!Number.isInteger(priceCredits) || priceCredits < 1) continue;
-      const actions = document.createElement("div");
-      actions.className = "plugin-credit-actions";
-      const price = document.createElement("strong");
+      const accessType = plugin?.type || plugin?.access;
+      const priceCredits = plugin ? prices.get(plugin.id) : null;
+      let actions = card.querySelector(".plugin-credit-actions");
+
+      if (!plugin || !["Premium", "Supporter"].includes(accessType)
+          || !Number.isInteger(priceCredits) || priceCredits < 1) {
+        actions?.remove();
+        continue;
+      }
+
+      if (!actions) {
+        actions = document.createElement("div");
+        actions.className = "plugin-credit-actions";
+        actions.append(document.createElement("strong"), document.createElement("button"));
+        card.append(actions);
+      }
+
+      const price = actions.querySelector("strong");
+      const button = actions.querySelector("button");
       price.textContent = creditsText(priceCredits);
-      const owned = Boolean(card.querySelector(".access-owned"));
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "button button-primary";
-      button.disabled = owned;
-      button.textContent = owned ? "Owned" : accountData ? "Buy with credits" : "Sign in to buy";
-      button.addEventListener("click", async () => {
-        if (!accountData) return document.querySelector("#sign-in-button")?.click();
-        if (!window.confirm(`Purchase ${plugin.descriptor.name} for ${creditsText(priceCredits)}?`)) return;
-        button.disabled = true;
-        try {
-          await creditApi("/api/credits/purchase", {
-            method: "POST", body: JSON.stringify({ pluginId: plugin.id })
-          });
-          setCreditStatus(`${plugin.descriptor.name} was added to your account.`);
-          await loadCredits();
-          if (typeof loadAccount === "function") await loadAccount();
-        } catch (error) {
-          setCreditStatus(error.message, true);
-          button.disabled = false;
-        }
-      });
-      actions.append(price, button);
-      card.append(actions);
+      configurePurchaseButton(button, plugin, priceCredits, Boolean(card.querySelector(".access-owned")));
     }
   }
 
-  function scheduleCreditRender() {
-    if (renderPending) return;
-    renderPending = true;
-    requestAnimationFrame(() => { renderPending = false; renderPluginCreditActions(); });
+  if (typeof renderPlugins === "function") {
+    const originalRenderPlugins = renderPlugins;
+    renderPlugins = function renderPluginsWithCredits() {
+      originalRenderPlugins();
+      renderPluginCreditActions();
+    };
   }
 
   if (typeof renderAccount === "function") {
@@ -190,6 +208,7 @@
       original(payload);
       accountData = payload;
       setTimeout(loadCredits, 0);
+      setTimeout(renderPluginCreditActions, 0);
     };
   }
   if (typeof renderSignedOut === "function") {
@@ -202,7 +221,6 @@
     };
   }
 
-  if (pluginGrid) new MutationObserver(scheduleCreditRender).observe(pluginGrid, { childList: true });
   const paymentState = new URLSearchParams(window.location.search).get("credits");
   if (paymentState) {
     history.replaceState({}, "", `${window.location.pathname}#account`);
