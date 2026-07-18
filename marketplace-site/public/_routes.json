@@ -1,5 +1,5 @@
 {
   "version": 1,
-  "include": ["/api/*"],
+  "include": ["/api/*", "/download/windows"],
   "exclude": ["/api", "/api/", "/api/index.html", "/api/app.js"]
 }
