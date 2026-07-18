@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import javax.imageio.ImageIO;
+import net.runelite.client.launcher.KLiteLauncher;
 
 /**
  * Stable entry point for the KLite distribution.
@@ -30,8 +31,14 @@ public final class KLite
 
 	public static void main(String[] args) throws Exception
 	{
+		if (!KLiteLauncher.isClientInvocation(args))
+		{
+			KLiteLauncher.main(args);
+			return;
+		}
+
 		applyWindowsTaskbarIcon();
-		RuneLite.main(args);
+		RuneLite.main(KLiteLauncher.clientArguments(args));
 	}
 
 	/**
