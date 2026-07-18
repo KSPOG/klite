@@ -1,0 +1,72 @@
+name: Verify Marketplace Production
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/verify-marketplace-production.yml"
+      - "marketplace-site/public/api/**"
+      - "marketplace-site/worker/**"
+      - "marketplace-site/wrangler.jsonc"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-marketplace-production
+  cancel-in-progress: true
+
+jobs:
+  verify-api-page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Wait for and verify the production API page
+        shell: bash
+        run: |
+          set -u
+          origin="https://klite-marketplace.pages.dev"
+
+          for attempt in $(seq 1 36); do
+            echo "Production verification attempt ${attempt}/36"
+
+            api_headers="$(mktemp)"
+            css_headers="$(mktemp)"
+            css_body="$(mktemp)"
+            app_body="$(mktemp)"
+            page_body="$(mktemp)"
+
+            api_status="$(curl --silent --show-error --output /dev/null --dump-header "$api_headers" --write-out '%{http_code}' "$origin/api" || true)"
+            css_status="$(curl --silent --show-error --output "$css_body" --dump-header "$css_headers" --write-out '%{http_code}' "$origin/api/api.css" || true)"
+            app_status="$(curl --silent --show-error --output "$app_body" --write-out '%{http_code}' "$origin/api/app.js" || true)"
+            page_status="$(curl --silent --show-error --output "$page_body" --write-out '%{http_code}' "$origin/api/" || true)"
+
+            location="$(tr -d '\r' < "$api_headers" | awk 'BEGIN { IGNORECASE=1 } /^location:/ { sub(/^location:[[:space:]]*/, ""); print; exit }')"
+            css_type="$(tr -d '\r' < "$css_headers" | awk 'BEGIN { IGNORECASE=1 } /^content-type:/ { sub(/^content-type:[[:space:]]*/, ""); print; exit }')"
+
+            redirect_ok=false
+            if [[ "$api_status" == "308" ]] && [[ "$location" == "$origin/api/" || "$location" == "/api/" ]]; then
+              redirect_ok=true
+            fi
+
+            if [[ "$redirect_ok" == true ]] \
+              && [[ "$css_status" == "200" ]] \
+              && [[ "$css_type" == text/css* ]] \
+              && grep --fixed-strings --quiet '.api-type > summary' "$css_body" \
+              && [[ "$app_status" == "200" ]] \
+              && grep --fixed-strings --quiet 'const accountStatus' "$app_body" \
+              && [[ "$page_status" == "200" ]] \
+              && grep --fixed-strings --quiet 'href="api.css?v=20260718-1"' "$page_body"; then
+              echo "Production API page is serving the canonical page, dedicated stylesheet, and page script correctly."
+              exit 0
+            fi
+
+            echo "Not ready: /api=$api_status location=$location css=$css_status type=$css_type app=$app_status page=$page_status"
+            rm -f "$api_headers" "$css_headers" "$css_body" "$app_body" "$page_body"
+            sleep 10
+          done
+
+          echo "Production API page did not become healthy within the verification window." >&2
+          exit 1
