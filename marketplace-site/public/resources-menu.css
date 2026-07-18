@@ -164,8 +164,9 @@
 
 .discord-login-button {
   position: relative;
-  min-width: 190px;
-  padding-left: 2.7rem !important;
+  min-width: 224px;
+  padding-left: 3rem !important;
+  padding-right: 1.1rem !important;
   border-color: rgba(112, 134, 255, 0.72) !important;
   color: #fff !important;
   background:

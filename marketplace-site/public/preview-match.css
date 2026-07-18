@@ -1,0 +1,118 @@
+/* Authoritative finishing layer for the approved desktop preview composition. */
+:root {
+  --preview-width: 1440px;
+  --preview-cyan: #00d9ff;
+  --preview-orange: #ff741d;
+}
+
+body {
+  background-color: #010408 !important;
+  background-image: linear-gradient(180deg, rgba(1, 5, 9, 0.08), rgba(1, 4, 8, 0.72)), url('/assets/obsidian-fractures.svg') !important;
+  background-position: center top !important;
+  background-size: max(1536px, 100vw) auto !important;
+  background-repeat: repeat-y !important;
+}
+
+.site-header {
+  min-height: 84px !important;
+  padding-inline: max(32px, calc((100vw - var(--preview-width)) / 2)) !important;
+  grid-template-columns: minmax(250px, auto) minmax(600px, 1fr) minmax(160px, auto) !important;
+  gap: 28px !important;
+}
+
+.brand img { width: 64px !important; height: 64px !important; }
+.brand strong { font-size: 1.18rem !important; letter-spacing: 0.31em !important; }
+.primary-site-nav { gap: clamp(18px, 1.8vw, 30px) !important; overflow: visible !important; }
+.primary-site-nav > button,
+.primary-site-nav > a {
+  gap: 7px !important;
+  min-height: 84px !important;
+  color: #bdc7cd !important;
+  font-size: 0.78rem !important;
+  text-decoration: none !important;
+}
+.primary-site-nav > button > span,
+.primary-site-nav > a > span { color: #d8e1e6; font-size: 1rem; }
+.primary-site-nav > button.is-active,
+.primary-site-nav > button:hover,
+.primary-site-nav > a:hover { color: var(--preview-cyan) !important; }
+.account-name-button { min-width: 152px; justify-content: flex-start !important; border-color: rgba(89, 153, 187, 0.42) !important; }
+header.site-header .account-actions .klite-resources-menu:not([hidden]) { display: none !important; }
+main { width: min(var(--preview-width), calc(100% - 64px)) !important; }
+.release-home { padding-top: 18px !important; }
+.release-hero {
+  grid-template-columns: minmax(470px, 0.84fr) minmax(650px, 1.16fr) !important;
+  gap: 48px !important;
+  min-height: 536px !important;
+  padding: 32px 20px 24px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(132, 178, 201, 0.2) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+.release-wordmark {
+  width: fit-content;
+  background: linear-gradient(180deg, #fff 0%, #d5dde2 27%, #7a858c 55%, #f0f4f6 73%, #6f7a80 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  font-size: clamp(6rem, 8.25vw, 8.5rem) !important;
+  filter: drop-shadow(0 7px 0 #151b1f) drop-shadow(0 11px 10px rgba(0, 0, 0, 0.8));
+  text-shadow: none !important;
+}
+.release-description { max-width: 530px !important; }
+.release-action { min-width: 260px !important; min-height: 66px !important; border-radius: 6px !important; }
+.release-action > span:not(.action-icon) { display: grid; gap: 3px; }
+.release-action small { color: #9eb2bd; font-size: 0.64rem; font-weight: 600; letter-spacing: 0.08em; }
+.action-icon { font-size: 2rem; line-height: 1; }
+.client-window { min-height: 430px !important; border-color: rgba(165, 204, 224, 0.45) !important; }
+.client-window::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--preview-cyan), transparent 20%, transparent 80%, var(--preview-orange));
+  opacity: 0.55;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  padding: 2px;
+}
+.developer-link span { display: grid; gap: 4px; text-align: left; }
+.developer-link strong { color: #eef5f8; font-size: 0.72rem; }
+.developer-link small { color: #8298a5; font-size: 0.61rem; }
+.status-overall.has-errors,
+.status-row b.is-unavailable { color: #ff815f !important; }
+.status-row b.is-checking { color: #d8ad61 !important; }
+.status-row b.is-operational { color: #57d76c !important; }
+.status-link { width: 100%; cursor: pointer; background: rgba(4, 11, 17, 0.72); }
+
+@media (max-width: 1320px) {
+  .site-header { grid-template-columns: minmax(210px, auto) minmax(0, 1fr) auto !important; gap: 18px !important; padding-inline: 20px !important; }
+  .primary-site-nav { gap: 18px !important; }
+  .primary-site-nav > button, .primary-site-nav > a { font-size: 0.72rem !important; }
+  .release-hero { grid-template-columns: minmax(400px, 0.82fr) minmax(560px, 1.18fr) !important; }
+}
+
+@media (max-width: 1080px) {
+  .primary-site-nav > a[href*="github.com"], .primary-site-nav > a[href="/docs/"] { display: none !important; }
+  .release-hero { grid-template-columns: 1fr !important; padding-inline: 4vw !important; }
+  .release-wordmark { margin-inline: auto; }
+}
+
+@media (max-width: 900px) {
+  .site-header { grid-template-columns: 1fr auto !important; }
+  .primary-site-nav { overflow-x: auto !important; }
+  .primary-site-nav > button, .primary-site-nav > a { min-height: 46px !important; }
+  main { width: calc(100% - 24px) !important; }
+}
+
+@media (max-width: 560px) {
+  .brand img { width: 48px !important; height: 48px !important; }
+  .brand strong { font-size: 0.92rem !important; }
+  .release-wordmark { font-size: clamp(4.1rem, 21vw, 6rem) !important; }
+  .release-action { min-width: 0 !important; }
+}

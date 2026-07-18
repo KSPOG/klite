@@ -12,9 +12,10 @@
   <link rel="stylesheet" href="filters.css">
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="site-shell.css?v=release-20260718-1">
-  <link rel="stylesheet" href="/release-preview.css?v=3">
+  <link rel="stylesheet" href="/release-preview.css?v=release-20260718-4">
   <link rel="stylesheet" href="/obsidian-release.css?v=1">
   <link rel="stylesheet" href="/final-obsidian.css?v=1">
+  <link rel="stylesheet" href="/preview-match.css?v=release-20260718-2">
   <link rel="stylesheet" href="/credits.css?v=1">
 </head>
 <body>
@@ -25,8 +26,12 @@
     </a>
 
     <nav class="primary-site-nav" aria-label="Primary navigation">
-      <button type="button" data-site-route="home">Home</button>
-      <button type="button" data-site-route="marketplace">Marketplace</button>
+      <button type="button" data-site-route="home"><span aria-hidden="true">&#8962;</span>Home</button>
+      <button type="button" data-site-route="marketplace"><span aria-hidden="true">&#9649;</span>Marketplace</button>
+      <a href="#marketplace"><span aria-hidden="true">&#9827;</span>Plugins</a>
+      <a href="/docs/"><span aria-hidden="true">&lt;/&gt;</span>Developers</a>
+      <button id="status-navigation-button" type="button"><span aria-hidden="true">&#9719;</span>Status</button>
+      <a href="https://github.com/KSPOG/klite/releases"><span aria-hidden="true">&#9636;</span>Changelog</a>
       <button type="button" data-site-route="community" hidden>Community</button>
       <button type="button" data-site-route="account" hidden>Account</button>
       <button type="button" data-site-route="admin" hidden>Administration</button>
@@ -57,8 +62,8 @@
           <p class="release-client-line">The elite client</p>
           <p class="release-description">A focused desktop client with reviewed marketplace plugins, automation-safe APIs, an integrated web walker, and owner-controlled publishing.</p>
           <div class="release-actions">
-            <a class="release-action release-download download-button" href="/download/windows?browser=1"><span aria-hidden="true">⇩</span><span>Download KLite .exe</span></a>
-            <button id="explore-marketplace-button" class="release-action release-market" type="button"><span aria-hidden="true">▢</span><span>View Marketplace</span></button>
+            <a class="release-action release-download download-button" href="/download/windows?browser=1"><span class="action-icon" aria-hidden="true">&#8595;</span><span>Download KLite .exe<small>Windows &middot; 64-bit</small></span></a>
+            <button id="explore-marketplace-button" class="release-action release-market" type="button"><span class="action-icon" aria-hidden="true">&#9827;</span><span>View Marketplace<small>Browse plugins</small></span></button>
           </div>
           <p class="release-safety">◇ Safe. Secure. <strong>Automation-Safe.</strong></p>
         </div>
@@ -91,7 +96,7 @@
 
           <section id="release-download" class="release-download-strip" aria-labelledby="release-download-title">
             <span class="download-emblem" aria-hidden="true">⇩</span>
-            <div class="download-copy"><h2 id="release-download-title">Download KLite for Windows</h2><strong>Latest stable Windows release</strong><p>Windows 10/11 (64-bit)<br>Verified rolling release channel</p></div>
+            <div class="download-copy"><h2 id="release-download-title">Download KLite for Windows</h2><strong>Latest version: <span id="release-version">checking&hellip;</span></strong><p>Windows 10/11 (64-bit)<br><span id="release-published">Verified rolling release channel</span></p></div>
             <div class="download-benefits"><span>Secure direct download</span><span>Verified installer manifest</span><span>Auto-updater included</span></div>
             <a class="release-action release-download download-cta download-button" href="/download/windows?browser=1">⇩ Download KLite .exe</a>
           </section>
@@ -107,24 +112,24 @@
             <section class="release-panel" aria-labelledby="developers-title">
               <div class="release-panel-title"><h2 id="developers-title">Developers</h2></div>
               <div class="developer-links">
-                <a class="developer-link" href="/docs/"><i>▣</i><span>Documentation</span></a>
-                <button class="developer-link" type="button" data-site-route="community"><i>◉</i><span>Developer Discord</span></button>
-                <button class="developer-link" type="button" data-site-route="developer"><i>⇧</i><span>Publish Your Plugin</span></button>
+                <a class="developer-link" href="/docs/"><i>▣</i><span><strong>Documentation</strong><small>API guides and examples</small></span></a>
+                <button class="developer-link" type="button" data-site-route="community"><i>◉</i><span><strong>Developer Discord</strong><small>Community control center</small></span></button>
+                <button class="developer-link" type="button" data-site-route="developer"><i>⇧</i><span><strong>Publish Your Plugin</strong><small>Submit for approval</small></span></button>
               </div>
             </section>
           </div>
         </div>
 
         <aside id="release-status" class="release-status" aria-labelledby="status-title">
-          <div id="status-title" class="status-title"><span class="status-dot"></span><strong>Platform Access</strong></div>
-          <p class="status-overall">KLite services and resources</p>
+          <div id="status-title" class="status-title"><span class="status-dot"></span><strong>System Status</strong></div>
+          <p id="status-overall" class="status-overall">Checking KLite services&hellip;</p>
           <div class="status-list">
-            <div class="status-row"><span>Marketplace</span><b>Browse</b></div>
-            <div class="status-row"><span>Windows client</span><b>Download</b></div>
-            <div class="status-row"><span>Developer guide</span><b>Open</b></div>
-            <div class="status-row"><span>API reference</span><b>Open</b></div>
+            <div class="status-row" data-status-endpoint="/plugins.json"><span>Marketplace</span><b>Checking</b></div>
+            <div class="status-row" data-status-endpoint="/client/windows/latest.json"><span>Downloads</span><b>Checking</b></div>
+            <div class="status-row" data-status-endpoint="/docs/"><span>Documentation</span><b>Checking</b></div>
+            <div class="status-row" data-status-endpoint="/api/credits/packs"><span>API</span><b>Checking</b></div>
           </div>
-          <a class="status-link" href="/docs/">Open Developer Resources</a>
+          <button id="refresh-status-button" class="status-link" type="button">&#8635; Refresh status</button>
         </aside>
       </div>
     </section>
@@ -323,7 +328,8 @@
   <script src="app.js?v=release-20260718-2" defer></script>
   <script src="enhancements.js?v=release-20260718-1" defer></script>
   <script src="site-shell.js?v=release-20260718-2" defer></script>
-  <script src="/homepage-featured.js?v=1" defer></script>
+  <script src="/homepage-featured.js?v=release-20260718-2" defer></script>
+  <script src="/homepage-status.js?v=release-20260718-1" defer></script>
   <script src="/account-routes.js?v=1" defer></script>
   <script src="/credits.js?v=1" defer></script>
   <script src="/credits-admin.js?v=1" defer></script>
