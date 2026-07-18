@@ -25,3 +25,12 @@ test("homepage serves one deterministic generated stylesheet", async () => {
   assert.match(stylesheet, /\/\* Source: preview-match\.css \*\//);
   assert.match(stylesheet, /\/\* Source: resources-menu\.css \*\//);
 });
+
+test("homepage primary navigation contains one marketplace destination", async () => {
+  const html = await readFile(path.join(siteDirectory, "public/index.html"), "utf8");
+  const navigation = html.match(/<nav class="primary-site-nav"[\s\S]*?<\/nav>/)?.[0];
+
+  assert.ok(navigation, "primary navigation is missing");
+  assert.equal((navigation.match(/data-site-route="marketplace"/g) ?? []).length, 1);
+  assert.doesNotMatch(navigation, /href="#marketplace"[^>]*>[\s\S]*?Plugins<\/a>/);
+});
