@@ -43,3 +43,17 @@ test("API page links the downloadable public API source bundle", () => {
     /releases\/download\/plugin-sdk\/KLite-Public-API-Sources\.zip/
   );
 });
+
+test("Cloudflare serves API page files before dynamic API routes", () => {
+  const worker = read("worker/entry.js");
+  const configuration = read("wrangler.jsonc");
+
+  assert.match(configuration, /"run_worker_first": \["\/api", "\/api\/\*"\]/);
+  assert.match(worker, /const API_PAGE_ASSETS = new Set/);
+  assert.match(worker, /"\/api\/api\.css"/);
+  assert.match(worker, /"\/api\/app\.js"/);
+  assert.match(worker, /"\/api\/controls\.js"/);
+  assert.match(worker, /url\.pathname === "\/api"/);
+  assert.match(worker, /target\.pathname = "\/api\/"/);
+  assert.match(worker, /return env\.ASSETS\.fetch\(request\)/);
+});
