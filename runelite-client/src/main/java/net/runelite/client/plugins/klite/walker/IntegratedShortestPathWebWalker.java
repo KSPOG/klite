@@ -354,23 +354,31 @@ public final class IntegratedShortestPathWebWalker implements WebWalker
 		{
 			return false;
 		}
-		Point dispatchPoint = scaleForDispatch(projected.point);
-		if (!insideCanvas(dispatchPoint))
+		Point dispatchPoint = projected.point == null ? null : scaleForDispatch(projected.point);
+		if (dispatchPoint != null && !insideCanvas(dispatchPoint))
 		{
 			return false;
 		}
 
-		diagnostics.debug(LOG_SOURCE, "Clicking integrated Shortest Path waypoint "
+		diagnostics.debug(LOG_SOURCE, "Dispatching integrated Shortest Path waypoint "
 			+ targetIndex + '/' + route.size() + ": current=" + formatPoint(current)
 			+ ", target=" + formatPoint(target) + ", surface=" + projected.surface
-			+ ", point=" + dispatchPoint.getX() + ',' + dispatchPoint.getY() + '.');
-		EventQueue.invokeLater(() ->
+			+ (dispatchPoint == null ? "." : ", point="
+				+ dispatchPoint.getX() + ',' + dispatchPoint.getY() + '.'));
+		if (projected.surface == WalkSurface.SCENE)
 		{
-			if (!clearRequested)
+			GroundWalkDispatcher.walk(client, projected.localPoint);
+		}
+		else
+		{
+			EventQueue.invokeLater(() ->
 			{
-				dispatchCanvasClick(dispatchPoint);
-			}
-		});
+				if (!clearRequested)
+				{
+					dispatchCanvasClick(dispatchPoint);
+				}
+			});
+		}
 		waypoint = target;
 		waypointIndex = targetIndex;
 		lastClickAt = System.currentTimeMillis();
@@ -395,10 +403,11 @@ public final class IntegratedShortestPathWebWalker implements WebWalker
 		Point minimap = Perspective.localToMinimap(client, local);
 		if (minimap != null && insideCanvas(scaleForDispatch(minimap)))
 		{
-			return new ProjectedWaypoint(minimap, "minimap");
+			return new ProjectedWaypoint(local, minimap, WalkSurface.MINIMAP);
 		}
 		Point scene = Perspective.localToCanvas(client, local, target.getPlane());
-		return scene == null ? null : new ProjectedWaypoint(scene, "scene");
+		return scene == null ? null
+			: new ProjectedWaypoint(local, null, WalkSurface.SCENE);
 	}
 
 	private Point scaleForDispatch(Point point)
@@ -510,13 +519,23 @@ public final class IntegratedShortestPathWebWalker implements WebWalker
 
 	private static final class ProjectedWaypoint
 	{
+		private final LocalPoint localPoint;
+		@Nullable
 		private final Point point;
-		private final String surface;
+		private final WalkSurface surface;
 
-		private ProjectedWaypoint(Point point, String surface)
+		private ProjectedWaypoint(LocalPoint localPoint, @Nullable Point point,
+			WalkSurface surface)
 		{
+			this.localPoint = localPoint;
 			this.point = point;
 			this.surface = surface;
 		}
+	}
+
+	private enum WalkSurface
+	{
+		MINIMAP,
+		SCENE
 	}
 }
