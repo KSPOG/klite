@@ -13,7 +13,7 @@ function read(relativePath) {
 
 test("API page loads its dedicated responsive reference stylesheet", () => {
   const html = read("public/api/index.html");
-  const css = read("public/api/api.css");
+  const css = read("public/api-reference.css");
 
   assert.match(html, /href="api\.css\?v=20260718-1"/);
   assert.match(css, /\.api-type\s*>\s*summary\s*\{/);
@@ -50,7 +50,10 @@ test("Cloudflare serves API page files before dynamic API routes", () => {
 
   assert.match(configuration, /"run_worker_first": \["\/api", "\/api\/\*"\]/);
   assert.match(worker, /const API_PAGE_ASSETS = new Set/);
-  assert.match(worker, /"\/api\/api\.css"/);
+  assert.match(worker, /const API_REFERENCE_STYLESHEET = "\/api-reference\.css"/);
+  assert.match(worker, /url\.pathname === "\/api\/api\.css"/);
+  assert.match(worker, /assetUrl\.pathname = API_REFERENCE_STYLESHEET/);
+  assert.match(worker, /env\.ASSETS\.fetch\(new Request\(assetUrl, request\)\)/);
   assert.match(worker, /"\/api\/app\.js"/);
   assert.match(worker, /"\/api\/controls\.js"/);
   assert.match(worker, /url\.pathname === "\/api"/);
