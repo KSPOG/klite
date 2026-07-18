@@ -1,3 +1,13 @@
+const apiStylesheetHref = "/api-reference.css?v=20260718-2";
+
+if (!document.querySelector('link[data-api-reference-styles]')) {
+  const stylesheet = document.createElement("link");
+  stylesheet.rel = "stylesheet";
+  stylesheet.href = apiStylesheetHref;
+  stylesheet.dataset.apiReferenceStyles = "true";
+  document.head.append(stylesheet);
+}
+
 const expandAll = document.querySelector("#api-expand-all");
 const collapseAll = document.querySelector("#api-collapse-all");
 const resetFilters = document.querySelector("#api-reset-filters");
