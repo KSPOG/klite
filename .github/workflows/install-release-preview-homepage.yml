@@ -1,0 +1,192 @@
+name: Install release preview homepage
+run-name: Replace the legacy homepage with the approved KLite release preview
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-release-preview-homepage.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace homepage structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('marketplace-site/public/index.html')
+          text = path.read_text('utf-8')
+
+          lines = []
+          for line in text.splitlines():
+              if 'announcement-shell.css' in line or 'announcement-hero.css' in line or 'announcement-cards.css' in line or 'announcement-docs.css' in line:
+                  continue
+              if 'release-preview.css' in line:
+                  continue
+              lines.append(line)
+          text = '\n'.join(lines)
+          text = text.replace('</head>', '  <link rel="stylesheet" href="/release-preview.css?v=1">\n</head>', 1)
+
+          header_start = text.index('  <header class="site-header">')
+          header_end = text.index('  </header>', header_start) + len('  </header>')
+          header = '''  <header class="site-header">
+    <a class="brand" href="#home" aria-label="KLite home">
+      <img src="assets/klite-marketplace.png" alt="" width="62" height="62">
+      <span><strong>KLite</strong><small>Elite OSRS Client</small></span>
+    </a>
+
+    <nav class="primary-site-nav" aria-label="Primary navigation">
+      <button type="button" data-site-route="home">Home</button>
+      <button type="button" data-site-route="marketplace">Marketplace</button>
+      <button type="button" data-site-route="marketplace">Plugins</button>
+      <button type="button" data-site-route="developer">Developers</button>
+      <a href="#release-status">Status</a>
+      <a href="#release-download">Changelog</a>
+    </nav>
+
+    <div class="account-actions" aria-label="Account actions">
+      <button id="sign-in-button" class="button button-secondary" type="button">Sign in</button>
+      <button id="register-button" class="button button-primary" type="button">Register</button>
+      <a id="api-button" class="button button-secondary" href="/api/" hidden>API</a>
+      <div id="account-menu-wrapper" class="account-menu-wrapper" hidden>
+        <button id="account-button" class="button button-secondary account-name-button" type="button" hidden>My Account</button>
+        <div id="account-menu" class="account-menu" hidden>
+          <button id="account-menu-account" type="button">Account</button>
+          <a href="/api/">API reference</a>
+          <button id="account-menu-logout" class="danger-link" type="button">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>'''
+          text = text[:header_start] + header + text[header_end:]
+
+          home_start = text.index('    <section class="landing-hero"')
+          home_end = text.index('    <section id="workspace-heading"', home_start)
+          home = '''    <section class="release-home" data-site-section="home" aria-labelledby="release-title">
+      <div class="release-hero">
+        <div class="release-copy">
+          <p class="release-eyebrow">Focused. Powerful. Trusted.</p>
+          <h1 id="release-title" class="release-wordmark">KLite</h1>
+          <p class="release-subline">The next evolution of</p>
+          <p class="release-client-line">The elite client</p>
+          <p class="release-description">A focused desktop client with reviewed marketplace plugins, automation-safe APIs, an integrated web walker, and owner-controlled publishing.</p>
+          <div class="release-actions">
+            <a class="release-action release-download download-button" href="/download/windows?browser=1"><span aria-hidden="true">⇩</span><span>Download KLite .exe</span></a>
+            <button id="explore-marketplace-button" class="release-action release-market" type="button"><span aria-hidden="true">▢</span><span>View Marketplace</span></button>
+          </div>
+          <p class="release-safety">◇ Safe. Secure. <strong>Automation-Safe.</strong></p>
+        </div>
+
+        <div class="client-stage" aria-label="KLite client preview">
+          <div class="client-window">
+            <div class="client-titlebar">
+              <span class="client-dots"><i></i><i></i><i></i></span>
+              <strong>KLite Client</strong>
+              <span class="client-controls">− □ ×</span>
+            </div>
+            <div class="client-body">
+              <img src="assets/klite-marketplace.png" alt="KLite shield">
+              <div class="client-tagline"><span>Built for performance.</span><em>Designed for control.</em></div>
+              <div class="client-rail" aria-hidden="true"><b>◫</b><b>◇</b><b>⌁</b><b>⊕</b><b>⚙</b></div>
+            </div>
+            <div class="client-bottombar" aria-hidden="true"><span>All On</span><span>Game On</span><span>Public On</span><span>Private On</span><span>Clan On</span><span>Trade On</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="release-dashboard">
+        <div class="release-main-column">
+          <div class="release-features">
+            <article class="release-card"><div class="release-card-head"><span class="release-icon">ϟ</span><h3>Built for <span>Performance</span></h3></div><p>Optimized core for smooth gameplay and reliability.</p></article>
+            <article class="release-card orange"><div class="release-card-head"><span class="release-icon">◇</span><h3>Safe &amp; <span>Secure</span></h3></div><p>Automation-safe APIs and regular security reviews.</p></article>
+            <article class="release-card"><div class="release-card-head"><span class="release-icon">✦</span><h3>Powerful <span>Plugins</span></h3></div><p>Curated marketplace with high-quality plugins.</p></article>
+            <article class="release-card orange"><div class="release-card-head"><span class="release-icon">&lt;/&gt;</span><h3>Developer <span>Friendly</span></h3></div><p>Modern API, extensive documentation, and publishing tools.</p></article>
+          </div>
+
+          <section id="release-download" class="release-download-strip" aria-labelledby="release-download-title">
+            <span class="download-emblem" aria-hidden="true">⇩</span>
+            <div class="download-copy"><h2 id="release-download-title">Download KLite for Windows</h2><strong>Latest stable Windows release</strong><p>Windows 10/11 (64-bit)<br>Verified rolling release channel</p></div>
+            <div class="download-benefits"><span>Secure direct download</span><span>Verified installer manifest</span><span>Auto-updater included</span></div>
+            <a class="release-action release-download download-cta download-button" href="/download/windows?browser=1">⇩ Download KLite .exe</a>
+          </section>
+
+          <div class="release-lower">
+            <section class="release-panel" aria-labelledby="featured-plugins-title">
+              <div class="release-panel-title"><h2 id="featured-plugins-title">Featured Plugins</h2><button type="button" data-site-route="marketplace">View all</button></div>
+              <div class="plugin-samples">
+                <article class="plugin-sample"><strong>GPU Plugin</strong><small>Utility</small><footer><span>★ 4.9</span><b>Free</b></footer></article>
+                <article class="plugin-sample"><strong>AFK Skiller</strong><small>Skilling</small><footer><span>★ 4.8</span><b>Marketplace</b></footer></article>
+                <article class="plugin-sample"><strong>Loot Tracker</strong><small>Utility</small><footer><span>★ 4.7</span><b>Free</b></footer></article>
+                <article class="plugin-sample"><strong>Bank Organizer</strong><small>Utility</small><footer><span>★ 4.8</span><b>Marketplace</b></footer></article>
+              </div>
+            </section>
+
+            <section class="release-panel" aria-labelledby="developers-title">
+              <div class="release-panel-title"><h2 id="developers-title">Developers</h2></div>
+              <div class="developer-links">
+                <a class="developer-link" href="/docs/"><i>▣</i><span>Documentation</span></a>
+                <button class="developer-link" type="button" data-site-route="community"><i>◉</i><span>Developer Discord</span></button>
+                <button class="developer-link" type="button" data-site-route="developer"><i>⇧</i><span>Publish Your Plugin</span></button>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <aside id="release-status" class="release-status" aria-labelledby="status-title">
+          <div id="status-title" class="status-title"><span class="status-dot"></span><strong>System Status</strong></div>
+          <p class="status-overall">● All Systems Operational</p>
+          <div class="status-list">
+            <div class="status-row"><span>Website</span><b>Operational</b></div>
+            <div class="status-row"><span>Authentication</span><b>Operational</b></div>
+            <div class="status-row"><span>Marketplace</span><b>Operational</b></div>
+            <div class="status-row"><span>Downloads</span><b>Operational</b></div>
+            <div class="status-row"><span>API</span><b>Operational</b></div>
+          </div>
+          <a class="status-link" href="#release-status">⌁ View Status Page</a>
+        </aside>
+      </div>
+    </section>
+
+'''
+          text = text[:home_start] + home + text[home_end:]
+          path.write_text(text + '\n', 'utf-8')
+
+          headers = Path('marketplace-site/public/_headers')
+          value = headers.read_text('utf-8')
+          route = '/release-preview.css'
+          if f'\n{route}\n' not in '\n' + value:
+              value += f'\n{route}\n  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n  Pragma: no-cache\n  Expires: 0\n'
+          headers.write_text(value.rstrip() + '\n', 'utf-8')
+          PY
+
+      - name: Verify replacement
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq '/release-preview.css?v=1' marketplace-site/public/index.html
+          grep -Fq 'class="release-wordmark">KLite</h1>' marketplace-site/public/index.html
+          grep -Fq 'class="client-window"' marketplace-site/public/index.html
+          grep -Fq 'id="release-status"' marketplace-site/public/index.html
+          ! grep -Fq 'class="landing-hero"' marketplace-site/public/index.html
+
+      - name: Commit production homepage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/install-release-preview-homepage.yml
+          git add marketplace-site/public/index.html marketplace-site/public/_headers
+          git commit -m "Replace homepage with the approved KLite release preview"
+          git push
