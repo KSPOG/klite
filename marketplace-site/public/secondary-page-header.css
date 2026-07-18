@@ -1,0 +1,140 @@
+.secondary-site-header {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 78px !important;
+  margin: 0 !important;
+  padding: 0 clamp(16px, 3.4vw, 64px) !important;
+  display: grid !important;
+  grid-template-columns: minmax(205px, auto) minmax(220px, 1fr) minmax(max-content, auto) !important;
+  align-items: center !important;
+  gap: clamp(16px, 2.4vw, 36px) !important;
+}
+
+.secondary-site-header .brand {
+  display: flex !important;
+  align-items: center !important;
+  height: 78px !important;
+}
+
+.secondary-site-header .brand img {
+  width: 54px !important;
+  height: 54px !important;
+}
+
+.secondary-site-header .primary-site-nav {
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  height: 78px !important;
+  gap: clamp(18px, 2.4vw, 34px) !important;
+}
+
+.secondary-site-header .primary-site-nav > a {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 78px !important;
+  min-height: 78px !important;
+  margin: 0 !important;
+  padding-block: 0 !important;
+  line-height: 1 !important;
+}
+
+.secondary-site-header .account-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  min-width: max-content !important;
+  min-height: 78px !important;
+  gap: 9px !important;
+}
+
+.secondary-site-header .account-actions .button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding-block: 0 !important;
+  line-height: 1 !important;
+}
+
+.secondary-site-header [hidden],
+#sign-in-button[hidden],
+#shared-discord-login[hidden],
+#shared-account-wrapper[hidden] {
+  display: none !important;
+}
+
+.shared-header-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.shared-header-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 1200;
+  width: min(330px, calc(100vw - 32px));
+  padding: 10px;
+  border: 1px solid rgba(132, 178, 201, 0.3);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(14, 25, 35, 0.99), rgba(5, 10, 16, 0.99));
+  box-shadow: 0 28px 75px rgba(0, 0, 0, 0.58);
+}
+
+.shared-header-dropdown a,
+.shared-header-dropdown button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 7px;
+  color: #edf7fb;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.shared-header-dropdown a:hover,
+.shared-header-dropdown button:hover {
+  background: rgba(0, 217, 255, 0.08);
+}
+
+.shared-header-dropdown .danger-link:hover {
+  background: rgba(255, 116, 29, 0.1);
+}
+
+@media (max-width: 900px) {
+  .secondary-site-header {
+    grid-template-columns: 1fr auto !important;
+    padding-top: 8px !important;
+  }
+
+  .secondary-site-header .brand,
+  .secondary-site-header .account-actions {
+    height: 62px !important;
+    min-height: 62px !important;
+  }
+
+  .secondary-site-header .primary-site-nav {
+    grid-column: 1 / -1 !important;
+    order: 3 !important;
+    justify-content: flex-start !important;
+    height: 44px !important;
+    overflow-x: auto !important;
+  }
+
+  .secondary-site-header .primary-site-nav > a {
+    height: 44px !important;
+    min-height: 44px !important;
+  }
+}
