@@ -1,0 +1,108 @@
+name: Publish KLite Public API Sources
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Publish KLite Plugin SDK
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+concurrency:
+  group: klite-public-api-sources
+  cancel-in-progress: true
+
+jobs:
+  publish-api-sources:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       contains(fromJSON('["push", "workflow_dispatch"]'), github.event.workflow_run.event))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERIFIED_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
+      KLITE_SDK_VERSION: 1.0.${{ github.run_number }}
+    steps:
+      - name: Check out verified API source commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERIFIED_COMMIT }}
+          fetch-depth: 0
+
+      - name: Build documented API source ZIP
+        run: python3 plugin-sdk/build_api_sources.py
+
+      - name: Verify source archive boundaries
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SOURCE_ZIP="dist/plugin-sdk/KLite-Public-API-Sources.zip"
+          test -s "$SOURCE_ZIP"
+          unzip -t "$SOURCE_ZIP"
+          unzip -l "$SOURCE_ZIP" | grep -q "KLiteClientApi.java"
+          unzip -l "$SOURCE_ZIP" | grep -q "AutomationTask.java"
+          unzip -l "$SOURCE_ZIP" | grep -q "WebWalker.java"
+          if unzip -l "$SOURCE_ZIP" | grep -Eq "/(marketplace|update|launcher)/"; then
+            echo "Private implementation source entered the public API bundle." >&2
+            exit 1
+          fi
+          python3 <<'PY'
+          import json
+          from zipfile import ZipFile
+
+          archive_path = "dist/plugin-sdk/KLite-Public-API-Sources.zip"
+          with ZipFile(archive_path) as archive:
+              entries = archive.namelist()
+              manifest = json.loads(
+                  archive.read(
+                      "KLite-Public-API-Sources/api-sources-manifest.json"
+                  ).decode("utf-8")
+              )
+          java_count = sum(entry.endswith(".java") for entry in entries)
+          if java_count != manifest["typeCount"]:
+              raise SystemExit(
+                  f"Source ZIP contains {java_count} Java files but the manifest declares "
+                  f"{manifest['typeCount']}"
+              )
+          print(f"Verified {java_count} documented public API source files")
+          PY
+          sha256sum "$SOURCE_ZIP"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KLite-Public-API-Sources
+          path: dist/plugin-sdk/KLite-Public-API-Sources.zip
+          if-no-files-found: error
+
+      - name: Publish rolling release asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          SOURCE_ZIP="dist/plugin-sdk/KLite-Public-API-Sources.zip"
+          gh release view plugin-sdk --repo "$GITHUB_REPOSITORY"
+          gh release upload plugin-sdk "$SOURCE_ZIP" --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Verify published source asset bytes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          rm -rf build/api-source-release-verification
+          mkdir -p build/api-source-release-verification
+          gh release download plugin-sdk \
+            --pattern "KLite-Public-API-Sources.zip" \
+            --dir build/api-source-release-verification \
+            --repo "$GITHUB_REPOSITORY"
+          cmp \
+            dist/plugin-sdk/KLite-Public-API-Sources.zip \
+            build/api-source-release-verification/KLite-Public-API-Sources.zip
+          sha256sum build/api-source-release-verification/KLite-Public-API-Sources.zip

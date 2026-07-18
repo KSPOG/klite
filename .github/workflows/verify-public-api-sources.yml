@@ -1,0 +1,110 @@
+name: Verify KLite Public API Sources
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/verify-public-api-sources.yml"
+      - "plugin-sdk/build_api_sources.py"
+      - "marketplace-site/worker/api-reference.generated.js"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/api/**"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/automation/**"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/walker/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/verify-public-api-sources.yml"
+      - "plugin-sdk/build_api_sources.py"
+      - "marketplace-site/worker/api-reference.generated.js"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/api/**"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/automation/**"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/walker/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  verify-api-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Build documented API source ZIP
+        id: build_source_zip
+        continue-on-error: true
+        env:
+          KLITE_SDK_VERSION: verification
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 plugin-sdk/build_api_sources.py 2>&1 | tee api-source-build.log
+
+      - name: Report source bundle build failure
+        if: steps.build_source_zip.outcome == 'failure' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          {
+            echo "### Public API source ZIP verification failed"
+            echo
+            echo '```text'
+            tail -n 40 api-source-build.log
+            echo '```'
+          } > api-source-failure-comment.md
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file api-source-failure-comment.md
+
+      - name: Stop after source bundle build failure
+        if: steps.build_source_zip.outcome == 'failure'
+        run: exit 1
+
+      - name: Inspect source bundle
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SOURCE_ZIP="dist/plugin-sdk/KLite-Public-API-Sources.zip"
+          test -s "$SOURCE_ZIP"
+          unzip -t "$SOURCE_ZIP"
+          unzip -l "$SOURCE_ZIP" | grep -q "KLite-Public-API-Sources/README.md"
+          unzip -l "$SOURCE_ZIP" | grep -q "KLite-Public-API-Sources/api-sources-manifest.json"
+          unzip -l "$SOURCE_ZIP" | grep -q "KLiteClientApi.java"
+          unzip -l "$SOURCE_ZIP" | grep -q "AutomationTask.java"
+          unzip -l "$SOURCE_ZIP" | grep -q "WebWalker.java"
+          if unzip -l "$SOURCE_ZIP" | grep -Eq "/(marketplace|update|launcher)/"; then
+            echo "Private implementation source entered the public API bundle." >&2
+            exit 1
+          fi
+          python3 <<'PY'
+          import json
+          from zipfile import ZipFile
+
+          archive_path = "dist/plugin-sdk/KLite-Public-API-Sources.zip"
+          with ZipFile(archive_path) as archive:
+              entries = archive.namelist()
+              manifest = json.loads(
+                  archive.read(
+                      "KLite-Public-API-Sources/api-sources-manifest.json"
+                  ).decode("utf-8")
+              )
+          java_count = sum(entry.endswith(".java") for entry in entries)
+          if java_count != manifest["typeCount"]:
+              raise SystemExit(
+                  f"Source ZIP contains {java_count} Java files but the manifest declares "
+                  f"{manifest['typeCount']}"
+              )
+          print(f"Verified {java_count} documented public API source files")
+          PY
+          sha256sum "$SOURCE_ZIP"
+
+      - name: Upload verified source bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: KLite-Public-API-Sources
+          path: dist/plugin-sdk/KLite-Public-API-Sources.zip
+          if-no-files-found: error
