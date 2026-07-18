@@ -2,8 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
 
-const siteRoot = path.resolve(import.meta.dirname, "..");
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const siteRoot = path.resolve(testDirectory, "..");
 
 function read(relativePath) {
   return fs.readFileSync(path.join(siteRoot, relativePath), "utf8");
