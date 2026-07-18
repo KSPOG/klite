@@ -1,0 +1,2 @@
+KLite release-preview homepage production marker.
+Generated: 2026-07-18
