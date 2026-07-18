@@ -45,7 +45,8 @@ def main() -> None:
         "  </header>",
         header,
     )
-    text = text.replace("  </header>  </header>", "  </header>", 1)
+    while "  </header>  </header>" in text:
+        text = text.replace("  </header>  </header>", "  </header>", 1)
 
     home_start = (
         '    <section class="landing-hero"'
