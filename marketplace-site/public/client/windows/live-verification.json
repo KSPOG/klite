@@ -1,0 +1,10 @@
+{
+  "verified": true,
+  "checkedAt": "2026-07-18T18:16:09Z",
+  "endpoint": "https://klite-marketplace.pages.dev/download/windows",
+  "version": "1.0.91",
+  "buildSha": "31206e72d5b761bc3044d6088d7cc0f95e29721e",
+  "assetName": "KLite-Setup-1.0.91-bfa58602e6710716.exe",
+  "sha256": "bfa58602e67107160beda82ceed7b4ebb37e5288db97b31c3531916b9f250c26",
+  "size": 89307648
+}
