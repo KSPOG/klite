@@ -1,0 +1,66 @@
+name: Install shared headers and restore marketplace catalog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-navigation-catalog-fix.yml"
+      - "scripts/apply_navigation_catalog_fix.py"
+      - "marketplace-site/public/secondary-page-header.js"
+      - "marketplace-site/public/secondary-page-header.css"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: klite-navigation-catalog-fix
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply website corrections
+        run: python scripts/apply_navigation_catalog_fix.py
+
+      - name: Validate website scripts and markup
+        run: |
+          python -m py_compile scripts/apply_navigation_catalog_fix.py
+          node --check marketplace-site/public/app.js
+          node --check marketplace-site/public/enhancements.js
+          node --check marketplace-site/public/site-shell.js
+          node --check marketplace-site/public/secondary-page-header.js
+          node --check marketplace-site/public/api/app.js
+          python -m json.tool marketplace-site/public/plugins.json >/dev/null
+          grep -Fq 'Copper and Tin Miner' marketplace-site/public/plugins.json
+          grep -Fq 'fetch("/plugins.json?v=20260718-2"' marketplace-site/public/app.js
+          grep -Fq 'if (announcementSync)' marketplace-site/public/app.js
+          grep -Fq 'id="shared-resources-button"' marketplace-site/public/docs/index.html
+          grep -Fq 'id="shared-resources-button"' marketplace-site/public/api/index.html
+          grep -Fq 'id="shared-discord-login"' marketplace-site/public/docs/index.html
+          grep -Fq 'id="shared-discord-login"' marketplace-site/public/api/index.html
+          ! grep -Fq '<a href="/docs/">Developers</a>' marketplace-site/public/index.html
+
+      - name: Commit production corrections
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            marketplace-site/public/index.html \
+            marketplace-site/public/app.js \
+            marketplace-site/public/enhancements.js \
+            marketplace-site/public/final-obsidian.css \
+            marketplace-site/public/docs/index.html \
+            marketplace-site/public/api/index.html \
+            marketplace-site/public/api/app.js \
+            marketplace-site/public/_headers
+          if git diff --cached --quiet; then
+            echo "Navigation and catalog corrections are already installed."
+            exit 0
+          fi
+          git commit -m "Unify website headers and restore marketplace catalog"
+          git push
