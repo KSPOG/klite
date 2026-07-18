@@ -22,6 +22,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   verify-api-sources:
@@ -34,9 +35,34 @@ jobs:
           show-progress: false
 
       - name: Build documented API source ZIP
+        id: build_source_zip
+        continue-on-error: true
         env:
           KLITE_SDK_VERSION: verification
-        run: python3 plugin-sdk/build_api_sources.py
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 plugin-sdk/build_api_sources.py 2>&1 | tee api-source-build.log
+
+      - name: Report source bundle build failure
+        if: steps.build_source_zip.outcome == 'failure' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          {
+            echo "### Public API source ZIP verification failed"
+            echo
+            echo '```text'
+            tail -n 40 api-source-build.log
+            echo '```'
+          } > api-source-failure-comment.md
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file api-source-failure-comment.md
+
+      - name: Stop after source bundle build failure
+        if: steps.build_source_zip.outcome == 'failure'
+        run: exit 1
 
       - name: Inspect source bundle
         shell: bash
