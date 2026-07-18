@@ -38,7 +38,7 @@ document.body.append(accountMenu);
 const originalRenderSignedOut = renderSignedOut;
 renderSignedOut = function renderSignedOutEnhanced() {
   originalRenderSignedOut();
-  apiButton.hidden = true;
+  apiButton.hidden = false;
   accountMenuWrapper.hidden = true;
   closeAccountMenu();
   if (ownerDashboard) ownerDashboard.hidden = true;

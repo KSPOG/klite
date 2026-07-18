@@ -206,7 +206,7 @@ function populateFilter(select, values) {
 
 async function loadCatalog() {
   try {
-    const response = await fetch("plugins.json", { cache: "no-store" });
+    const response = await fetch("/plugins.json?v=20260718-2", { cache: "no-store" });
     if (!response.ok) {
       throw new Error("Catalog request failed with status " + response.status);
     }
@@ -701,24 +701,26 @@ discordBotSettingsForm.addEventListener("submit", async (event) => {
   }
 });
 
-announcementSync.addEventListener("click", async () => {
-  announcementSync.disabled = true;
-  announcementStatus.textContent = "Checking the published catalog...";
-  try {
-    const result = await api(
-      "/api/discord-bot/announcements/sync", { method: "POST" });
-    announcementStatus.textContent = result.skipped === "bot_disabled"
-      ? "Discord bot automation is disabled."
-      : result.skipped === "disabled"
-        ? "Marketplace announcements are disabled."
-        : `${result.announced} announcement${result.announced === 1 ? "" : "s"} posted.`;
-    await loadDiscordBotDashboard();
-  } catch (error) {
-    announcementStatus.textContent = error.message;
-  } finally {
-    announcementSync.disabled = false;
-  }
-});
+if (announcementSync) {
+  announcementSync.addEventListener("click", async () => {
+    announcementSync.disabled = true;
+    announcementStatus.textContent = "Checking the published catalog...";
+    try {
+      const result = await api(
+        "/api/discord-bot/announcements/sync", { method: "POST" });
+      announcementStatus.textContent = result.skipped === "bot_disabled"
+        ? "Discord bot automation is disabled."
+        : result.skipped === "disabled"
+          ? "Marketplace announcements are disabled."
+          : `${result.announced} announcement${result.announced === 1 ? "" : "s"} posted.`;
+      await loadDiscordBotDashboard();
+    } catch (error) {
+      announcementStatus.textContent = error.message;
+    } finally {
+      announcementSync.disabled = false;
+    }
+  });
+}
 
 signInButton.addEventListener("click", () => openAuth("login"));
 registerButton.addEventListener("click", () => openAuth("register"));

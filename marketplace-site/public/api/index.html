@@ -16,16 +16,37 @@
   <link rel="stylesheet" href="/announcement-hero.css?v=2">
   <link rel="stylesheet" href="/announcement-cards.css?v=2">
   <link rel="stylesheet" href="/announcement-docs.css?v=2">
+  <link rel="stylesheet" href="/secondary-page-header.css?v=1">
+  <script src="/secondary-page-header.js?v=1" defer></script>
 </head>
 <body>
-  <header class="site-header api-site-header">
-    <a class="brand" href="/" aria-label="KLite marketplace home">
-      <img src="../assets/klite-marketplace.png" alt="" width="48" height="48">
+  <header class="site-header secondary-site-header">
+    <a class="brand" href="/" aria-label="KLite home">
+      <img src="../assets/klite-marketplace.png" alt="" width="54" height="54">
       <span><strong>KLite</strong><small>Developer Documentation</small></span>
     </a>
-    <div class="account-actions">
-      <a class="button button-secondary" href="/">Marketplace</a>
-      <button id="api-logout" class="button button-danger" type="button" hidden>Log out</button>
+    <nav class="primary-site-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/#marketplace">Marketplace</a>
+    </nav>
+    <div class="account-actions" aria-label="Account actions">
+      <div class="shared-header-menu">
+        <button id="shared-resources-button" class="button button-secondary" type="button" aria-haspopup="menu" aria-expanded="false">Resources</button>
+        <div id="shared-resources-menu" class="shared-header-dropdown" role="menu" hidden>
+          <a role="menuitem" href="/api/">API reference</a>
+          <a role="menuitem" href="/docs/">Plugin development guide</a>
+        </div>
+      </div>
+      <button id="shared-discord-login" class="button button-secondary discord-login-button" type="button">Continue with Discord</button>
+      <div id="shared-account-wrapper" class="shared-header-menu" hidden>
+        <button id="shared-account-button" class="button button-secondary" type="button" aria-haspopup="menu" aria-expanded="false">My Account</button>
+        <div id="shared-account-menu" class="shared-header-dropdown" role="menu" hidden>
+          <a role="menuitem" href="/#account">Account dashboard</a>
+          <a role="menuitem" href="/api/">API reference</a>
+          <a role="menuitem" href="/docs/">Plugin documentation</a>
+          <button id="shared-account-logout" class="danger-link" type="button" role="menuitem">Log out</button>
+        </div>
+      </div>
     </div>
   </header>
 

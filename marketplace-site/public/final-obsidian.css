@@ -202,3 +202,14 @@ body::before {
     display: none !important;
   }
 }
+
+
+/* Authentication visibility must override header flex alignment. */
+.account-actions > [hidden],
+.account-actions [hidden],
+#sign-in-button[hidden],
+#register-button[hidden],
+#api-button[hidden],
+#account-menu-wrapper[hidden] {
+  display: none !important;
+}

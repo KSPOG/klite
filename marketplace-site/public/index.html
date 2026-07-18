@@ -27,7 +27,6 @@
     <nav class="primary-site-nav" aria-label="Primary navigation">
       <button type="button" data-site-route="home">Home</button>
       <button type="button" data-site-route="marketplace">Marketplace</button>
-      <a href="/docs/">Developers</a>
       <button type="button" data-site-route="community" hidden>Community</button>
       <button type="button" data-site-route="account" hidden>Account</button>
       <button type="button" data-site-route="admin" hidden>Administration</button>
@@ -230,6 +229,8 @@
         <article class="account-card"><span class="account-label">Bot account</span><strong id="discord-bot-identity">Loading...</strong><p id="discord-bot-id" class="account-note"></p></article>
         <article class="account-card"><span class="account-label">Discord server</span><strong id="discord-guild-name">Loading...</strong><p id="discord-guild-status" class="account-note"></p></article>
         <article class="account-card"><span class="account-label">Linked accounts</span><strong id="discord-linked-count">0</strong><p id="discord-session-count" class="account-note"></p></article>
+        <article class="account-card"><span class="account-label">Commands</span><strong id="discord-command-count">0</strong><p class="account-note">Registered server commands</p></article>
+        <article class="account-card"><span class="account-label">Announcements</span><strong id="discord-announcement-count">0</strong><p class="account-note">Marketplace announcements sent</p></article>
       </div>
       <form id="discord-bot-settings-form" class="bot-settings-form">
         <div class="bot-settings-group">
@@ -248,6 +249,14 @@
           <h3>Behaviour</h3>
           <label class="toggle-field"><input id="discord-bot-enabled" type="checkbox"><span>Bot automation enabled</span></label>
           <label class="toggle-field"><input id="discord-auto-member-role" type="checkbox"><span>Automatically assign the default member role</span></label>
+        </div>
+        <div class="bot-settings-group">
+          <div><h3>Marketplace announcements</h3><p class="account-note">Choose the channel used for approved plugin release and update announcements.</p></div>
+          <label class="form-field"><span>Announcement channel</span><select id="announcement-channel-id"></select></label>
+          <label class="toggle-field"><input id="announcement-enabled" type="checkbox"><span>Marketplace announcements enabled</span></label>
+          <div class="review-actions bot-settings-actions"><button id="announcement-sync" class="button button-secondary" type="button">Sync published catalog</button></div>
+          <p id="announcement-status" class="account-note" aria-live="polite"></p>
+          <div><h4>Recent announcements</h4><div id="announcement-history" class="submission-list bot-scroll-list"></div></div>
         </div>
         <div class="review-actions bot-settings-actions">
           <button class="button button-primary" type="submit">Save bot settings</button>
@@ -311,9 +320,9 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=release-20260718-1" defer></script>
+  <script src="app.js?v=release-20260718-2" defer></script>
   <script src="enhancements.js?v=release-20260718-1" defer></script>
-  <script src="site-shell.js?v=release-20260718-1" defer></script>
+  <script src="site-shell.js?v=release-20260718-2" defer></script>
   <script src="/homepage-featured.js?v=1" defer></script>
   <script src="/account-routes.js?v=1" defer></script>
   <script src="/credits.js?v=1" defer></script>

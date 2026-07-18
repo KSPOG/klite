@@ -67,7 +67,7 @@ async function load() {
   try {
     const account = await request("/api/account");
     accountStatus.textContent = `Signed in as ${account.account.username}`;
-    logout.hidden = false;
+    if (logout) logout.hidden = false;
 
     reference = await request("/api/docs");
     populateFilters();
@@ -469,7 +469,7 @@ content.addEventListener("click", async (event) => {
   }
 });
 
-logout.addEventListener("click", async () => {
+logout?.addEventListener("click", async () => {
   await request("/api/auth/logout", { method: "POST", body: "{}" });
   window.location.assign("/");
 });

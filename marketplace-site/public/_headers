@@ -149,3 +149,12 @@
 
 /account-routes.js
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
+/plugins.json
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
+/secondary-page-header.js
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
+/secondary-page-header.css
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
