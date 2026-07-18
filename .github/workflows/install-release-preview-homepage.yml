@@ -36,7 +36,7 @@ jobs:
                   continue
               lines.append(line)
           text = '\n'.join(lines)
-          text = text.replace('</head>', '  <link rel="stylesheet" href="/release-preview.css?v=1">\n</head>', 1)
+          text = text.replace('</head>', '  <link rel="stylesheet" href="/release-preview.css?v=2">\n</head>', 1)
 
           header_start = text.index('  <header class="site-header">')
           header_end = text.index('  </header>', header_start) + len('  </header>')
@@ -53,6 +53,9 @@ jobs:
       <button type="button" data-site-route="developer">Developers</button>
       <a href="#release-status">Status</a>
       <a href="#release-download">Changelog</a>
+      <button type="button" data-site-route="community" hidden>Community</button>
+      <button type="button" data-site-route="account" hidden>Account</button>
+      <button type="button" data-site-route="admin" hidden>Administration</button>
     </nav>
 
     <div class="account-actions" aria-label="Account actions">
@@ -174,7 +177,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq '/release-preview.css?v=1' marketplace-site/public/index.html
+          grep -Fq '/release-preview.css?v=2' marketplace-site/public/index.html
           grep -Fq 'class="release-wordmark">KLite</h1>' marketplace-site/public/index.html
           grep -Fq 'class="client-window"' marketplace-site/public/index.html
           grep -Fq 'id="release-status"' marketplace-site/public/index.html
@@ -186,7 +189,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .github/workflows/install-release-preview-homepage.yml
           git add marketplace-site/public/index.html marketplace-site/public/_headers
           git commit -m "Replace homepage with the approved KLite release preview"
-          git push
+          git pull --rebase origin main
+          git push origin HEAD:main
