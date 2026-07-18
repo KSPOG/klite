@@ -1,0 +1,92 @@
+name: Deploy final announcement artwork website
+run-name: Deploy the announcement artwork layout without legacy theme conflicts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-final-announcement-website.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-design:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove legacy theme layers and rotate announcement assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          public = Path('marketplace-site/public')
+          announcement_links = [
+              '  <link rel="stylesheet" href="/announcement-shell.css?v=2">',
+              '  <link rel="stylesheet" href="/announcement-hero.css?v=2">',
+              '  <link rel="stylesheet" href="/announcement-cards.css?v=2">',
+              '  <link rel="stylesheet" href="/announcement-docs.css?v=2">',
+          ]
+
+          for path in sorted(public.rglob('*.html')):
+              lines = []
+              for line in path.read_text('utf-8').splitlines():
+                  if 'obsidian-release-theme.css' in line:
+                      continue
+                  if 'obsidian-site-routes.css' in line:
+                      continue
+                  if 'obsidian-layout-v2.css' in line:
+                      continue
+                  if 'announcement-shell.css' in line:
+                      continue
+                  if 'announcement-hero.css' in line:
+                      continue
+                  if 'announcement-cards.css' in line:
+                      continue
+                  if 'announcement-docs.css' in line:
+                      continue
+                  lines.append(line)
+              text = '\n'.join(lines)
+              text = text.replace('</head>', '\n'.join(announcement_links) + '\n</head>', 1)
+              if path == public / 'index.html':
+                  text = text.replace('<h1 id="hero-title"><span>KLite</span><strong>Client.</strong></h1>', '<h1 id="hero-title"><span>KLite</span><strong>Client</strong></h1>')
+                  text = text.replace('<p class="eyebrow">KLite desktop client</p>', '<p class="eyebrow">A modern RuneLite experience</p>')
+              path.write_text(text + '\n', 'utf-8')
+
+          headers = public / '_headers'
+          current = headers.read_text('utf-8')
+          for route in ('/announcement-shell.css','/announcement-hero.css','/announcement-cards.css','/announcement-docs.css'):
+              if f'\n{route}\n' not in '\n' + current:
+                  current += f'\n{route}\n  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n  Pragma: no-cache\n  Expires: 0\n'
+          headers.write_text(current.rstrip() + '\n', 'utf-8')
+          PY
+
+      - name: Verify the deployed stylesheet order
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in marketplace-site/public/index.html marketplace-site/public/api/index.html marketplace-site/public/docs/index.html; do
+            ! grep -Fq 'obsidian-release-theme.css' "$file"
+            ! grep -Fq 'obsidian-site-routes.css' "$file"
+            grep -Fq '/announcement-shell.css?v=2' "$file"
+            grep -Fq '/announcement-hero.css?v=2' "$file"
+            grep -Fq '/announcement-cards.css?v=2' "$file"
+            grep -Fq '/announcement-docs.css?v=2' "$file"
+          done
+          grep -F '<span>KLite</span><strong>Client</strong>' marketplace-site/public/index.html
+
+      - name: Commit production deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/deploy-final-announcement-website.yml
+          git add marketplace-site/public
+          git commit -m "Deploy website using the KLite announcement artwork style"
+          git push
