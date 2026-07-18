@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="site-shell.css?v=release-20260718-1">
   <link rel="stylesheet" href="/release-preview.css?v=3">
   <link rel="stylesheet" href="/obsidian-release.css?v=1">
+  <link rel="stylesheet" href="/final-obsidian.css?v=1">
+  <link rel="stylesheet" href="/credits.css?v=1">
 </head>
 <body>
   <header class="site-header">
@@ -154,6 +156,15 @@
         <p id="account-summary" class="account-summary"></p>
       </div>
       <div class="account-details">
+        <article class="credit-wallet-card">
+          <div class="credit-wallet-heading">
+            <div><p class="eyebrow">Marketplace currency</p><h3>KLite credits</h3><p>Top up securely, then use credits to purchase Premium and Supporter plugins.</p></div>
+            <div class="credit-balance-block"><span>Available balance</span><strong id="credit-balance">0 credits</strong></div>
+          </div>
+          <div id="credit-pack-grid" class="credit-pack-grid" aria-live="polite"></div>
+          <p id="credit-status" role="status" aria-live="polite"></p>
+          <div class="credit-transaction-wrap"><h4>Recent credit activity</h4><ul id="credit-transaction-list" class="credit-transaction-list"></ul></div>
+        </article>
         <div class="account-card">
           <span class="account-label">Discord</span>
           <strong id="discord-status">Not linked</strong>
@@ -304,5 +315,8 @@
   <script src="enhancements.js?v=release-20260718-1" defer></script>
   <script src="site-shell.js?v=release-20260718-1" defer></script>
   <script src="/homepage-featured.js?v=1" defer></script>
+  <script src="/account-routes.js?v=1" defer></script>
+  <script src="/credits.js?v=1" defer></script>
+  <script src="/credits-admin.js?v=1" defer></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 import core from "./index.js";
+import { handleCredits } from "./credits.js";
 import {
   exchangeDiscordClientLogin,
   handleDiscordLoginCallback,
@@ -10,6 +11,9 @@ export default {
     const url = new URL(request.url);
 
     try {
+      const creditResponse = await handleCredits(request, env, url);
+      if (creditResponse) return creditResponse;
+
       if (request.method === "POST" && url.pathname === "/api/auth/discord/start") {
         return await startDiscordLogin(request, env);
       }

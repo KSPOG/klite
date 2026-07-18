@@ -17,6 +17,10 @@ export async function handleCredits(request, env, url = new URL(request.url)) {
   if (request.method === "POST" && url.pathname === "/api/webhooks/lemonsqueezy") {
     return handleLemonSqueezyWebhook(request, env);
   }
+  if (request.method === "GET" && url.pathname === "/api/credits/prices") {
+    return json({ prices: await activePluginPrices(env) });
+  }
+  if (!url.pathname.startsWith("/api/credits")) return null;
 
   const user = await authenticatedUser(request, env);
   if (!user) {
@@ -28,9 +32,6 @@ export async function handleCredits(request, env, url = new URL(request.url)) {
 
   if (request.method === "GET" && url.pathname === "/api/credits") {
     return json(await creditAccountPayload(env, user.id));
-  }
-  if (request.method === "GET" && url.pathname === "/api/credits/prices") {
-    return json({ prices: await activePluginPrices(env) });
   }
   if (request.method === "POST" && url.pathname === "/api/credits/checkout") {
     return createCreditCheckout(request, env, user);

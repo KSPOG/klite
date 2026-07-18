@@ -1,4 +1,5 @@
 import marketplaceWorker from "../../worker/index.js";
+import { handleCredits } from "../../worker/credits.js";
 import {
   exchangeDiscordClientLogin,
   handleDiscordLoginCallback,
@@ -97,6 +98,9 @@ export async function onRequest(context) {
       const loginResponse = await handleDiscordLoginCallback(requestUrl, env);
       if (loginResponse) return loginResponse;
     }
+
+    const creditResponse = await handleCredits(request, env, requestUrl);
+    if (creditResponse) return creditResponse;
 
     if (!env.PASSWORD_PEPPER) {
       return apiError(
