@@ -38,13 +38,14 @@ replace_exact(
     "AppenderBase diamond operator",
 )
 
-# PMD: schema version is a constant of the persisted data model.
+# This is intentionally instance data because Gson persists it with each stored
+# marketplace state document. Making it static would remove it from JSON.
 persistence = ROOT / "runelite-client/src/main/java/net/runelite/client/plugins/klite/marketplace/KLiteMarketplacePersistenceService.java"
 replace_exact(
     persistence,
     "\t\tprivate int schemaVersion = 1;",
-    "\t\tprivate final int schemaVersion = 1;",
-    "immutable schemaVersion",
+    "\t\t@SuppressWarnings(\"PMD.ImmutableField\")\n\t\tprivate int schemaVersion = 1;",
+    "persisted schemaVersion",
 )
 
 # PMD: both load-failure branches performed identical cleanup and wrapping.
