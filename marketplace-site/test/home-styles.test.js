@@ -43,3 +43,14 @@ test("homepage primary navigation contains one marketplace destination", async (
   assert.equal((navigation.match(/data-site-route="marketplace"/g) ?? []).length, 1);
   assert.doesNotMatch(navigation, /href="#marketplace"[^>]*>[\s\S]*?Plugins<\/a>/);
 });
+test("changelog is client-focused and does not link to GitHub", async () => {
+  const html = await readFile(path.join(siteDirectory, "public/changelog/index.html"), "utf8");
+  const entries = html.match(/<article class="changelog-entry[\s\S]*?<\/article>/g) ?? [];
+
+  assert.ok(entries.length >= 4, "expected multiple client changelog entries");
+  assert.doesNotMatch(html, /github\.com|Implementation details/i);
+  assert.doesNotMatch(html, /data-changelog-(?:filter|category)="[^"]*website/i);
+  assert.match(html, /Client v1\.0\.89/);
+  assert.match(html, /Integrated Shortest Path web walker/);
+  assert.match(html, /Completed client and automation API coverage/);
+});

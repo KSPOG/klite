@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="KLite client, website, marketplace, and developer platform release history.">
+  <meta name="description" content="KLite Windows client release history, automation updates, and client API changes.">
   <meta name="theme-color" content="#020407">
   <title>KLite Changelog</title>
   <link rel="stylesheet" href="/home.css?v=20260718-5">
@@ -49,7 +49,7 @@
       <div>
         <p class="eyebrow">Product updates</p>
         <h1 id="changelog-title">KLite changelog.</h1>
-        <p>Release notes for the Windows client, website, marketplace, plugin SDK, and developer platform—all in one place.</p>
+        <p>Release notes for the KLite Windows client, automation engine, account integration, and public client API.</p>
       </div>
       <aside class="current-release" aria-label="Current Windows release">
         <span>Current Windows client</span>
@@ -60,86 +60,83 @@
     </section>
 
     <section class="changelog-controls" aria-label="Filter changelog entries">
-      <span>Show updates for</span>
+      <span>Show client updates for</span>
       <div class="changelog-filter-list">
         <button class="is-active" type="button" data-changelog-filter="all" aria-pressed="true">All</button>
-        <button type="button" data-changelog-filter="client" aria-pressed="false">Client</button>
-        <button type="button" data-changelog-filter="website" aria-pressed="false">Website</button>
-        <button type="button" data-changelog-filter="marketplace" aria-pressed="false">Marketplace</button>
-        <button type="button" data-changelog-filter="developers" aria-pressed="false">Developers</button>
+        <button type="button" data-changelog-filter="release" aria-pressed="false">Releases</button>
+        <button type="button" data-changelog-filter="automation" aria-pressed="false">Automation</button>
+        <button type="button" data-changelog-filter="account" aria-pressed="false">Account</button>
+        <button type="button" data-changelog-filter="api" aria-pressed="false">Client API</button>
       </div>
     </section>
 
-    <section class="changelog-timeline" aria-label="Release notes">
-      <article class="changelog-entry is-featured" data-changelog-category="website marketplace" id="credits-checkout">
-        <div class="entry-marker" aria-hidden="true"></div>
-        <header>
-          <div><time datetime="2026-07-18">July 18, 2026</time><span class="entry-version">Website</span><span class="entry-version orange">Marketplace</span></div>
-          <h2>Marketplace credits and verified checkout</h2>
-          <p>The KLite wallet is live with account-bound credit packs and signed Test Mode checkout verification.</p>
-        </header>
-        <div class="entry-grid">
-          <section><h3>Added</h3><ul><li>Six USD credit packs with volume bonuses.</li><li>Account balance and transaction history.</li><li>Signed Lemon Squeezy <code>order_created</code> processing.</li></ul></section>
-          <section><h3>Verified</h3><ul><li>The $5.72 pack grants exactly 500 credits.</li><li>Credits are granted only after amount, currency, order, pack, and account validation.</li><li>Duplicate deliveries cannot grant credits twice.</li></ul></section>
-        </div>
-        <footer><a href="https://github.com/KSPOG/klite/pull/29">Implementation details</a></footer>
-      </article>
-
-      <article class="changelog-entry" data-changelog-category="website" id="website-preview">
-        <div class="entry-marker" aria-hidden="true"></div>
-        <header>
-          <div><time datetime="2026-07-18">July 18, 2026</time><span class="entry-version">Website</span></div>
-          <h2>Obsidian website release</h2>
-          <p>The production homepage now uses the approved cyan-and-orange KLite composition across desktop and responsive layouts.</p>
-        </header>
-        <div class="entry-grid">
-          <section><h3>Changed</h3><ul><li>Expanded first-party navigation and account controls.</li><li>Added the metallic KLite hero and client showcase.</li><li>Unified the homepage, API reference, and developer documentation headers.</li></ul></section>
-          <section><h3>Live data</h3><ul><li>Windows version loads from the published client manifest.</li><li>Featured plugins load from the marketplace catalog.</li><li>Status checks use real production endpoints.</li></ul></section>
-        </div>
-        <footer><a href="https://github.com/KSPOG/klite/pull/28">Implementation details</a></footer>
-      </article>
-
-      <article class="changelog-entry" data-changelog-category="client" id="client-1-0-89">
+    <section class="changelog-timeline" aria-label="Client release notes">
+      <article class="changelog-entry is-featured" data-changelog-category="release" id="client-1-0-89">
         <div class="entry-marker" aria-hidden="true"></div>
         <header>
           <div><time datetime="2026-07-17">July 17, 2026</time><span class="entry-version orange">Client v1.0.89</span></div>
-          <h2>Windows client delivery and updates</h2>
-          <p>The signed Windows installer and client update manifest now share one verified rolling-release channel.</p>
+          <h2>Client diagnostics and verified Windows updates</h2>
+          <p>KLite v1.0.89 improves diagnostics, update delivery, and marketplace account continuity in the Windows client.</p>
         </header>
         <div class="entry-grid">
-          <section><h3>Client</h3><ul><li>Added client-side update manifest verification.</li><li>Added the integrated KLite log window for client and plugin diagnostics.</li><li>Added account persistence for marketplace access.</li></ul></section>
-          <section><h3>Distribution</h3><ul><li>Published the 64-bit Windows installer.</li><li>Added automated release synchronization and live download checks.</li><li>Kept the updater and website download route aligned.</li></ul></section>
+          <section><h3>Client</h3><ul><li>Added a shared in-memory log buffer for KLite client and plugin diagnostics.</li><li>Added the integrated log window for client and plugin output.</li><li>Improved timeout handling for client-thread automation requests.</li></ul></section>
+          <section><h3>Updates</h3><ul><li>Checks for KLite updates after client startup.</li><li>Verifies the published client update manifest before installation.</li><li>Uses graceful client shutdown when applying updates.</li></ul></section>
         </div>
       </article>
 
-      <article class="changelog-entry" data-changelog-category="developers client marketplace" id="developer-workflow">
+      <article class="changelog-entry" data-changelog-category="automation" id="shortest-path-walker">
         <div class="entry-marker" aria-hidden="true"></div>
         <header>
-          <div><time datetime="2026-07-17">July 17, 2026</time><span class="entry-version">Developers</span><span class="entry-version orange">Marketplace</span></div>
-          <h2>Plugin SDK, review flow, and hot reload</h2>
-          <p>Plugin developers can build against the public SDK, test locally, and submit releases for marketplace review.</p>
+          <div><time datetime="2026-07-17">July 17, 2026</time><span class="entry-version">Automation</span><span class="entry-version orange">Web walker</span></div>
+          <h2>Integrated Shortest Path web walker</h2>
+          <p>The native Shortest Path implementation is now the default route engine used by KLite automation.</p>
         </header>
         <div class="entry-grid">
-          <section><h3>Developer tools</h3><ul><li>Published the standalone Gradle and IntelliJ starter.</li><li>Added developer-mode JAR hot reload.</li><li>Published the authenticated API reference and worked example.</li></ul></section>
-          <section><h3>Publishing</h3><ul><li>Added role-gated plugin submissions and review decisions.</li><li>Added Discord role synchronization for Plugin Dev access.</li><li>Added streamed plugin loading without permanent client downloads.</li></ul></section>
+          <section><h3>Navigation</h3><ul><li>Added the integrated Shortest Path route engine.</li><li>Uses native Shortest Path routes by default.</li><li>Respects configured arrival distances during pathfinding.</li></ul></section>
+          <section><h3>Reliability</h3><ul><li>Added live walker status to the client overlay.</li><li>Added an optional path overlay for route diagnostics.</li><li>Corrected canvas-tile interaction during walking.</li></ul></section>
         </div>
       </article>
 
-      <article class="changelog-entry" data-changelog-category="marketplace developers" id="copper-tin-miner">
+      <article class="changelog-entry" data-changelog-category="account release" id="client-account-sessions">
         <div class="entry-marker" aria-hidden="true"></div>
         <header>
-          <div><time datetime="2026-07-16">July 16, 2026</time><span class="entry-version orange">Plugin v0.0.2</span></div>
-          <h2>Copper and Tin Miner example</h2>
-          <p>The first streamed marketplace example demonstrates a complete automation-safe mining and banking lifecycle.</p>
+          <div><time datetime="2026-07-17">July 17, 2026</time><span class="entry-version">Account</span><span class="entry-version orange">Client</span></div>
+          <h2>Secure Discord login and persisted client sessions</h2>
+          <p>Marketplace identity can now be restored securely when the KLite client starts.</p>
         </header>
         <div class="entry-grid">
-          <section><h3>Automation</h3><ul><li>Alternates copper and tin at the configured Varrock mine.</li><li>Banks only when the inventory is full.</li><li>Preserves pickaxes during banking.</li></ul></section>
-          <section><h3>Example quality</h3><ul><li>Includes configuration, task, overlay, and plugin entry point.</li><li>Uses the integrated shortest-path walker.</li><li>Ships with complete developer documentation.</li></ul></section>
+          <section><h3>Authentication</h3><ul><li>Replaced the client password form with Discord browser login.</li><li>Added secure OAuth session exchange with the KLite website.</li><li>Persists marketplace login data using Windows DPAPI.</li></ul></section>
+          <section><h3>Client experience</h3><ul><li>Restores protected marketplace sessions on startup.</li><li>Shows the restored marketplace account in the client sidebar.</li><li>Keeps paid-plugin access tied to the authenticated account.</li></ul></section>
         </div>
-        <footer><a href="/docs/">Read the plugin guide</a><a href="/#marketplace">View in marketplace</a></footer>
       </article>
 
-      <p id="changelog-empty" class="changelog-empty" hidden>No entries match this category yet.</p>
+      <article class="changelog-entry" data-changelog-category="api automation" id="client-api-coverage">
+        <div class="entry-marker" aria-hidden="true"></div>
+        <header>
+          <div><time datetime="2026-07-16">July 16, 2026</time><span class="entry-version">Client API</span><span class="entry-version orange">Automation</span></div>
+          <h2>Completed client and automation API coverage</h2>
+          <p>The public KLite API now exposes the remaining supported client surfaces through immutable snapshots and controlled automation operations.</p>
+        </header>
+        <div class="entry-grid">
+          <section><h3>Coverage</h3><ul><li>Added advanced camera, world-view, widget, interface-node, and player-menu surfaces.</li><li>Added client metadata, presentation, enum, and MIDI snapshots.</li><li>Completed detached client-state access without exposing mutable internals.</li></ul></section>
+          <section><h3>Safety</h3><ul><li>Returns stable snapshots for plugin-facing state.</li><li>Routes supported mutations through the client thread.</li><li>Added extended coverage and remaining-surface regression tests.</li></ul></section>
+        </div>
+      </article>
+
+      <article class="changelog-entry" data-changelog-category="automation account" id="account-bank-cache">
+        <div class="entry-marker" aria-hidden="true"></div>
+        <header>
+          <div><time datetime="2026-07-16">July 16, 2026</time><span class="entry-version">Automation</span><span class="entry-version orange">Bank cache</span></div>
+          <h2>Account-persistent bank cache for route planning</h2>
+          <p>The web walker can retain a bank-item snapshot per account between client sessions.</p>
+        </header>
+        <div class="entry-grid">
+          <section><h3>Persistence</h3><ul><li>Stores bank snapshots by account instead of by client session.</li><li>Restores the matching snapshot when the same account returns.</li><li>Keeps data separated between different accounts.</li></ul></section>
+          <section><h3>Web walker</h3><ul><li>Makes cached bank inventory available to route planning.</li><li>Supports planning around item-based travel requirements.</li><li>Includes dedicated persistence and account-isolation tests.</li></ul></section>
+        </div>
+      </article>
+
+      <p id="changelog-empty" class="changelog-empty" hidden>No client updates match this category yet.</p>
     </section>
   </main>
 
