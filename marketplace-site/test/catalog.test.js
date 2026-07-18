@@ -14,10 +14,10 @@ test("publishes the copper and tin miner as a streamed free plugin", async () =>
   assert.equal(plugin.access, "Free");
   assert.equal(plugin.descriptor.version, "1.0.0");
   assert.equal(plugin.artifact.version, plugin.descriptor.version);
-  assert.equal(plugin.artifact.size, 7_459);
+  assert.equal(plugin.artifact.size, 7_490);
   assert.equal(
     plugin.artifact.sha256,
-    "626255fc638da012d02b02b9fa56dbcef0311dded9b12bcfa9d724f43b0783b8"
+    "cfb6226c9bb6e0b052204846659e38604a337e7f51b87408f985bf40cf2ac805"
   );
   assert.deepEqual(plugin.artifact.entrypoints, [
     "net.runelite.client.plugins.klite.examples.miner.CopperTinMinerPlugin"
