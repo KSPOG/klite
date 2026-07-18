@@ -1,0 +1,57 @@
+name: Verify KLite Public API Sources
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/verify-public-api-sources.yml"
+      - "plugin-sdk/build_api_sources.py"
+      - "marketplace-site/worker/api-reference.generated.js"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/api/**"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/automation/**"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/walker/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/verify-public-api-sources.yml"
+      - "plugin-sdk/build_api_sources.py"
+      - "marketplace-site/worker/api-reference.generated.js"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/api/**"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/automation/**"
+      - "runelite-client/src/main/java/net/runelite/client/plugins/klite/walker/**"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-api-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build documented API source ZIP
+        env:
+          KLITE_SDK_VERSION: verification
+        run: python3 plugin-sdk/build_api_sources.py
+
+      - name: Inspect source bundle
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SOURCE_ZIP="dist/plugin-sdk/KLite-Public-API-Sources.zip"
+          test -s "$SOURCE_ZIP"
+          unzip -t "$SOURCE_ZIP"
+          unzip -l "$SOURCE_ZIP" | grep -q "KLite-Public-API-Sources/README.md"
+          unzip -l "$SOURCE_ZIP" | grep -q "KLite-Public-API-Sources/api-sources-manifest.json"
+          unzip -l "$SOURCE_ZIP" | grep -q "KLiteClientApi.java"
+          unzip -l "$SOURCE_ZIP" | grep -q "AutomationTask.java"
+          unzip -l "$SOURCE_ZIP" | grep -q "WebWalker.java"
+          if unzip -l "$SOURCE_ZIP" | grep -Eq "/(marketplace|update|launcher)/"; then
+            echo "Private implementation source entered the public API bundle." >&2
+            exit 1
+          fi
+          JAVA_COUNT="$(unzip -Z1 "$SOURCE_ZIP" | grep -c '\.java$')"
+          test "$JAVA_COUNT" -eq 81
+          sha256sum "$SOURCE_ZIP"
