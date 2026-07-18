@@ -7,6 +7,6 @@
   "assetName": "KLite-Setup-1.0.90-93c9fda1d285be25.exe",
   "sha256": "93c9fda1d285be25e9a0d5177e7cf92dafce790a4427b1a1fd31f52b9144c56f",
   "size": 88913408,
-  "launcher": "KLite.exe",
+  "launcher": "KLiteLauncher.exe",
   "publishedAt": "2026-07-18T16:46:12Z"
 }

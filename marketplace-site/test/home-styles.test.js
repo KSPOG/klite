@@ -43,6 +43,17 @@ test("homepage primary navigation contains one marketplace destination", async (
   assert.equal((navigation.match(/data-site-route="marketplace"/g) ?? []).length, 1);
   assert.doesNotMatch(navigation, /href="#marketplace"[^>]*>[\s\S]*?Plugins<\/a>/);
 });
+
+test("Windows download actions point to the KLite Launcher", async () => {
+  const html = await readFile(path.join(siteDirectory, "public/index.html"), "utf8");
+  const downloadLinks = html.match(/<a[^>]+href="\/download\/windows\?browser=1"[^>]*>[\s\S]*?<\/a>/g) ?? [];
+
+  assert.ok(downloadLinks.length >= 2, "expected launcher download actions");
+  for (const link of downloadLinks) {
+    assert.match(link, /KLite Launcher|Windows launcher/);
+    assert.doesNotMatch(link, /Download KLite \.exe/);
+  }
+});
 test("changelog is client-focused and does not link to GitHub", async () => {
   const html = await readFile(path.join(siteDirectory, "public/changelog/index.html"), "utf8");
   const entries = html.match(/<article class="changelog-entry[\s\S]*?<\/article>/g) ?? [];

@@ -173,7 +173,7 @@ jobs:
               "assetName": os.environ["ASSET_NAME"],
               "sha256": os.environ["INSTALLER_SHA256"],
               "size": int(os.environ["INSTALLER_SIZE"]),
-              "launcher": "KLite.exe",
+              "launcher": "KLiteLauncher.exe",
               "publishedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
           }
 
