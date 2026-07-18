@@ -3,8 +3,8 @@
 
 The website API reference is generated from the direct Java source files in the
 KLite client API, automation runtime, and web-walker packages. This script
-packages that exact documented surface and rejects any drift between the source
-tree and the generated website reference.
+packages exactly the types currently published by that reference. Public client
+implementation classes that are not listed on the API page remain excluded.
 """
 
 from __future__ import annotations
@@ -50,6 +50,10 @@ class PublicType:
     @property
     def relative_java_path(self) -> Path:
         return self.source_path.relative_to(JAVA_ROOT)
+
+    @property
+    def reference_key(self) -> tuple[str, str, str, str]:
+        return self.area, self.package_name, self.name, self.kind
 
 
 def sha256(path: Path) -> str:
@@ -103,34 +107,26 @@ def discover_public_types() -> list[PublicType]:
     return public_types
 
 
-def verify_reference_parity(public_types: list[PublicType], reference: dict) -> None:
-    documented = {
+def select_documented_types(discovered: list[PublicType], reference: dict) -> list[PublicType]:
+    source_by_key = {item.reference_key: item for item in discovered}
+    documented_keys = [
         (section["name"], item["packageName"], item["name"], item["kind"])
         for section in reference.get("sections", [])
         for item in section.get("types", [])
-    }
-    discovered = {
-        (item.area, item.package_name, item.name, item.kind)
-        for item in public_types
-    }
-    missing_from_bundle = sorted(documented - discovered)
-    undocumented_sources = sorted(discovered - documented)
-    if missing_from_bundle or undocumented_sources:
-        details = []
-        if missing_from_bundle:
-            details.append(f"missing documented types: {missing_from_bundle}")
-        if undocumented_sources:
-            details.append(f"undocumented source types: {undocumented_sources}")
+    ]
+    missing = [key for key in documented_keys if key not in source_by_key]
+    if missing:
         raise RuntimeError(
-            "Public API sources do not match api-reference.generated.js; "
-            + "; ".join(details)
-            + ". Run `npm run api:generate` in marketplace-site when the API changes."
+            "Documented API types have no matching Java source: "
+            f"{missing}. Run `npm run api:generate` in marketplace-site when the API changes."
         )
+    selected = [source_by_key[key] for key in documented_keys]
     expected_count = int(reference.get("typeCount", -1))
-    if expected_count != len(public_types):
+    if expected_count != len(selected):
         raise RuntimeError(
-            f"API reference declares {expected_count} types but {len(public_types)} source files were found"
+            f"API reference declares {expected_count} types but {len(selected)} source files were selected"
         )
+    return selected
 
 
 def bundle_readme(version: str, commit: str, count: int) -> bytes:
@@ -142,17 +138,16 @@ def bundle_readme(version: str, commit: str, count: int) -> bytes:
         f"- Source commit: `{commit}`\n"
         f"- Public Java types: `{count}`\n"
         "- Areas: Client API, Automation runtime, Web walker\n\n"
-        "Marketplace, account, updater, launcher, and other private implementation "
-        "packages are intentionally excluded. The source bundle is a reference "
-        "companion to `KLite-Plugin-SDK.jar`; use the SDK JAR as the compile-only "
-        "dependency in plugin projects.\n"
+        "Marketplace, account, updater, launcher, undocumented walker implementations, "
+        "and other private implementation packages are intentionally excluded. The "
+        "source bundle is a reference companion to `KLite-Plugin-SDK.jar`; use the "
+        "SDK JAR as the compile-only dependency in plugin projects.\n"
     ).encode("utf-8")
 
 
 def build_source_bundle(version: str) -> Path:
     reference = documented_reference()
-    public_types = discover_public_types()
-    verify_reference_parity(public_types, reference)
+    public_types = select_documented_types(discover_public_types(), reference)
 
     commit = os.environ.get("GITHUB_SHA", "local")
     manifest = {
