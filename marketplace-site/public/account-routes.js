@@ -7,8 +7,10 @@
     { id: "account-menu-community", label: "Community administration", route: "community", selector: "#discord-bot-dashboard" },
     { id: "account-menu-admin", label: "Marketplace administration", route: "admin", selector: "#owner-admin-dashboard, #review-dashboard" }
   ];
+  let updatePending = false;
 
   function update() {
+    updatePending = false;
     for (const definition of routes) {
       let button = menu.querySelector(`#${definition.id}`);
       if (!button) {
@@ -23,11 +25,22 @@
         });
         menu.insertBefore(button, logout);
       }
-      button.hidden = ![...document.querySelectorAll(definition.selector)].some((panel) => !panel.hidden);
+
+      const shouldHide = ![...document.querySelectorAll(definition.selector)]
+        .some((panel) => !panel.hidden);
+      if (button.hidden !== shouldHide) {
+        button.hidden = shouldHide;
+      }
     }
   }
 
-  new MutationObserver(update).observe(document.body, {
+  function scheduleUpdate() {
+    if (updatePending) return;
+    updatePending = true;
+    requestAnimationFrame(update);
+  }
+
+  new MutationObserver(scheduleUpdate).observe(document.body, {
     subtree: true,
     childList: true,
     attributes: true,
