@@ -8,6 +8,7 @@
   let accountData = null;
   let catalogPlugins = [];
   let prices = new Map();
+  let creditLoadPromise = null;
 
   async function creditApi(path, options = {}) {
     const response = await fetch(path, {
@@ -110,13 +111,18 @@
 
   async function loadCredits() {
     if (!balanceNode || accountPanel?.hidden) return;
+    if (creditLoadPromise) return creditLoadPromise;
     setCreditStatus("Loading credit wallet…");
-    try {
-      applyCreditPayload(await creditApi("/api/credits"));
-      setCreditStatus("Credits are added only after verified payment confirmation.");
-    } catch (error) {
-      if (error.status !== 401) setCreditStatus(error.message, true);
-    }
+    creditLoadPromise = creditApi("/api/credits")
+      .then((payload) => {
+        applyCreditPayload(payload);
+        setCreditStatus("Credits are added only after verified payment confirmation.");
+      })
+      .catch((error) => {
+        if (error.status !== 401) setCreditStatus(error.message, true);
+      })
+      .finally(() => { creditLoadPromise = null; });
+    return creditLoadPromise;
   }
 
   async function loadCreditCatalog() {
@@ -228,4 +234,12 @@
   }
   loadCreditCatalog();
   if (accountPanel && !accountPanel.hidden) loadCredits();
+  if (accountPanel) {
+    new MutationObserver(() => {
+      if (!accountPanel.hidden) loadCredits();
+    }).observe(accountPanel, { attributes: true, attributeFilter: ["hidden"] });
+  }
+  window.addEventListener("pageshow", () => {
+    if (accountPanel && !accountPanel.hidden) loadCredits();
+  });
 })();
