@@ -1,0 +1,67 @@
+name: Install marketplace credits and final website styling
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-credits-and-style.yml"
+      - "scripts/apply_credits_website.py"
+      - "scripts/fix_credits_price_route.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: klite-credits-and-style
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply website and credit integration
+        run: |
+          python scripts/apply_credits_website.py
+          python scripts/fix_credits_price_route.py
+
+      - name: Validate generated assets
+        run: |
+          python -m py_compile scripts/apply_credits_website.py scripts/fix_credits_price_route.py
+          node --check marketplace-site/worker/credits.js
+          node --check marketplace-site/worker/entry.js
+          node --check marketplace-site/functions/api/'[[path]].js'
+          node --check marketplace-site/public/credits.js
+          node --check marketplace-site/public/credits-admin.js
+          node --check marketplace-site/public/account-routes.js
+          python -m json.tool marketplace-site/public/plugins.json >/dev/null
+          grep -Fq 'id="credit-balance"' marketplace-site/public/index.html
+          grep -Fq '/final-obsidian.css?v=1' marketplace-site/public/index.html
+          grep -Fq 'handleCredits' marketplace-site/functions/api/'[[path]].js'
+          grep -Fq 'handleCredits' marketplace-site/worker/entry.js
+          ! grep -Fq '>Example Source<' marketplace-site/public/docs/index.html
+          ! grep -Fq 'github.com/KSPOG/klite/tree/main/examples' marketplace-site/public/plugins.json
+
+      - name: Commit production integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            marketplace-site/public/index.html \
+            marketplace-site/public/docs/index.html \
+            marketplace-site/public/api/index.html \
+            marketplace-site/public/plugins.json \
+            marketplace-site/public/_headers \
+            marketplace-site/worker/credits.js \
+            marketplace-site/worker/entry.js \
+            marketplace-site/functions/api/'[[path]].js'
+          if git diff --cached --quiet; then
+            echo "Website credit integration is already installed."
+            exit 0
+          fi
+          git commit -m "Activate marketplace credits and final obsidian website"
+          git push
