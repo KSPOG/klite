@@ -3,7 +3,10 @@ from pathlib import Path
 INDEX = Path("marketplace-site/public/index.html")
 HEADERS = Path("marketplace-site/public/_headers")
 HEADER_PARTIAL = Path("scripts/release-preview/header.html")
-HOME_PARTIAL = Path("scripts/release-preview/home.html")
+HOME_PARTIALS = (
+    Path("scripts/release-preview/home-1.html"),
+    Path("scripts/release-preview/home-2.html"),
+)
 
 
 def replace_range(text: str, start: str, end: str, value: str) -> str:
@@ -15,7 +18,9 @@ def replace_range(text: str, start: str, end: str, value: str) -> str:
 def main() -> None:
     text = INDEX.read_text(encoding="utf-8")
     header = HEADER_PARTIAL.read_text(encoding="utf-8").rstrip()
-    home = HOME_PARTIAL.read_text(encoding="utf-8").rstrip() + "\n\n"
+    home = "\n".join(
+        part.read_text(encoding="utf-8").rstrip() for part in HOME_PARTIALS
+    ) + "\n\n"
 
     blocked_styles = (
         "announcement-shell.css",
