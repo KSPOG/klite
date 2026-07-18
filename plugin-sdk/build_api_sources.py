@@ -90,7 +90,7 @@ def discover_public_types() -> list[PublicType]:
             package_match = PACKAGE_PATTERN.search(source)
             type_match = TYPE_PATTERN.search(source)
             if not package_match or not type_match:
-                raise RuntimeError(f"Unable to identify public type in {source_path}")
+                continue
             public_types.append(
                 PublicType(
                     area=area,
