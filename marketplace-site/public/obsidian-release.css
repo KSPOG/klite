@@ -1,0 +1,324 @@
+/* Production corrections for the approved KLite obsidian release composition. */
+:root {
+  --obsidian-cyan: #00d9ff;
+  --obsidian-orange: #ff741d;
+  --obsidian-surface: rgba(4, 10, 16, 0.9);
+  --obsidian-border: rgba(139, 181, 204, 0.22);
+}
+
+html {
+  background: #010408;
+}
+
+body {
+  background-color: #010408 !important;
+  background-image:
+    linear-gradient(180deg, rgba(0, 5, 10, 0.12), rgba(0, 3, 7, 0.78)),
+    url('/assets/obsidian-fractures.svg') !important;
+  background-repeat: no-repeat !important;
+  background-position: center top !important;
+  background-size: cover !important;
+  background-attachment: fixed !important;
+}
+
+body::before {
+  content: "" !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+  opacity: 0.56 !important;
+  background:
+    radial-gradient(circle at 8% 34%, rgba(0, 217, 255, 0.17), transparent 28rem),
+    radial-gradient(circle at 92% 35%, rgba(255, 116, 29, 0.15), transparent 30rem),
+    repeating-linear-gradient(132deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 24px) !important;
+  mask-image: none !important;
+}
+
+.site-header {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 84px !important;
+  margin: 0 !important;
+  padding: 0 clamp(18px, 4vw, 72px) !important;
+  display: grid !important;
+  grid-template-columns: minmax(230px, auto) minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: clamp(16px, 2.5vw, 38px) !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(128, 175, 199, 0.24) !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(90deg, rgba(0, 217, 255, 0.055), rgba(4, 10, 16, 0.94) 28%, rgba(4, 10, 16, 0.96) 72%, rgba(255, 116, 29, 0.055)),
+    url('/assets/obsidian-fractures.svg') center 18% / cover !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.48), inset 0 -1px rgba(255,255,255,0.025) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+}
+
+.site-header::after {
+  left: clamp(18px, 4vw, 72px) !important;
+  right: clamp(18px, 4vw, 72px) !important;
+  background: linear-gradient(90deg, var(--obsidian-cyan), transparent 38%, transparent 62%, var(--obsidian-orange)) !important;
+  opacity: 0.9 !important;
+}
+
+.brand {
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+
+.brand img {
+  width: 58px !important;
+  height: 58px !important;
+}
+
+.brand strong {
+  font-size: 1.08rem !important;
+  letter-spacing: 0.22em !important;
+}
+
+.brand small {
+  font-size: 0.58rem !important;
+  letter-spacing: 0.2em !important;
+}
+
+.primary-site-nav {
+  min-width: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  flex-wrap: nowrap !important;
+  gap: clamp(14px, 2vw, 30px) !important;
+  overflow: hidden !important;
+}
+
+.primary-site-nav > button,
+.primary-site-nav > a {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  min-height: 84px !important;
+  padding: 0 2px !important;
+  white-space: nowrap !important;
+  font-size: 0.79rem !important;
+  letter-spacing: 0.015em !important;
+}
+
+.account-actions {
+  min-width: max-content !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+}
+
+.account-actions .button,
+.klite-resources-menu > .button {
+  min-height: 42px !important;
+  padding-inline: 15px !important;
+  border-radius: 7px !important;
+  background: linear-gradient(180deg, rgba(13, 24, 34, 0.94), rgba(4, 9, 14, 0.98)) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,0.035), 0 8px 20px rgba(0,0,0,0.25) !important;
+}
+
+.release-hero,
+.release-card,
+.release-panel,
+.release-status,
+.release-download-strip,
+.client-window,
+.workspace-heading,
+.catalog,
+.account-panel,
+.bot-dashboard,
+.developer-dashboard,
+.owner-admin-panel {
+  background-image:
+    linear-gradient(145deg, rgba(5, 14, 22, 0.93), rgba(2, 7, 12, 0.97)),
+    url('/assets/obsidian-fractures.svg') !important;
+  background-position: center !important;
+  background-size: cover !important;
+  border-color: var(--obsidian-border) !important;
+}
+
+.release-hero {
+  overflow: hidden !important;
+  border: 1px solid rgba(129, 174, 198, 0.2) !important;
+  border-radius: 12px !important;
+  box-shadow:
+    -18px 0 55px rgba(0, 217, 255, 0.08),
+    18px 0 55px rgba(255, 116, 29, 0.08),
+    0 28px 70px rgba(0,0,0,0.4) !important;
+}
+
+.release-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(105deg, rgba(0,217,255,0.08), transparent 31%, transparent 69%, rgba(255,116,29,0.075)),
+    radial-gradient(circle at 12% 52%, rgba(0,217,255,0.12), transparent 30%),
+    radial-gradient(circle at 88% 49%, rgba(255,116,29,0.11), transparent 31%);
+  mix-blend-mode: screen;
+}
+
+.release-copy,
+.client-stage {
+  position: relative;
+  z-index: 1;
+}
+
+.release-card,
+.release-panel,
+.release-status,
+.release-download-strip {
+  box-shadow: inset 0 1px rgba(255,255,255,0.025), 0 14px 32px rgba(0,0,0,0.28) !important;
+}
+
+.plugin-samples {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.plugin-sample {
+  width: 100% !important;
+  min-height: 108px !important;
+  padding: 15px !important;
+  display: grid !important;
+  grid-template-columns: 44px minmax(0, 1fr) !important;
+  grid-template-rows: auto auto 1fr auto !important;
+  gap: 3px 12px !important;
+  text-align: left !important;
+  color: #ecf5f8 !important;
+  border: 1px solid rgba(128, 172, 194, 0.21) !important;
+  border-radius: 7px !important;
+  background:
+    linear-gradient(145deg, rgba(8, 20, 30, 0.92), rgba(2, 7, 12, 0.98)),
+    url('/assets/obsidian-fractures.svg') center / cover !important;
+  cursor: pointer !important;
+  box-shadow: inset 0 1px rgba(255,255,255,0.03) !important;
+}
+
+.plugin-sample:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(0, 217, 255, 0.55) !important;
+  box-shadow: 0 0 24px rgba(0,217,255,0.1), inset 0 1px rgba(255,255,255,0.04) !important;
+}
+
+.plugin-sample-icon {
+  grid-row: 1 / 5 !important;
+  width: 44px !important;
+  height: 44px !important;
+  object-fit: contain !important;
+  align-self: start !important;
+  filter: drop-shadow(-3px 0 8px rgba(0,217,255,0.24)) drop-shadow(3px 0 8px rgba(255,116,29,0.18)) !important;
+}
+
+.plugin-sample strong {
+  grid-column: 2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.plugin-sample small,
+.plugin-sample .plugin-sample-description {
+  grid-column: 2 !important;
+  color: #91a8b5 !important;
+}
+
+.plugin-sample .plugin-sample-description {
+  margin: 5px 0 0 !important;
+  font-size: 0.69rem !important;
+  line-height: 1.42 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.plugin-sample footer {
+  grid-column: 2 !important;
+  margin-top: 8px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  color: #88a3b2 !important;
+}
+
+.plugin-sample footer b {
+  color: #63e47a !important;
+}
+
+.featured-plugin-message {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 20px;
+  color: #93a9b5;
+  border: 1px dashed rgba(130, 173, 195, 0.22);
+  border-radius: 7px;
+  background: rgba(2, 8, 13, 0.7);
+}
+
+@media (max-width: 1180px) {
+  .site-header {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    padding-inline: 18px !important;
+    gap: 16px !important;
+  }
+
+  .brand small {
+    display: none !important;
+  }
+
+  .primary-site-nav {
+    gap: 16px !important;
+  }
+
+  .primary-site-nav > button,
+  .primary-site-nav > a {
+    font-size: 0.74rem !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    position: relative !important;
+    grid-template-columns: 1fr auto !important;
+    min-height: auto !important;
+    padding-top: 10px !important;
+  }
+
+  .primary-site-nav {
+    grid-column: 1 / -1 !important;
+    order: 3 !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+  }
+
+  .primary-site-nav > button,
+  .primary-site-nav > a {
+    min-height: 46px !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .brand strong {
+    font-size: 0.94rem !important;
+  }
+
+  .brand img {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .account-actions .button,
+  .klite-resources-menu > .button {
+    padding-inline: 11px !important;
+    font-size: 0.72rem !important;
+  }
+}
