@@ -1,11 +1,204 @@
 /* Final header and obsidian presentation corrections. */
-:root{--klite-cyan:#00d9ff;--klite-orange:#ff741d;--klite-line:rgba(132,178,201,.23)}
-html,body{background-color:#02060a!important}
-body{background-image:linear-gradient(180deg,rgba(1,5,9,.04),rgba(1,4,8,.56)),url('/assets/obsidian-fractures.svg')!important;background-position:center top!important;background-size:max(1600px,100vw) auto!important;background-repeat:repeat-y!important;background-attachment:fixed!important}
-body::before{opacity:.34!important;background:radial-gradient(circle at 4% 26%,rgba(0,217,255,.25),transparent 31rem),radial-gradient(circle at 96% 27%,rgba(255,116,29,.22),transparent 34rem),repeating-linear-gradient(126deg,rgba(255,255,255,.014) 0 1px,transparent 1px 25px)!important}
-.site-header{width:100%!important;max-width:none!important;min-height:78px!important;padding:0 clamp(16px,3.4vw,64px)!important;grid-template-columns:minmax(205px,auto) minmax(280px,1fr) minmax(max-content,auto)!important;gap:clamp(16px,2.4vw,36px)!important;overflow:visible!important;background:linear-gradient(90deg,rgba(0,217,255,.08),rgba(3,9,14,.95) 29%,rgba(3,9,14,.97) 71%,rgba(255,116,29,.08)),url('/assets/obsidian-fractures.svg') center 12%/max(1500px,100vw) auto!important;border-bottom:1px solid rgba(132,185,211,.28)!important;box-shadow:0 18px 48px rgba(0,0,0,.52)!important}
-.brand img{width:54px!important;height:54px!important}.primary-site-nav{min-width:0!important;width:100%!important;justify-content:center!important;gap:clamp(18px,2.4vw,34px)!important;overflow:hidden!important}.primary-site-nav>button,.primary-site-nav>a{min-height:78px!important;white-space:nowrap!important}.primary-site-nav [data-site-route="account"],.primary-site-nav [data-site-route="community"],.primary-site-nav [data-site-route="admin"]{display:none!important}.account-actions{min-width:max-content!important;flex-wrap:nowrap!important;gap:9px!important}.account-actions .button,.klite-resources-menu>.button{min-height:40px!important;padding-inline:13px!important;white-space:nowrap!important}
-.release-hero,.release-card,.release-panel,.release-status,.release-download-strip,.client-window,.workspace-heading,.catalog,.account-panel,.owner-admin-panel{background-image:linear-gradient(145deg,rgba(6,17,26,.9),rgba(2,7,12,.96)),url('/assets/obsidian-fractures.svg')!important;background-position:center!important;background-size:max(1200px,100%) auto!important;border-color:var(--klite-line)!important}.release-hero{border-color:rgba(135,186,211,.27)!important;box-shadow:-20px 0 60px rgba(0,217,255,.12),20px 0 60px rgba(255,116,29,.1),0 32px 76px rgba(0,0,0,.5)!important}
-@media(max-width:1180px){.site-header{grid-template-columns:auto minmax(240px,1fr) auto!important;padding-inline:18px!important}.brand small{display:none!important}}
-@media(max-width:900px){.site-header{grid-template-columns:1fr auto!important;padding-top:8px!important}.primary-site-nav{grid-column:1/-1!important;order:3!important;justify-content:flex-start!important;overflow-x:auto!important}.primary-site-nav>button,.primary-site-nav>a{min-height:44px!important}}
-@media(max-width:620px){.account-actions .klite-resources-menu{display:none!important}}
+:root {
+  --klite-cyan: #00d9ff;
+  --klite-orange: #ff741d;
+  --klite-line: rgba(132, 178, 201, 0.23);
+  --klite-header-height: 78px;
+  --klite-header-control-height: 42px;
+}
+
+html,
+body {
+  background-color: #02060a !important;
+}
+
+body {
+  background-image:
+    linear-gradient(180deg, rgba(1, 5, 9, 0.04), rgba(1, 4, 8, 0.56)),
+    url('/assets/obsidian-fractures.svg') !important;
+  background-position: center top !important;
+  background-size: max(1600px, 100vw) auto !important;
+  background-repeat: repeat-y !important;
+  background-attachment: fixed !important;
+}
+
+body::before {
+  opacity: 0.34 !important;
+  background:
+    radial-gradient(circle at 4% 26%, rgba(0, 217, 255, 0.25), transparent 31rem),
+    radial-gradient(circle at 96% 27%, rgba(255, 116, 29, 0.22), transparent 34rem),
+    repeating-linear-gradient(126deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 25px) !important;
+}
+
+.site-header {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: var(--klite-header-height) !important;
+  padding: 0 clamp(16px, 3.4vw, 64px) !important;
+  grid-template-columns: minmax(205px, auto) minmax(280px, 1fr) minmax(max-content, auto) !important;
+  align-items: center !important;
+  gap: clamp(16px, 2.4vw, 36px) !important;
+  overflow: visible !important;
+  background:
+    linear-gradient(90deg, rgba(0, 217, 255, 0.08), rgba(3, 9, 14, 0.95) 29%, rgba(3, 9, 14, 0.97) 71%, rgba(255, 116, 29, 0.08)),
+    url('/assets/obsidian-fractures.svg') center 12% / max(1500px, 100vw) auto !important;
+  border-bottom: 1px solid rgba(132, 185, 211, 0.28) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.52) !important;
+}
+
+.brand {
+  display: flex !important;
+  align-items: center !important;
+  align-self: stretch !important;
+  height: var(--klite-header-height) !important;
+  margin: 0 !important;
+}
+
+.brand > span {
+  display: grid !important;
+  align-content: center !important;
+  line-height: 1.15 !important;
+}
+
+.brand img {
+  width: 54px !important;
+  height: 54px !important;
+  flex: 0 0 54px !important;
+}
+
+.primary-site-nav {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: var(--klite-header-height) !important;
+  align-self: stretch !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  gap: clamp(18px, 2.4vw, 34px) !important;
+  overflow: hidden !important;
+}
+
+.primary-site-nav > button,
+.primary-site-nav > a {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  height: var(--klite-header-height) !important;
+  min-height: var(--klite-header-height) !important;
+  margin: 0 !important;
+  padding-block: 0 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.primary-site-nav [data-site-route="account"],
+.primary-site-nav [data-site-route="community"],
+.primary-site-nav [data-site-route="admin"] {
+  display: none !important;
+}
+
+.account-actions {
+  min-width: max-content !important;
+  height: var(--klite-header-height) !important;
+  align-self: stretch !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 9px !important;
+  margin: 0 !important;
+}
+
+.account-actions > * {
+  align-self: center !important;
+  margin-block: 0 !important;
+}
+
+.klite-resources-menu:not([hidden]),
+.account-menu-wrapper:not([hidden]) {
+  display: flex !important;
+  align-items: center !important;
+  height: var(--klite-header-control-height) !important;
+}
+
+.account-actions .button,
+.klite-resources-menu > .button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  height: var(--klite-header-control-height) !important;
+  min-height: var(--klite-header-control-height) !important;
+  margin: 0 !important;
+  padding-block: 0 !important;
+  padding-inline: 13px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.release-hero,
+.release-card,
+.release-panel,
+.release-status,
+.release-download-strip,
+.client-window,
+.workspace-heading,
+.catalog,
+.account-panel,
+.owner-admin-panel {
+  background-image:
+    linear-gradient(145deg, rgba(6, 17, 26, 0.9), rgba(2, 7, 12, 0.96)),
+    url('/assets/obsidian-fractures.svg') !important;
+  background-position: center !important;
+  background-size: max(1200px, 100%) auto !important;
+  border-color: var(--klite-line) !important;
+}
+
+.release-hero {
+  border-color: rgba(135, 186, 211, 0.27) !important;
+  box-shadow:
+    -20px 0 60px rgba(0, 217, 255, 0.12),
+    20px 0 60px rgba(255, 116, 29, 0.1),
+    0 32px 76px rgba(0, 0, 0, 0.5) !important;
+}
+
+@media (max-width: 1180px) {
+  .site-header {
+    grid-template-columns: auto minmax(240px, 1fr) auto !important;
+    padding-inline: 18px !important;
+  }
+
+  .brand small {
+    display: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    grid-template-columns: 1fr auto !important;
+    padding-top: 8px !important;
+  }
+
+  .brand,
+  .account-actions {
+    height: 62px !important;
+  }
+
+  .primary-site-nav {
+    grid-column: 1 / -1 !important;
+    order: 3 !important;
+    justify-content: flex-start !important;
+    height: 44px !important;
+    overflow-x: auto !important;
+  }
+
+  .primary-site-nav > button,
+  .primary-site-nav > a {
+    height: 44px !important;
+    min-height: 44px !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .account-actions .klite-resources-menu {
+    display: none !important;
+  }
+}
