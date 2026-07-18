@@ -9,22 +9,30 @@ import {
 const API_PAGE_ASSETS = new Set([
   "/api/",
   "/api/index.html",
-  "/api/api.css",
   "/api/app.js",
   "/api/controls.js"
 ]);
+const API_REFERENCE_STYLESHEET = "/api-reference.css";
 
 export default {
   async fetch(request, env, context) {
     const url = new URL(request.url);
+    const isAssetRequest = request.method === "GET" || request.method === "HEAD";
 
-    if ((request.method === "GET" || request.method === "HEAD") && url.pathname === "/api") {
+    if (isAssetRequest && url.pathname === "/api") {
       const target = new URL(request.url);
       target.pathname = "/api/";
       return Response.redirect(target.toString(), 308);
     }
 
-    if ((request.method === "GET" || request.method === "HEAD") && API_PAGE_ASSETS.has(url.pathname)) {
+    if (isAssetRequest && url.pathname === "/api/api.css") {
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = API_REFERENCE_STYLESHEET;
+      assetUrl.search = "";
+      return env.ASSETS.fetch(new Request(assetUrl, request));
+    }
+
+    if (isAssetRequest && API_PAGE_ASSETS.has(url.pathname)) {
       return env.ASSETS.fetch(request);
     }
 
