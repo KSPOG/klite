@@ -12,10 +12,12 @@ function read(relativePath) {
 }
 
 test("API page loads its dedicated responsive reference stylesheet", () => {
-  const html = read("public/api/index.html");
   const css = read("public/api-reference.css");
+  const controls = read("public/api/controls.js");
 
-  assert.match(html, /href="api\.css\?v=20260718-1"/);
+  assert.match(controls, /const apiStylesheetHref = "\/api-reference\.css\?v=20260718-2"/);
+  assert.match(controls, /stylesheet\.dataset\.apiReferenceStyles = "true"/);
+  assert.match(controls, /document\.head\.append\(stylesheet\)/);
   assert.match(css, /\.api-type\s*>\s*summary\s*\{/);
   assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) auto/);
   assert.match(css, /\.api-type-title-copy\s*\{/);
