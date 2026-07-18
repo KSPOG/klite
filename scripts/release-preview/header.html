@@ -1,0 +1,32 @@
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="KLite home">
+      <img src="assets/klite-marketplace.png" alt="" width="62" height="62">
+      <span><strong>KLite</strong><small>Elite OSRS Client</small></span>
+    </a>
+
+    <nav class="primary-site-nav" aria-label="Primary navigation">
+      <button type="button" data-site-route="home">Home</button>
+      <button type="button" data-site-route="marketplace">Marketplace</button>
+      <button type="button" data-site-route="marketplace">Plugins</button>
+      <button type="button" data-site-route="developer">Developers</button>
+      <a href="#release-status">Status</a>
+      <a href="#release-download">Changelog</a>
+      <button type="button" data-site-route="community" hidden>Community</button>
+      <button type="button" data-site-route="account" hidden>Account</button>
+      <button type="button" data-site-route="admin" hidden>Administration</button>
+    </nav>
+
+    <div class="account-actions" aria-label="Account actions">
+      <button id="sign-in-button" class="button button-secondary" type="button">Sign in</button>
+      <button id="register-button" class="button button-primary" type="button">Register</button>
+      <a id="api-button" class="button button-secondary" href="/api/" hidden>API</a>
+      <div id="account-menu-wrapper" class="account-menu-wrapper" hidden>
+        <button id="account-button" class="button button-secondary account-name-button" type="button" hidden>My Account</button>
+        <div id="account-menu" class="account-menu" hidden>
+          <button id="account-menu-account" type="button">Account</button>
+          <a href="/api/">API reference</a>
+          <button id="account-menu-logout" class="danger-link" type="button">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
