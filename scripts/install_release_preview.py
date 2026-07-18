@@ -45,6 +45,7 @@ def main() -> None:
         "  </header>",
         header,
     )
+    text = text.replace("  </header>  </header>", "  </header>", 1)
 
     home_start = (
         '    <section class="landing-hero"'
@@ -71,6 +72,8 @@ def main() -> None:
         raise RuntimeError(f"Missing required homepage tokens: {missing}")
     if 'class="landing-hero"' in text:
         raise RuntimeError("Legacy landing hero was not removed")
+    if "</header>  </header>" in text:
+        raise RuntimeError("Duplicate header closing tag remains")
 
     INDEX.write_text(text.rstrip() + "\n", encoding="utf-8")
 
