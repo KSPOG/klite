@@ -1,0 +1,603 @@
+/* KLite release layout v2: final structural layer shared by every public page. */
+:root {
+  --v2-max: 1480px;
+  --v2-black: #010306;
+  --v2-obsidian: #05090e;
+  --v2-panel: #0a121b;
+  --v2-panel-raised: #101c28;
+  --v2-silver: #edf5f9;
+  --v2-muted: #9db1bf;
+  --v2-cyan: #13dcff;
+  --v2-cyan-soft: rgba(19, 220, 255, .16);
+  --v2-orange: #ff721f;
+  --v2-orange-soft: rgba(255, 114, 31, .14);
+  --v2-line: rgba(180, 211, 228, .2);
+  --v2-line-bright: rgba(220, 238, 247, .36);
+  --v2-shadow: 0 32px 90px rgba(0, 0, 0, .58);
+}
+
+html {
+  background: var(--v2-black) !important;
+}
+
+body {
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 2% 8%, rgba(19,220,255,.14), transparent 30rem),
+    radial-gradient(circle at 98% 8%, rgba(255,114,31,.13), transparent 32rem),
+    linear-gradient(180deg, #010306 0%, #05090e 46%, #020407 100%) !important;
+}
+
+body::before {
+  opacity: .7 !important;
+  background-image:
+    linear-gradient(118deg, transparent 0 29%, rgba(19,220,255,.055) 29.08%, transparent 29.2%),
+    linear-gradient(62deg, transparent 0 72%, rgba(255,114,31,.05) 72.08%, transparent 72.2%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.012) 0 1px, transparent 1px 22px) !important;
+  background-size: auto !important;
+}
+
+/* Shared navigation frame */
+.site-header,
+.api-site-header,
+.docs-site-header {
+  position: sticky !important;
+  top: 14px !important;
+  z-index: 100 !important;
+  width: min(var(--v2-max), calc(100% - 28px)) !important;
+  min-height: 88px !important;
+  margin: 14px auto 0 !important;
+  padding: 12px 22px !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 24px !important;
+  border: 1px solid var(--v2-line-bright) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px) !important;
+  background:
+    linear-gradient(90deg, rgba(19,220,255,.09), transparent 28%, transparent 72%, rgba(255,114,31,.08)),
+    linear-gradient(180deg, rgba(13,22,31,.985), rgba(3,7,11,.985)) !important;
+  backdrop-filter: blur(22px) !important;
+  box-shadow: 0 22px 70px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+
+.site-header::after,
+.api-site-header::after,
+.docs-site-header::after {
+  left: 18px !important;
+  right: 18px !important;
+  bottom: 0 !important;
+  height: 2px !important;
+  opacity: 1 !important;
+  background: linear-gradient(90deg, var(--v2-cyan), transparent 42%, transparent 58%, var(--v2-orange)) !important;
+  box-shadow: -12px 0 22px rgba(19,220,255,.32), 12px 0 22px rgba(255,114,31,.28) !important;
+}
+
+.brand img {
+  width: 58px !important;
+  height: 64px !important;
+  filter: drop-shadow(-9px 0 18px rgba(19,220,255,.38)) drop-shadow(9px 0 18px rgba(255,114,31,.3)) !important;
+}
+
+.brand strong {
+  color: #fff !important;
+  font-size: 1.02rem !important;
+  letter-spacing: .12em !important;
+  text-transform: uppercase !important;
+}
+
+.brand small {
+  color: var(--v2-muted) !important;
+  font-size: .72rem !important;
+  letter-spacing: .035em !important;
+}
+
+.primary-site-nav {
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+.primary-site-nav button,
+.primary-site-nav a {
+  min-height: 44px !important;
+  padding: 10px 15px !important;
+  border: 1px solid transparent !important;
+  border-radius: 0 !important;
+  color: rgba(225,238,246,.72) !important;
+  background: transparent !important;
+  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px) !important;
+}
+
+.primary-site-nav button:hover,
+.primary-site-nav a:hover,
+.primary-site-nav button.is-active,
+.primary-site-nav a.is-active {
+  border-color: rgba(19,220,255,.28) !important;
+  color: #fff !important;
+  background: linear-gradient(180deg, rgba(20,39,51,.92), rgba(5,12,18,.92)) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.025), 0 0 22px rgba(19,220,255,.08) !important;
+}
+
+/* Shared content width */
+main,
+.api-page-main,
+.docs-layout,
+footer {
+  width: min(var(--v2-max), calc(100% - 40px)) !important;
+}
+
+main,
+.api-page-main {
+  margin-inline: auto !important;
+}
+
+/* Home release hero */
+.landing-hero {
+  min-height: 720px !important;
+  margin-top: 30px !important;
+  padding: clamp(42px, 6vw, 88px) !important;
+  grid-template-columns: minmax(360px, .82fr) minmax(540px, 1.18fr) !important;
+  gap: clamp(42px, 6vw, 94px) !important;
+  border: 1px solid var(--v2-line-bright) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px), 0 22px) !important;
+  background:
+    radial-gradient(circle at 18% 42%, rgba(19,220,255,.16), transparent 28rem),
+    radial-gradient(circle at 88% 34%, rgba(255,114,31,.13), transparent 30rem),
+    linear-gradient(112deg, rgba(8,18,27,.995), rgba(2,5,9,.995) 54%, rgba(19,9,5,.98)) !important;
+  box-shadow: var(--v2-shadow), inset 0 1px 0 rgba(255,255,255,.055) !important;
+}
+
+.landing-hero::before {
+  opacity: .9 !important;
+  background:
+    linear-gradient(119deg, transparent 0 33%, rgba(19,220,255,.13) 33.08%, transparent 33.24%),
+    linear-gradient(61deg, transparent 0 74%, rgba(255,114,31,.12) 74.08%, transparent 74.24%),
+    repeating-linear-gradient(137deg, transparent 0 46px, rgba(255,255,255,.014) 46px 47px) !important;
+}
+
+.landing-copy {
+  align-self: center !important;
+}
+
+.landing-copy .eyebrow {
+  font-size: .72rem !important;
+  letter-spacing: .2em !important;
+}
+
+.landing-copy h1 {
+  max-width: 9.4ch !important;
+  margin: 18px 0 26px !important;
+  font-size: clamp(4.4rem, 6.5vw, 7.3rem) !important;
+  line-height: .84 !important;
+  letter-spacing: -.075em !important;
+  text-transform: uppercase !important;
+}
+
+.landing-copy h1 span {
+  color: var(--v2-silver) !important;
+  text-shadow: -3px 0 28px rgba(19,220,255,.16), 0 8px 0 rgba(0,0,0,.65) !important;
+}
+
+.landing-copy h1 strong {
+  background: linear-gradient(90deg, var(--v2-cyan) 0%, #eaf8fc 45%, #fff 54%, var(--v2-orange) 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,.55));
+}
+
+.hero-description {
+  max-width: 620px !important;
+  color: #a8bbc8 !important;
+  font-size: 1.06rem !important;
+  line-height: 1.75 !important;
+}
+
+.hero-preview {
+  perspective: 1400px !important;
+}
+
+.hero-preview-frame {
+  position: relative !important;
+  border: 1px solid rgba(215,235,245,.32) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px) !important;
+  transform: rotateY(-5deg) rotateX(1.5deg) !important;
+  transform-origin: center !important;
+  background: #03070b !important;
+  box-shadow: -28px 0 70px rgba(19,220,255,.15), 28px 0 70px rgba(255,114,31,.13), 0 46px 90px rgba(0,0,0,.64) !important;
+}
+
+.hero-preview-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid transparent;
+  background: linear-gradient(90deg, var(--v2-cyan), transparent 36%, transparent 64%, var(--v2-orange)) border-box;
+  mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+/* Home feature field */
+.brand-divider {
+  margin: 38px 0 26px !important;
+  color: #b8c9d4 !important;
+  letter-spacing: .24em !important;
+}
+
+.feature-grid {
+  gap: 18px !important;
+}
+
+.brand-feature-card {
+  min-height: 220px !important;
+  padding: 28px !important;
+  border: 1px solid var(--v2-line) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px) !important;
+  background: linear-gradient(145deg, rgba(14,25,36,.97), rgba(3,7,12,.99)) !important;
+  box-shadow: 0 24px 55px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.brand-feature-card h3 {
+  font-size: 1.3rem !important;
+}
+
+.download-card {
+  min-height: 180px !important;
+  margin-top: 30px !important;
+  border-width: 1px !important;
+  border-color: rgba(215,235,245,.3) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px) !important;
+  background:
+    linear-gradient(90deg, rgba(19,220,255,.105), transparent 36%, transparent 64%, rgba(255,114,31,.095)),
+    linear-gradient(180deg, rgba(11,21,30,.99), rgba(2,6,10,.99)) !important;
+}
+
+/* SPA workspace routes */
+.workspace-heading {
+  min-height: 230px !important;
+  margin-top: 30px !important;
+  padding: clamp(32px, 5vw, 64px) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(17px 0, 100% 0, 100% calc(100% - 17px), calc(100% - 17px) 100%, 0 100%, 0 17px) !important;
+}
+
+.workspace-heading-copy {
+  align-items: center !important;
+}
+
+.workspace-heading h1 {
+  max-width: 12ch !important;
+  font-size: clamp(3rem, 5vw, 5.2rem) !important;
+  line-height: .92 !important;
+  text-transform: uppercase !important;
+}
+
+.workspace-heading-description {
+  max-width: 680px !important;
+  font-size: 1.02rem !important;
+}
+
+.secondary-site-nav {
+  padding-top: 18px !important;
+  border-top: 1px solid rgba(180,211,228,.14) !important;
+}
+
+.account-panel,
+.catalog,
+.bot-dashboard,
+.developer-dashboard {
+  margin-top: 22px !important;
+  padding: clamp(28px, 4vw, 48px) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px) !important;
+}
+
+.account-panel > div:first-child,
+.catalog-heading,
+.bot-dashboard-heading {
+  padding-bottom: 24px !important;
+  border-bottom: 1px solid rgba(180,211,228,.15) !important;
+}
+
+.account-panel h2,
+.catalog h2,
+.bot-dashboard h2,
+.developer-dashboard h2 {
+  font-size: clamp(2.2rem, 4vw, 4rem) !important;
+  line-height: .94 !important;
+  text-transform: uppercase !important;
+}
+
+.account-details,
+.bot-status-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.catalog-controls {
+  display: grid !important;
+  grid-template-columns: minmax(280px, 1.6fr) repeat(3, minmax(160px, .5fr)) !important;
+  gap: 12px !important;
+  padding: 18px !important;
+  border-radius: 0 !important;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px) !important;
+}
+
+.plugin-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.plugin-card,
+.account-card,
+.submission-card,
+.review-card,
+.bot-settings-group,
+.bot-detail-grid > section,
+.user-role-card {
+  border-radius: 0 !important;
+  clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px) !important;
+}
+
+/* API documentation layout */
+.api-page-main {
+  margin: 30px auto 90px !important;
+}
+
+.api-reference-page {
+  gap: 22px !important;
+}
+
+.api-hero {
+  position: relative !important;
+  isolation: isolate !important;
+  min-height: 610px !important;
+  padding: clamp(42px, 6vw, 82px) !important;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, .45fr) !important;
+  align-items: center !important;
+  border-radius: 0 !important;
+  clip-path: polygon(20px 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px) !important;
+  background:
+    radial-gradient(circle at 10% 28%, rgba(19,220,255,.17), transparent 30rem),
+    radial-gradient(circle at 92% 26%, rgba(255,114,31,.14), transparent 28rem),
+    linear-gradient(112deg, rgba(9,20,29,.995), rgba(2,5,9,.995) 56%, rgba(20,9,5,.97)) !important;
+  box-shadow: var(--v2-shadow) !important;
+}
+
+.api-hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: clamp(24px, 6vw, 90px);
+  top: 50%;
+  width: min(34vw, 430px);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  opacity: .16;
+  background: url('/assets/klite-marketplace.png') center / contain no-repeat;
+  filter: drop-shadow(-18px 0 28px rgba(19,220,255,.5)) drop-shadow(18px 0 28px rgba(255,114,31,.42));
+}
+
+.api-hero h1 {
+  max-width: 10ch !important;
+  font-size: clamp(4rem, 6vw, 7rem) !important;
+  line-height: .86 !important;
+  text-transform: uppercase !important;
+  color: var(--v2-silver) !important;
+  text-shadow: -3px 0 30px rgba(19,220,255,.13), 3px 0 30px rgba(255,114,31,.12), 0 9px 0 rgba(0,0,0,.6) !important;
+}
+
+.api-hero-status {
+  align-self: end !important;
+  padding: 24px !important;
+  border-radius: 0 !important;
+  clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px) !important;
+  border-color: rgba(215,235,245,.24) !important;
+  background: rgba(2,6,10,.83) !important;
+  backdrop-filter: blur(14px) !important;
+}
+
+.api-important-note,
+.api-orientation,
+.api-browser,
+.api-learning-panel {
+  border-radius: 0 !important;
+  clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px) !important;
+}
+
+.api-orientation,
+.api-browser {
+  padding: clamp(28px, 4vw, 48px) !important;
+}
+
+.api-section-title-row h2 {
+  max-width: 15ch !important;
+  font-size: clamp(2.4rem, 4vw, 4.1rem) !important;
+  line-height: .94 !important;
+  text-transform: uppercase !important;
+}
+
+.api-guide-card,
+.api-concept-grid article,
+.api-example,
+.api-type,
+.api-method,
+.api-filter-grid {
+  border-radius: 0 !important;
+  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px) !important;
+}
+
+.api-guide-card {
+  min-height: 185px !important;
+}
+
+.api-reference-content {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+/* Long-form developer documentation */
+.docs-layout {
+  max-width: var(--v2-max) !important;
+  margin: 30px auto 100px !important;
+  grid-template-columns: 300px minmax(0, 1fr) !important;
+  gap: 26px !important;
+}
+
+.docs-sidebar {
+  top: 120px !important;
+  border-radius: 0 !important;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px) !important;
+  background: linear-gradient(155deg, rgba(13,24,34,.995), rgba(2,6,10,.995)) !important;
+}
+
+.docs-hero {
+  min-height: 620px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  padding: clamp(42px, 6vw, 86px) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px) !important;
+  background:
+    radial-gradient(circle at 8% 25%, rgba(19,220,255,.17), transparent 30rem),
+    radial-gradient(circle at 95% 20%, rgba(255,114,31,.14), transparent 28rem),
+    linear-gradient(112deg, rgba(9,20,29,.995), rgba(2,5,9,.995) 58%, rgba(20,9,5,.97)) !important;
+}
+
+.docs-hero h1 {
+  max-width: 10ch !important;
+  font-size: clamp(4rem, 6vw, 7rem) !important;
+  line-height: .86 !important;
+  text-transform: uppercase !important;
+  text-shadow: -3px 0 30px rgba(19,220,255,.15), 3px 0 30px rgba(255,114,31,.13), 0 9px 0 rgba(0,0,0,.62) !important;
+}
+
+.docs-section {
+  padding: clamp(30px, 4vw, 52px) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px) !important;
+}
+
+.docs-section h2 {
+  font-size: clamp(2.2rem, 4vw, 3.8rem) !important;
+  text-transform: uppercase !important;
+}
+
+/* Consistent form and control geometry */
+.button,
+input,
+select,
+textarea,
+.account-menu,
+.auth-dialog,
+.api-area-tabs button,
+.api-copy-button {
+  border-radius: 0 !important;
+}
+
+.button {
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px) !important;
+}
+
+@media (max-width: 1180px) {
+  .site-header,
+  .api-site-header,
+  .docs-site-header {
+    grid-template-columns: auto 1fr !important;
+  }
+
+  .primary-site-nav {
+    grid-column: 1 / -1 !important;
+    order: 3 !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+  }
+
+  .landing-hero,
+  .api-hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-preview-frame {
+    transform: none !important;
+  }
+
+  .plugin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .catalog-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .docs-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .docs-sidebar {
+    position: static !important;
+    max-height: none !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .site-header,
+  .api-site-header,
+  .docs-site-header {
+    top: 0 !important;
+    width: 100% !important;
+    margin-top: 0 !important;
+    padding: 10px 12px !important;
+    border-inline: 0 !important;
+    clip-path: none !important;
+  }
+
+  main,
+  .api-page-main,
+  .docs-layout,
+  footer {
+    width: calc(100% - 18px) !important;
+  }
+
+  .landing-hero,
+  .api-hero,
+  .docs-hero {
+    min-height: auto !important;
+    padding: 32px 18px !important;
+    clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 9px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 9px 100%, 0 calc(100% - 9px), 0 9px) !important;
+  }
+
+  .landing-copy h1,
+  .api-hero h1,
+  .docs-hero h1 {
+    font-size: clamp(3rem, 16vw, 4.9rem) !important;
+  }
+
+  .feature-grid,
+  .plugin-grid,
+  .account-details,
+  .bot-status-grid,
+  .api-reference-content,
+  .catalog-controls {
+    grid-template-columns: 1fr !important;
+  }
+
+  .workspace-heading-copy,
+  .api-section-title-row {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .brand-feature-card {
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+    padding: 18px !important;
+  }
+}
