@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="KLite client, website, marketplace, and developer platform release history.">
+  <meta name="theme-color" content="#020407">
+  <title>KLite Changelog</title>
+  <link rel="icon" type="image/png" href="../assets/klite-marketplace.png">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../site-shell.css">
+  <link rel="stylesheet" href="/final-obsidian.css?v=1">
+  <link rel="stylesheet" href="/secondary-page-header.css?v=1">
+  <link rel="stylesheet" href="changelog.css?v=1">
+  <script src="/secondary-page-header.js?v=1" defer></script>
+  <script src="changelog.js?v=1" defer></script>
+</head>
+<body>
+  <header class="site-header secondary-site-header">
+    <a class="brand" href="/" aria-label="KLite home">
+      <img src="../assets/klite-marketplace.png" alt="" width="54" height="54">
+      <span><strong>KLite</strong><small>Release History</small></span>
+    </a>
+    <nav class="primary-site-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/#marketplace">Marketplace</a>
+      <a href="/docs/">Developers</a>
+      <a class="is-active" href="/changelog/" aria-current="page">Changelog</a>
+    </nav>
+    <div class="account-actions" aria-label="Account actions">
+      <div class="shared-header-menu">
+        <button id="shared-resources-button" class="button button-secondary" type="button" aria-haspopup="menu" aria-expanded="false">Resources</button>
+        <div id="shared-resources-menu" class="shared-header-dropdown" role="menu" hidden>
+          <a role="menuitem" href="/api/">API reference</a>
+          <a role="menuitem" href="/docs/">Plugin development guide</a>
+        </div>
+      </div>
+      <button id="shared-discord-login" class="button button-secondary discord-login-button" type="button">Continue with Discord</button>
+      <div id="shared-account-wrapper" class="shared-header-menu" hidden>
+        <button id="shared-account-button" class="button button-secondary" type="button" aria-haspopup="menu" aria-expanded="false">My Account</button>
+        <div id="shared-account-menu" class="shared-header-dropdown" role="menu" hidden>
+          <a role="menuitem" href="/#account">Account dashboard</a>
+          <a role="menuitem" href="/api/">API reference</a>
+          <a role="menuitem" href="/docs/">Plugin documentation</a>
+          <button id="shared-account-logout" class="danger-link" type="button" role="menuitem">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="changelog-main">
+    <section class="changelog-hero" aria-labelledby="changelog-title">
+      <div>
+        <p class="eyebrow">Product updates</p>
+        <h1 id="changelog-title">KLite changelog.</h1>
+        <p>Release notes for the Windows client, website, marketplace, plugin SDK, and developer platform—all in one place.</p>
+      </div>
+      <aside class="current-release" aria-label="Current Windows release">
+        <span>Current Windows client</span>
+        <strong>v1.0.89</strong>
+        <small>Published July 17, 2026</small>
+        <a href="/download/windows?browser=1">Download latest</a>
+      </aside>
+    </section>
+
+    <section class="changelog-controls" aria-label="Filter changelog entries">
+      <span>Show updates for</span>
+      <div class="changelog-filter-list">
+        <button class="is-active" type="button" data-changelog-filter="all" aria-pressed="true">All</button>
+        <button type="button" data-changelog-filter="client" aria-pressed="false">Client</button>
+        <button type="button" data-changelog-filter="website" aria-pressed="false">Website</button>
+        <button type="button" data-changelog-filter="marketplace" aria-pressed="false">Marketplace</button>
+        <button type="button" data-changelog-filter="developers" aria-pressed="false">Developers</button>
+      </div>
+    </section>
+
+    <section class="changelog-timeline" aria-label="Release notes">
+      <article class="changelog-entry is-featured" data-changelog-category="website marketplace" id="credits-checkout">
+        <div class="entry-marker" aria-hidden="true"></div>
+        <header>
+          <div><time datetime="2026-07-18">July 18, 2026</time><span class="entry-version">Website</span><span class="entry-version orange">Marketplace</span></div>
+          <h2>Marketplace credits and verified checkout</h2>
+          <p>The KLite wallet is live with account-bound credit packs and signed Test Mode checkout verification.</p>
+        </header>
+        <div class="entry-grid">
+          <section><h3>Added</h3><ul><li>Six USD credit packs with volume bonuses.</li><li>Account balance and transaction history.</li><li>Signed Lemon Squeezy <code>order_created</code> processing.</li></ul></section>
+          <section><h3>Verified</h3><ul><li>The $5.72 pack grants exactly 500 credits.</li><li>Credits are granted only after amount, currency, order, pack, and account validation.</li><li>Duplicate deliveries cannot grant credits twice.</li></ul></section>
+        </div>
+        <footer><a href="https://github.com/KSPOG/klite/pull/29">Implementation details</a></footer>
+      </article>
+
+      <article class="changelog-entry" data-changelog-category="website" id="website-preview">
+        <div class="entry-marker" aria-hidden="true"></div>
+        <header>
+          <div><time datetime="2026-07-18">July 18, 2026</time><span class="entry-version">Website</span></div>
+          <h2>Obsidian website release</h2>
+          <p>The production homepage now uses the approved cyan-and-orange KLite composition across desktop and responsive layouts.</p>
+        </header>
+        <div class="entry-grid">
+          <section><h3>Changed</h3><ul><li>Expanded first-party navigation and account controls.</li><li>Added the metallic KLite hero and client showcase.</li><li>Unified the homepage, API reference, and developer documentation headers.</li></ul></section>
+          <section><h3>Live data</h3><ul><li>Windows version loads from the published client manifest.</li><li>Featured plugins load from the marketplace catalog.</li><li>Status checks use real production endpoints.</li></ul></section>
+        </div>
+        <footer><a href="https://github.com/KSPOG/klite/pull/28">Implementation details</a></footer>
+      </article>
+
+      <article class="changelog-entry" data-changelog-category="client" id="client-1-0-89">
+        <div class="entry-marker" aria-hidden="true"></div>
+        <header>
+          <div><time datetime="2026-07-17">July 17, 2026</time><span class="entry-version orange">Client v1.0.89</span></div>
+          <h2>Windows client delivery and updates</h2>
+          <p>The signed Windows installer and client update manifest now share one verified rolling-release channel.</p>
+        </header>
+        <div class="entry-grid">
+          <section><h3>Client</h3><ul><li>Added client-side update manifest verification.</li><li>Added the integrated KLite log window for client and plugin diagnostics.</li><li>Added account persistence for marketplace access.</li></ul></section>
+          <section><h3>Distribution</h3><ul><li>Published the 64-bit Windows installer.</li><li>Added automated release synchronization and live download checks.</li><li>Kept the updater and website download route aligned.</li></ul></section>
+        </div>
+      </article>
+
+      <article class="changelog-entry" data-changelog-category="developers client marketplace" id="developer-workflow">
+        <div class="entry-marker" aria-hidden="true"></div>
+        <header>
+          <div><time datetime="2026-07-17">July 17, 2026</time><span class="entry-version">Developers</span><span class="entry-version orange">Marketplace</span></div>
+          <h2>Plugin SDK, review flow, and hot reload</h2>
+          <p>Plugin developers can build against the public SDK, test locally, and submit releases for marketplace review.</p>
+        </header>
+        <div class="entry-grid">
+          <section><h3>Developer tools</h3><ul><li>Published the standalone Gradle and IntelliJ starter.</li><li>Added developer-mode JAR hot reload.</li><li>Published the authenticated API reference and worked example.</li></ul></section>
+          <section><h3>Publishing</h3><ul><li>Added role-gated plugin submissions and review decisions.</li><li>Added Discord role synchronization for Plugin Dev access.</li><li>Added streamed plugin loading without permanent client downloads.</li></ul></section>
+        </div>
+      </article>
+
+      <article class="changelog-entry" data-changelog-category="marketplace developers" id="copper-tin-miner">
+        <div class="entry-marker" aria-hidden="true"></div>
+        <header>
+          <div><time datetime="2026-07-16">July 16, 2026</time><span class="entry-version orange">Plugin v1.0.0</span></div>
+          <h2>Copper and Tin Miner example</h2>
+          <p>The first streamed marketplace example demonstrates a complete automation-safe mining and banking lifecycle.</p>
+        </header>
+        <div class="entry-grid">
+          <section><h3>Automation</h3><ul><li>Alternates copper and tin at the configured Varrock mine.</li><li>Banks only when the inventory is full.</li><li>Preserves pickaxes during banking.</li></ul></section>
+          <section><h3>Example quality</h3><ul><li>Includes configuration, task, overlay, and plugin entry point.</li><li>Uses the integrated shortest-path walker.</li><li>Ships with complete developer documentation.</li></ul></section>
+        </div>
+        <footer><a href="/docs/">Read the plugin guide</a><a href="/#marketplace">View in marketplace</a></footer>
+      </article>
+
+      <p id="changelog-empty" class="changelog-empty" hidden>No entries match this category yet.</p>
+    </section>
+  </main>
+
+  <footer class="changelog-footer">
+    <p>KLite is an independent RuneLite-based client project.</p>
+    <nav aria-label="Footer navigation"><a href="/">Home</a><a href="/#marketplace">Marketplace</a><a href="/docs/">Developers</a><a href="/api/">API reference</a></nav>
+  </footer>
+</body>
+</html>
