@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="site-shell.css?v=release-20260718-1">
   <link rel="stylesheet" href="/release-preview.css?v=3">
+  <link rel="stylesheet" href="/obsidian-release.css?v=1">
 </head>
 <body>
   <header class="site-header">
@@ -24,10 +25,7 @@
     <nav class="primary-site-nav" aria-label="Primary navigation">
       <button type="button" data-site-route="home">Home</button>
       <button type="button" data-site-route="marketplace">Marketplace</button>
-      <button type="button" data-site-route="marketplace">Plugins</button>
-      <button type="button" data-site-route="developer">Developers</button>
-      <a href="#release-status">Status</a>
-      <a href="#release-download">Changelog</a>
+      <a href="/docs/">Developers</a>
       <button type="button" data-site-route="community" hidden>Community</button>
       <button type="button" data-site-route="account" hidden>Account</button>
       <button type="button" data-site-route="admin" hidden>Administration</button>
@@ -99,12 +97,9 @@
 
           <div class="release-lower">
             <section class="release-panel" aria-labelledby="featured-plugins-title">
-              <div class="release-panel-title"><h2 id="featured-plugins-title">Featured Plugins</h2><button type="button" data-site-route="marketplace">View all</button></div>
-              <div class="plugin-samples">
-                <article class="plugin-sample"><strong>GPU Plugin</strong><small>Utility</small><footer><span>★ 4.9</span><b>Free</b></footer></article>
-                <article class="plugin-sample"><strong>AFK Skiller</strong><small>Skilling</small><footer><span>★ 4.8</span><b>Marketplace</b></footer></article>
-                <article class="plugin-sample"><strong>Loot Tracker</strong><small>Utility</small><footer><span>★ 4.7</span><b>Free</b></footer></article>
-                <article class="plugin-sample"><strong>Bank Organizer</strong><small>Utility</small><footer><span>★ 4.8</span><b>Marketplace</b></footer></article>
+              <div class="release-panel-title"><h2 id="featured-plugins-title">Published Plugins</h2><button type="button" data-site-route="marketplace">View all</button></div>
+              <div id="featured-plugin-list" class="plugin-samples" aria-live="polite">
+                <p class="featured-plugin-message">Loading published marketplace plugins…</p>
               </div>
             </section>
 
@@ -120,16 +115,15 @@
         </div>
 
         <aside id="release-status" class="release-status" aria-labelledby="status-title">
-          <div id="status-title" class="status-title"><span class="status-dot"></span><strong>System Status</strong></div>
-          <p class="status-overall">● All Systems Operational</p>
+          <div id="status-title" class="status-title"><span class="status-dot"></span><strong>Platform Access</strong></div>
+          <p class="status-overall">KLite services and resources</p>
           <div class="status-list">
-            <div class="status-row"><span>Website</span><b>Operational</b></div>
-            <div class="status-row"><span>Authentication</span><b>Operational</b></div>
-            <div class="status-row"><span>Marketplace</span><b>Operational</b></div>
-            <div class="status-row"><span>Downloads</span><b>Operational</b></div>
-            <div class="status-row"><span>API</span><b>Operational</b></div>
+            <div class="status-row"><span>Marketplace</span><b>Browse</b></div>
+            <div class="status-row"><span>Windows client</span><b>Download</b></div>
+            <div class="status-row"><span>Developer guide</span><b>Open</b></div>
+            <div class="status-row"><span>API reference</span><b>Open</b></div>
           </div>
-          <a class="status-link" href="#release-status">⌁ View Status Page</a>
+          <a class="status-link" href="/docs/">Open Developer Resources</a>
         </aside>
       </div>
     </section>
@@ -309,5 +303,6 @@
   <script src="app.js?v=release-20260718-1" defer></script>
   <script src="enhancements.js?v=release-20260718-1" defer></script>
   <script src="site-shell.js?v=release-20260718-1" defer></script>
+  <script src="/homepage-featured.js?v=1" defer></script>
 </body>
 </html>
