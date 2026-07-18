@@ -22,20 +22,24 @@ def main() -> None:
         part.read_text(encoding="utf-8").rstrip() for part in HOME_PARTIALS
     ) + "\n\n"
 
-    blocked_styles = (
+    blocked_assets = (
         "announcement-shell.css",
         "announcement-hero.css",
         "announcement-cards.css",
         "announcement-docs.css",
         "release-preview.css",
+        "obsidian-release.css",
+        "homepage-featured.js",
     )
     text = "\n".join(
         line for line in text.splitlines()
-        if not any(name in line for name in blocked_styles)
+        if not any(name in line for name in blocked_assets)
     )
     text = text.replace(
         "</head>",
-        '  <link rel="stylesheet" href="/release-preview.css?v=3">\n</head>',
+        '  <link rel="stylesheet" href="/release-preview.css?v=3">\n'
+        '  <link rel="stylesheet" href="/obsidian-release.css?v=1">\n'
+        "</head>",
         1,
     )
 
@@ -59,12 +63,19 @@ def main() -> None:
         '    <section id="workspace-heading"',
         home,
     )
+    text = text.replace(
+        "</body>",
+        '  <script src="/homepage-featured.js?v=1" defer></script>\n</body>',
+        1,
+    )
 
     required = (
         '/release-preview.css?v=3',
+        '/obsidian-release.css?v=1',
+        '/homepage-featured.js?v=1',
         'class="release-wordmark">KLite</h1>',
         'class="client-window"',
-        'id="release-status"',
+        'id="featured-plugin-list"',
         'id="workspace-heading"',
         'id="auth-dialog"',
     )
@@ -73,20 +84,27 @@ def main() -> None:
         raise RuntimeError(f"Missing required homepage tokens: {missing}")
     if 'class="landing-hero"' in text:
         raise RuntimeError("Legacy landing hero was not removed")
+    if "GPU Plugin" in text or "AFK Skiller" in text:
+        raise RuntimeError("Placeholder marketplace cards remain")
     if "</header>  </header>" in text:
         raise RuntimeError("Duplicate header closing tag remains")
 
     INDEX.write_text(text.rstrip() + "\n", encoding="utf-8")
 
     headers = HEADERS.read_text(encoding="utf-8")
-    route = "/release-preview.css"
-    if f"\n{route}\n" not in f"\n{headers}":
-        headers += (
-            f"\n{route}\n"
-            "  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n"
-            "  Pragma: no-cache\n"
-            "  Expires: 0\n"
-        )
+    for route in (
+        "/release-preview.css",
+        "/obsidian-release.css",
+        "/homepage-featured.js",
+        "/assets/obsidian-fractures.svg",
+    ):
+        if f"\n{route}\n" not in f"\n{headers}":
+            headers += (
+                f"\n{route}\n"
+                "  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n"
+                "  Pragma: no-cache\n"
+                "  Expires: 0\n"
+            )
     HEADERS.write_text(headers.rstrip() + "\n", encoding="utf-8")
 
 
