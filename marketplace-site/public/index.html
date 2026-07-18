@@ -14,6 +14,10 @@
   <link rel="stylesheet" href="site-shell.css?v=release-20260718-1">
   <link rel="stylesheet" href="/obsidian-release-theme.css?v=release-20260718-3">
   <link rel="stylesheet" href="/obsidian-site-routes.css?v=1">
+  <link rel="stylesheet" href="/announcement-shell.css?v=1">
+  <link rel="stylesheet" href="/announcement-hero.css?v=1">
+  <link rel="stylesheet" href="/announcement-cards.css?v=1">
+  <link rel="stylesheet" href="/announcement-docs.css?v=1">
 </head>
 <body>
   <header class="site-header">
@@ -51,15 +55,15 @@
       <div class="hero-energy hero-energy-cyan" aria-hidden="true"></div>
       <div class="hero-energy hero-energy-orange" aria-hidden="true"></div>
       <div class="landing-copy">
-        <p class="eyebrow">Focused RuneLite-based client</p>
-        <h1 id="hero-title"><span>KLite for</span><strong>Windows.</strong></h1>
-        <p class="hero-description">A focused desktop client with reviewed marketplace plugins, automation-safe APIs, an integrated web walker, and owner-controlled publishing.</p>
+        <p class="eyebrow">KLite desktop client</p>
+        <h1 id="hero-title"><span>KLite</span><strong>Client.</strong></h1>
+        <p class="hero-description">A modern, performance-focused RuneLite client.</p>
         <div class="hero-actions">
           <a class="button button-primary download-button" href="/download/windows?browser=1">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>
-            Download KLite .exe
+            Download for Windows
           </a>
-          <button id="explore-marketplace-button" class="button button-secondary hero-marketplace-button" type="button">Explore marketplace <span aria-hidden="true">›</span></button>
+          <button id="explore-marketplace-button" class="button button-secondary hero-marketplace-button" type="button">Explore Marketplace <span aria-hidden="true">›</span></button>
         </div>
         <p class="hero-platform-note"><span class="windows-mark" aria-hidden="true"></span>Windows 10/11 <b>•</b> Self-contained installer <b>•</b> Current release channel</p>
       </div>
@@ -106,7 +110,7 @@
       <div class="download-card-action">
         <a class="button button-primary download-button" href="/download/windows?browser=1">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>
-          Download KLite .exe
+          Download for Windows
         </a>
         <small>Windows 10/11 • Self-contained installer</small>
       </div>
@@ -210,7 +214,6 @@
         <article class="account-card"><span class="account-label">Bot account</span><strong id="discord-bot-identity">Loading...</strong><p id="discord-bot-id" class="account-note"></p></article>
         <article class="account-card"><span class="account-label">Discord server</span><strong id="discord-guild-name">Loading...</strong><p id="discord-guild-status" class="account-note"></p></article>
         <article class="account-card"><span class="account-label">Linked accounts</span><strong id="discord-linked-count">0</strong><p id="discord-session-count" class="account-note"></p></article>
-        <article class="account-card"><span class="account-label">Bot commands</span><strong id="discord-command-count">0</strong><p id="discord-announcement-count" class="account-note"></p></article>
       </div>
       <form id="discord-bot-settings-form" class="bot-settings-form">
         <div class="bot-settings-group">
@@ -222,26 +225,21 @@
         </div>
         <div class="bot-settings-group">
           <div><h3>Channel settings</h3><p class="account-note">Only text and announcement channels from the designated server are accepted.</p></div>
-          <label class="form-field"><span>Plugin announcements</span><select id="announcement-channel-id"></select></label>
           <label class="form-field"><span>Bot audit log</span><select id="discord-audit-channel"></select></label>
           <label class="form-field"><span>Member welcome channel</span><select id="discord-welcome-channel"></select></label>
         </div>
         <div class="bot-settings-group bot-settings-toggles">
           <h3>Behaviour</h3>
           <label class="toggle-field"><input id="discord-bot-enabled" type="checkbox"><span>Bot automation enabled</span></label>
-          <label class="toggle-field"><input id="announcement-enabled" type="checkbox"><span>Marketplace announcements enabled</span></label>
           <label class="toggle-field"><input id="discord-auto-member-role" type="checkbox"><span>Automatically assign the default member role</span></label>
         </div>
         <div class="review-actions bot-settings-actions">
           <button class="button button-primary" type="submit">Save bot settings</button>
-          <button id="announcement-sync" class="button button-secondary" type="button">Check plugin updates now</button>
         </div>
-        <p id="announcement-status" class="form-error" role="status" aria-live="polite"></p>
       </form>
       <div class="bot-detail-grid">
         <section><h3>Registered commands</h3><div id="discord-command-list" class="submission-list"></div></section>
         <section><h3>Server roles</h3><div id="discord-role-list" class="submission-list bot-scroll-list"></div></section>
-        <section class="bot-detail-wide"><h3>Recent announcements</h3><div id="announcement-history" class="submission-list"></div></section>
       </div>
     </section>
 
