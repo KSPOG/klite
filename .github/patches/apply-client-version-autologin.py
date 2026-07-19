@@ -28,7 +28,9 @@ def ensure_absent(path: str) -> None:
         raise RuntimeError(f'{path}: file already exists')
 
 
+# ---------------------------------------------------------------------------
 # Client version below Check Updates / KLite Logs.
+# ---------------------------------------------------------------------------
 replace_once(
     'runelite-client/src/main/java/net/runelite/client/plugins/klite/marketplace/KLitePluginPanel.java',
     'import net.runelite.client.plugins.Plugin;\n',
@@ -47,8 +49,12 @@ replace_once(
     '\t\treturn wrapper;\n\t}\n\n'
     '\tstatic String clientVersionText()\n'
     '\t{\n'
-    '\t\treturn formatClientVersion(System.getProperty("klite.client.version"),\n'
-    '\t\t\tRuneLiteProperties.getCommit());\n'
+    '\t\tString version = System.getProperty("klite.client.version");\n'
+    '\t\tif (version == null || version.trim().isEmpty())\n'
+    '\t\t{\n'
+    '\t\t\tversion = System.getenv("KLITE_CLIENT_VERSION");\n'
+    '\t\t}\n'
+    '\t\treturn formatClientVersion(version, RuneLiteProperties.getCommit());\n'
     '\t}\n\n'
     '\tstatic String formatClientVersion(String version, String commit)\n'
     '\t{\n'
@@ -66,15 +72,21 @@ replace_once(
     '\tprivate void openLogWindow()'
 )
 
+# Pass the packaged launcher version to every managed KLiteClient process.
 replace_once(
-    '.github/workflows/build-windows-client.yml',
-    '          java-options=-Xmx1024m\n          icon=build/packaging/KLite.ico\n',
-    '          java-options=-Xmx1024m -Dklite.client.version=$appVersion\n'
-    '          app-version=$appVersion\n'
-    '          icon=build/packaging/KLite.ico\n'
+    'runelite-client/src/main/java/net/runelite/client/launcher/KLiteProcessLauncher.java',
+    '\t\tenvironment.putAll(credentials);\n',
+    '\t\tenvironment.putAll(credentials);\n'
+    '\t\tString clientVersion = System.getProperty("klite.launcher.version");\n'
+    '\t\tif (clientVersion != null && !clientVersion.isBlank())\n'
+    '\t\t{\n'
+    '\t\t\tenvironment.put("KLITE_CLIENT_VERSION", clientVersion);\n'
+    '\t\t}\n'
 )
 
+# ---------------------------------------------------------------------------
 # KLite Core AutoLogin.
+# ---------------------------------------------------------------------------
 replace_once(
     'runelite-client/src/main/java/net/runelite/client/plugins/klite/KLiteConfig.java',
     '\t@ConfigSection(\n\t\tname = "Automation",\n\t\tdescription = "Global controls for KLite automation modules.",\n\t\tposition = 1\n\t)\n\tString automationSection = "automation";\n\n'
@@ -116,7 +128,13 @@ import net.runelite.api.GameState;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
 
-/** KLite-owned automatic login and connection-loss recovery. */
+/**
+ * KLite-owned automatic login and connection-loss recovery.
+ *
+ * <p>The service never stores credentials. It only starts a login when the
+ * client already holds a launcher session or complete credentials. An explicit
+ * logout is respected and does not immediately trigger another login.</p>
+ */
 @Singleton
 public final class KLiteAutoLoginService
 {
@@ -128,6 +146,7 @@ public final class KLiteAutoLoginService
 	private final Client client;
 	private final ClientThread clientThread;
 	private final KLiteClientLogBuffer diagnostics;
+
 	private boolean enabled;
 	private boolean running;
 	private boolean startupArmed;
@@ -181,6 +200,7 @@ public final class KLiteAutoLoginService
 		{
 			return;
 		}
+
 		if (gameState == GameState.LOGGED_IN)
 		{
 			startupArmed = false;
@@ -233,6 +253,7 @@ public final class KLiteAutoLoginService
 			scheduleAttempt();
 			return;
 		}
+
 		attempts++;
 		lastAttemptAt = now;
 		loginCycleActive = true;
@@ -331,7 +352,12 @@ replace_once(
 )
 
 ensure_absent('runelite-client/src/test/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginServiceTest.java')
-write('runelite-client/src/test/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginServiceTest.java', r'''package net.runelite.client.plugins.klite.login;
+write('runelite-client/src/test/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginServiceTest.java', r'''/*
+ * Copyright (c) 2026, KLite contributors
+ * All rights reserved.
+ * BSD 2-Clause License; see LICENSE in the project root.
+ */
+package net.runelite.client.plugins.klite.login;
 
 import org.junit.Test;
 
@@ -369,7 +395,12 @@ public class KLiteAutoLoginServiceTest
 ''')
 
 ensure_absent('runelite-client/src/test/java/net/runelite/client/plugins/klite/marketplace/KLitePluginPanelVersionTest.java')
-write('runelite-client/src/test/java/net/runelite/client/plugins/klite/marketplace/KLitePluginPanelVersionTest.java', r'''package net.runelite.client.plugins.klite.marketplace;
+write('runelite-client/src/test/java/net/runelite/client/plugins/klite/marketplace/KLitePluginPanelVersionTest.java', r'''/*
+ * Copyright (c) 2026, KLite contributors
+ * All rights reserved.
+ * BSD 2-Clause License; see LICENSE in the project root.
+ */
+package net.runelite.client.plugins.klite.marketplace;
 
 import org.junit.Test;
 
@@ -392,5 +423,6 @@ public class KLitePluginPanelVersionTest
 	}
 }
 ''')
+
 
 print('Applied client version and KLite AutoLogin features.')
