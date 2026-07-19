@@ -39,42 +39,41 @@ jobs:
           node --check marketplace-site/scripts/register-discord-commands.mjs
 
       - name: Run marketplace tests
-        id: marketplace_tests
+        run: npm --prefix marketplace-site test
+
+      - name: Run focused client tests
+        id: client_tests
         continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
-          npm --prefix marketplace-site test 2>&1 | tee marketplace-test.log
+          ./gradlew :client:test \
+            --tests net.runelite.client.plugins.klite.login.KLiteAutoLoginServiceTest \
+            --tests net.runelite.client.plugins.klite.marketplace.KLitePluginPanelVersionTest \
+            --no-daemon --stacktrace 2>&1 | tee client-test.log
 
-      - name: Upload marketplace test log
+      - name: Upload focused client test log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: marketplace-test-log
-          path: marketplace-test.log
+          name: focused-client-test-log
+          path: client-test.log
           if-no-files-found: error
 
-      - name: Report marketplace test failure
-        if: steps.marketplace_tests.outcome == 'failure'
+      - name: Report focused client test failure
+        if: steps.client_tests.outcome == 'failure'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           {
-            echo '### Marketplace test failure summary'
+            echo '### Focused client test failure summary'
             echo '```text'
-            grep -E -A 14 -B 3 'not ok|AssertionError|ReferenceError|SyntaxError|ERR_' marketplace-test.log | tail -n 180
+            grep -E -A 18 -B 5 'error:|FAILURE:|FAILED|cannot find symbol|Compilation failed|AssertionError|Caused by:' client-test.log | tail -n 220
             echo '```'
-          } > marketplace-test-comment.md
-          gh pr comment 57 --body-file marketplace-test-comment.md
+          } > client-test-comment.md
+          gh pr comment 57 --body-file client-test-comment.md
           exit 1
-
-      - name: Run focused client tests
-        run: |
-          ./gradlew :client:test \
-            --tests net.runelite.client.plugins.klite.login.KLiteAutoLoginServiceTest \
-            --tests net.runelite.client.plugins.klite.marketplace.KLitePluginPanelVersionTest \
-            --no-daemon
 
       - name: Run client static checks
         run: ./gradlew :client:checkstyleMain :client:pmdMain --no-daemon
