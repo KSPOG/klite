@@ -22,15 +22,21 @@
   async function load() {
     if (!panel) return;
     const status = panel.querySelector("#credit-admin-status");
+    const refresh = panel.querySelector("#credit-admin-refresh");
     status.textContent = "Loading credit administration…";
+    if (refresh) refresh.disabled = true;
     try {
       const payload = await api("/api/credits/admin");
       renderPrices(payload.prices || []);
       renderTransactions(payload.transactions || []);
       status.textContent = `${payload.transactions?.length || 0} recent transaction${payload.transactions?.length === 1 ? "" : "s"}.`;
     } catch (error) {
-      if (error.status === 403) panel.remove();
-      else status.textContent = error.message;
+      status.textContent = error.status === 403
+        ? "KLite owner access was not accepted by the credit administration endpoint."
+        : error.message;
+      status.classList.add("is-error");
+    } finally {
+      if (refresh) refresh.disabled = false;
     }
   }
 
@@ -91,6 +97,7 @@
     title.textContent = "Credit prices and ledger";
     copy.append(eyebrow, title);
     const refresh = document.createElement("button");
+    refresh.id = "credit-admin-refresh";
     refresh.type = "button";
     refresh.className = "button button-secondary";
     refresh.textContent = "Refresh";
@@ -125,19 +132,25 @@
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      const submit = form.querySelector("button[type='submit']");
       const pluginId = panel.querySelector("#credit-price-plugin").value.trim().toLowerCase();
       const priceCredits = Number(panel.querySelector("#credit-price-amount").value);
       const active = panel.querySelector("#credit-price-active").checked;
       status.textContent = "Saving credit price…";
+      submit.disabled = true;
       try {
         await api(`/api/credits/admin/prices/${encodeURIComponent(pluginId)}`, {
           method: "PUT",
           body: JSON.stringify({ priceCredits, active })
         });
+        status.classList.remove("is-error");
         status.textContent = "Plugin credit price saved.";
         await load();
       } catch (error) {
+        status.classList.add("is-error");
         status.textContent = error.message;
+      } finally {
+        submit.disabled = false;
       }
     });
 

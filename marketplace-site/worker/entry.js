@@ -6,6 +6,11 @@ import {
   startDiscordLogin
 } from "./discord-auth.js";
 import { handleDiscordDashboardActions } from "./discord-dashboard-actions.js";
+import {
+  handleWebsiteControls,
+  loadWebsiteDashboard,
+  updateWebsiteDashboardSettings
+} from "./website-controls.js";
 
 const API_PAGE_ASSETS = new Set([
   "/api/",
@@ -15,11 +20,13 @@ const API_PAGE_ASSETS = new Set([
 ]);
 const API_REFERENCE_STYLESHEET = "/api-reference.css";
 const HOMEPAGE_ASSETS = new Set(["/", "/index.html"]);
+const WEBSITE_CONTROL_SCRIPT = "/website-control-fixes.js?v=20260719-1";
 const DASHBOARD_ACTION_SCRIPT = "/discord-dashboard-actions.js?v=20260719-1";
 
 export default {
   async fetch(request, env, context) {
     const url = new URL(request.url);
+    const controlEnv = websiteControlEnvironment(env);
     const isAssetRequest = request.method === "GET" || request.method === "HEAD";
 
     if (isAssetRequest && url.pathname === "/api") {
@@ -36,17 +43,37 @@ export default {
     }
 
     if (isAssetRequest && API_PAGE_ASSETS.has(url.pathname)) {
-      return env.ASSETS.fetch(request);
+      const response = await env.ASSETS.fetch(request);
+      return request.method === "GET" && response.ok
+          && response.headers.get("content-type")?.includes("text/html")
+        ? injectScripts(response, [WEBSITE_CONTROL_SCRIPT])
+        : response;
     }
 
+    const loadCoreAccount = () => core.fetch(
+      internalRequest(request, "/api/account", "GET"), env, context
+    );
+    const loadCoreDashboard = () => core.fetch(
+      internalRequest(request, "/api/discord-bot/dashboard", "GET"), env, context
+    );
+    const updateCoreSettings = (body) => core.fetch(
+      internalRequest(request, "/api/discord-bot/settings", "PUT", body), env, context
+    );
+    const loadDashboard = () => loadWebsiteDashboard(request, controlEnv, loadCoreDashboard);
+    const updateSettings = (body) => updateWebsiteDashboardSettings(
+      request, controlEnv, body, updateCoreSettings
+    );
+
     try {
-      const dashboardAction = await handleDiscordDashboardActions(request, env, url, {
-        loadDashboard: () => core.fetch(
-          internalRequest(request, "/api/discord-bot/dashboard", "GET"), env, context
-        ),
-        updateSettings: (body) => core.fetch(
-          internalRequest(request, "/api/discord-bot/settings", "PUT", body), env, context
-        )
+      const websiteControl = await handleWebsiteControls(request, controlEnv, url, {
+        loadAccount: loadCoreAccount,
+        loadDashboard: loadCoreDashboard
+      });
+      if (websiteControl) return websiteControl;
+
+      const dashboardAction = await handleDiscordDashboardActions(request, controlEnv, url, {
+        loadDashboard,
+        updateSettings
       });
       if (dashboardAction) return dashboardAction;
 
@@ -61,16 +88,14 @@ export default {
       }
       if (request.method === "GET" && url.pathname === "/api/discord/callback") {
         const loginResponse = await handleDiscordLoginCallback(url, env);
-        if (loginResponse) {
-          return loginResponse;
-        }
+        if (loginResponse) return loginResponse;
       }
     } catch (error) {
       console.error("Unhandled marketplace entry route error", error);
       return new Response(JSON.stringify({
         error: {
           code: "entry_route_failed",
-          message: "The request could not be completed."
+          message: error.message || "The request could not be completed."
         }
       }), {
         status: 500,
@@ -83,9 +108,11 @@ export default {
     }
 
     const response = await core.fetch(request, env, context);
-    if (request.method === "GET" && HOMEPAGE_ASSETS.has(url.pathname)
-        && response.ok && response.headers.get("content-type")?.includes("text/html")) {
-      return injectDashboardActionScript(response);
+    if (request.method === "GET" && response.ok
+        && response.headers.get("content-type")?.includes("text/html")) {
+      const scripts = [WEBSITE_CONTROL_SCRIPT];
+      if (HOMEPAGE_ASSETS.has(url.pathname)) scripts.push(DASHBOARD_ACTION_SCRIPT);
+      return injectScripts(response, scripts);
     }
     return response;
   },
@@ -98,13 +125,25 @@ export default {
   }
 };
 
+function websiteControlEnvironment(env) {
+  if (env.OWNER_RECOVERY_KEY || !env.SITE_OWNER_RECOVERY_KEY) return env;
+  return new Proxy(env, {
+    get(target, property, receiver) {
+      if (property === "OWNER_RECOVERY_KEY") return target.SITE_OWNER_RECOVERY_KEY;
+      return Reflect.get(target, property, receiver);
+    }
+  });
+}
+
 function internalRequest(source, pathname, method, body) {
   const target = new URL(source.url);
   target.pathname = pathname;
   target.search = "";
   const headers = new Headers();
   const cookie = source.headers.get("cookie");
+  const authorization = source.headers.get("authorization");
   if (cookie) headers.set("cookie", cookie);
+  if (authorization) headers.set("authorization", authorization);
   headers.set("accept", "application/json");
   if (body !== undefined) headers.set("content-type", "application/json");
   return new Request(target, {
@@ -114,19 +153,20 @@ function internalRequest(source, pathname, method, body) {
   });
 }
 
-async function injectDashboardActionScript(response) {
-  const html = await response.text();
-  const script = `<script src="${DASHBOARD_ACTION_SCRIPT}" defer></script>`;
-  const content = html.includes(DASHBOARD_ACTION_SCRIPT)
-    ? html
-    : html.includes("</body>")
+async function injectScripts(response, sources) {
+  let html = await response.text();
+  for (const source of sources) {
+    if (html.includes(source)) continue;
+    const script = `<script src="${source}" defer></script>`;
+    html = html.includes("</body>")
       ? html.replace("</body>", `  ${script}\n</body>`)
       : `${html}\n${script}`;
+  }
   const headers = new Headers(response.headers);
   headers.delete("content-length");
   headers.delete("content-encoding");
   headers.delete("etag");
-  return new Response(content, {
+  return new Response(html, {
     status: response.status,
     statusText: response.statusText,
     headers

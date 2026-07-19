@@ -7,14 +7,16 @@ account code, migrations, and deployment configuration are not web-accessible.
 ## Features
 
 - Website registration and sign-in with server-side, revocable sessions.
-- Discord OAuth account linking and one-time `/link` bot codes.
+- Discord OAuth sign-in, account linking, one-time `/link` bot codes, and
+  Discord-verified password recovery for legacy password accounts.
 - Client sign-in with memory-only tokens and server-authoritative paid-plugin
   entitlements.
 - A dual-role Plugin Dev capability, submission dashboard, and reviewer queue.
+- Site-owner account and role administration for registered marketplace users.
 - An authenticated, generated client/automation/web-walker API reference that
   deliberately excludes marketplace internals.
-- A Discord Dev-only bot dashboard with live application, server, command,
-  role, channel, account, session, and announcement information.
+- A Discord Dev and site-owner bot dashboard with live application, server,
+  command, role, channel, account, session, and announcement information.
 - Configurable bot role mappings, account-link automation, audit/welcome
   channels, scheduled plugin announcements, and Dev-posted client updates.
 - An opt-in client-update notification role managed by the bot through
@@ -54,24 +56,26 @@ Never commit `.dev.vars` or any real Discord/password secrets.
 Create a Discord application and configure these endpoints using the value of
 `PUBLIC_ORIGIN` in `wrangler.jsonc`:
 
-- OAuth redirect: `<PUBLIC_ORIGIN>/api/discord/callback`
+- Website and client OAuth redirect: `<PUBLIC_ORIGIN>/api/discord/callback`
+- Password recovery OAuth redirect: `<PUBLIC_ORIGIN>/api/auth/reset/callback`
 - Interactions endpoint: `<PUBLIC_ORIGIN>/api/discord/interactions`
 
 Set `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`, and `DISCORD_PLUGIN_DEV_ROLE_ID` in
 `wrangler.jsonc`. OAuth requests `guilds.members.read` so the backend can verify
 the server role without trusting browser or client claims. Store
 `DISCORD_CLIENT_SECRET`, `DISCORD_PUBLIC_KEY`, and `DISCORD_BOT_TOKEN` as Worker
-secrets. Create a Discord role named exactly `Dev`; only linked members who
-currently hold that role can load or change the bot dashboard. The first
-authorized request resolves that role by name, after which its stable role ID is
-stored in D1.
+secrets. Create a Discord role named exactly `Dev`; linked members who currently
+hold that role can load or change the bot dashboard. The site owner may also load
+the installation dashboard before the Dev role has been created so the bootstrap
+controls remain usable.
 
 The bot needs View Channels, Send Messages, Embed Links, and Read Message
-History. It also needs Manage Roles when automatic account-link assignment or
-client-update subscriptions are enabled. The bot's highest role must be above
-the configured member and client-update notification roles. To notify the
-client-update role, either make that role mentionable or grant the bot permission
-to mention roles in the configured update channel.
+History. It also needs Manage Roles when automatic account-link assignment,
+client-update subscriptions, or the dashboard's **Create Dev role** control are
+enabled. The bot's highest role must be above the configured member and
+client-update notification roles. To notify the client-update role, either make
+that role mentionable or grant the bot permission to mention roles in the
+configured update channel.
 
 The dashboard's **Register slash commands** control registers and verifies the
 commands directly in the designated Discord server. Guild registration is used
@@ -87,21 +91,28 @@ npm run discord:commands
 ```
 
 The Worker uses the bot token only server-side to validate configured channels,
-register commands, verify posted client-update messages, and publish Discord
-messages. The token is never returned to the browser or stored in D1.
+register commands, verify posted client-update messages, publish Discord
+messages, and verify dashboard installation state. The token is never returned
+to the browser or stored in D1.
 
 ## Production deployment
 
-Use a random password pepper that is independent of the database:
+Use independent random secrets for password hashing and owner recovery:
 
 ```powershell
 npx wrangler secret put PASSWORD_PEPPER
+npx wrangler secret put SITE_OWNER_RECOVERY_KEY
 npx wrangler secret put DISCORD_CLIENT_SECRET
 npx wrangler secret put DISCORD_PUBLIC_KEY
 npx wrangler secret put DISCORD_BOT_TOKEN
 npm run db:migrate:remote
 npm run deploy
 ```
+
+The recovery key is accepted only for the `site_owner` account. Other legacy
+password accounts must verify the Discord identity already linked to the same
+marketplace account before receiving a short-lived, one-time password reset
+token.
 
 Grant or revoke entitlements only from a trusted administrative path. For
 example, after resolving a user's ID in D1:
@@ -114,12 +125,14 @@ VALUES
 ON CONFLICT(user_id, plugin_id) DO UPDATE SET
   access_level = excluded.access_level,
   granted_at = excluded.granted_at,
-  expires_at = excluded.expires_at,
+  expires_at = NULL,
   revoked_at = NULL;
 ```
 
-Website roles are assigned only from a trusted administrative path. Plugin
-developers need both this website role and the configured Discord role:
+The site-owner dashboard can assign or revoke the `plugin_dev` and
+`marketplace_reviewer` website roles. Plugin developers still need both the
+website role and the configured Discord Plugin Dev role. Equivalent trusted SQL
+is:
 
 ```sql
 INSERT INTO user_roles (user_id, role, granted_by, granted_at)
@@ -134,8 +147,9 @@ needs the signed catalog publishing process.
 Discord Plugin Dev verification is refreshed when the user relinks Discord or
 runs `/account` in the configured server, and expires after 24 hours.
 
-Payment-provider webhooks and an administrative grant UI are intentionally not
-included because no payment provider or trust policy has been selected.
+Payment-provider webhooks and an administrative entitlement-grant UI are
+intentionally not included because no payment provider or entitlement trust
+policy has been selected.
 
 ## Tests
 
