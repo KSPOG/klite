@@ -33,6 +33,8 @@ include("client")
 project(":client").projectDir = file("./runelite-client")
 include("copper-tin-miner")
 project(":copper-tin-miner").projectDir = file("./examples/klite-copper-tin-miner")
+include("klite-ge-flipper")
+project(":klite-ge-flipper").projectDir = file("./plugins/klite-ge-flipper")
 apply(from = "./common.settings.gradle.kts")
 
 includeBuild("cache")
