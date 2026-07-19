@@ -16,9 +16,9 @@ import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
 /**
  * KLite-owned automatic login and connection-loss recovery.
  *
- * <p>The service never stores credentials. It only starts a login when the
- * client already holds a launcher session or complete credentials. An explicit
- * logout is respected and does not immediately trigger another login.</p>
+ * <p>The service never stores credentials. It starts login only when the client
+ * was launched with a Jagex Launcher session. An explicit logout is respected
+ * and does not immediately trigger another login.</p>
  */
 @Singleton
 public final class KLiteAutoLoginService
@@ -109,7 +109,7 @@ public final class KLiteAutoLoginService
 	private void scheduleAttempt()
 	{
 		if (pendingTimer != null || attempts >= MAX_ATTEMPTS_PER_CYCLE
-			|| !credentialsAvailable())
+			|| !launcherSessionAvailable())
 		{
 			return;
 		}
@@ -128,7 +128,7 @@ public final class KLiteAutoLoginService
 	private void attemptOnClientThread()
 	{
 		if (!running || !enabled || client.getGameState() != GameState.LOGIN_SCREEN
-			|| attempts >= MAX_ATTEMPTS_PER_CYCLE || !credentialsAvailable())
+			|| attempts >= MAX_ATTEMPTS_PER_CYCLE || !launcherSessionAvailable())
 		{
 			return;
 		}
@@ -148,17 +148,15 @@ public final class KLiteAutoLoginService
 		client.setGameState(GameState.LOGGING_IN);
 	}
 
-	private boolean credentialsAvailable()
+	private boolean launcherSessionAvailable()
 	{
-		return hasCredentials(System.getenv("JX_SESSION_ID"), client.getLauncherDisplayName(),
-			client.getUsername(), client.getPassword());
+		return hasLauncherSession(System.getenv("JX_SESSION_ID"),
+			client.getLauncherDisplayName());
 	}
 
-	static boolean hasCredentials(String launcherSession, String launcherDisplayName,
-		String username, String password)
+	static boolean hasLauncherSession(String launcherSession, String launcherDisplayName)
 	{
-		return hasText(launcherSession) || hasText(launcherDisplayName)
-			|| hasText(username) && hasText(password);
+		return hasText(launcherSession) || hasText(launcherDisplayName);
 	}
 
 	private static boolean hasText(String value)
