@@ -38,6 +38,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
+import net.runelite.client.RuneLiteProperties;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.config.PluginConfigurationNavigator;
 import net.runelite.client.plugins.klite.debug.KLiteClientLogBuffer;
@@ -150,7 +151,38 @@ public class KLitePluginPanel extends PluginPanel
 		utilities.add(logsButton);
 		actions.add(utilities);
 		wrapper.add(actions, BorderLayout.CENTER);
+
+		JLabel clientVersion = new JLabel(clientVersionText());
+		clientVersion.setHorizontalAlignment(SwingConstants.CENTER);
+		clientVersion.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		clientVersion.setFont(clientVersion.getFont().deriveFont(10f));
+		clientVersion.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
+		wrapper.add(clientVersion, BorderLayout.SOUTH);
 		return wrapper;
+	}
+
+	static String clientVersionText()
+	{
+		String version = System.getProperty("klite.client.version");
+		if (version == null || version.trim().isEmpty())
+		{
+			version = System.getenv("KLITE_CLIENT_VERSION");
+		}
+		return formatClientVersion(version, RuneLiteProperties.getCommit());
+	}
+
+	static String formatClientVersion(String version, String commit)
+	{
+		if (version != null && !version.trim().isEmpty())
+		{
+			return "Client version: v" + version.trim();
+		}
+		if (commit == null || commit.trim().isEmpty())
+		{
+			return "Client version: development";
+		}
+		String build = commit.trim();
+		return "Client version: build " + build.substring(0, Math.min(7, build.length()));
 	}
 
 	private void openLogWindow()

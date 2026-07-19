@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.swing.Timer;
 import net.runelite.api.events.AccountHashChanged;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.config.ConfigManager;
@@ -22,6 +23,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.klite.api.DefaultKLiteClientApi;
 import net.runelite.client.plugins.klite.api.KLiteClientApi;
 import net.runelite.client.plugins.klite.automation.AutomationManager;
+import net.runelite.client.plugins.klite.login.KLiteAutoLoginService;
 import net.runelite.client.plugins.klite.marketplace.KLiteMarketplacePersistenceService;
 import net.runelite.client.plugins.klite.marketplace.KLiteMarketplaceWindow;
 import net.runelite.client.plugins.klite.marketplace.KLitePluginPanel;
@@ -59,6 +61,9 @@ public class KLitePlugin extends Plugin
 
 	@Inject
 	private AutomationManager automationManager;
+
+	@Inject
+	private KLiteAutoLoginService autoLoginService;
 
 	@Inject
 	private IntegratedShortestPathWebWalker webWalker;
@@ -113,7 +118,11 @@ public class KLitePlugin extends Plugin
 			return;
 		}
 
-		if ("enableAutomation".equals(event.getKey()))
+		if ("autoLogin".equals(event.getKey()))
+		{
+			autoLoginService.setEnabled(config.autoLogin());
+		}
+		else if ("enableAutomation".equals(event.getKey()))
 		{
 			automationManager.setEnabled(config.enableAutomation());
 		}
@@ -128,6 +137,12 @@ public class KLitePlugin extends Plugin
 				developmentPluginManager.stop();
 			}
 		}
+	}
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event)
+	{
+		autoLoginService.onGameStateChanged(event.getGameState());
 	}
 
 	@Subscribe
@@ -156,6 +171,7 @@ public class KLitePlugin extends Plugin
 	{
 		overlayManager.add(overlay);
 		overlayManager.add(shortestPathOverlay);
+		autoLoginService.start(config.autoLogin());
 		automationManager.setEnabled(config.enableAutomation());
 		if (config.enableDevelopmentPlugins())
 		{
@@ -198,6 +214,7 @@ public class KLitePlugin extends Plugin
 		updateService.cancel();
 		clientToolbar.removeNavigation(marketplaceButton);
 		marketplaceWindow.close();
+		autoLoginService.stop();
 		automationManager.setEnabled(false);
 		webWalker.shutdown();
 		bankCache.clearMemory();

@@ -21,16 +21,23 @@ public interface KLiteConfig extends Config
 	String updatesSection = "updates";
 
 	@ConfigSection(
+		name = "Login",
+		description = "KLite login and reconnect behaviour.",
+		position = 1
+	)
+	String loginSection = "login";
+
+	@ConfigSection(
 		name = "Automation",
 		description = "Global controls for KLite automation modules.",
-		position = 1
+		position = 2
 	)
 	String automationSection = "automation";
 
 	@ConfigSection(
 		name = "Plugin development",
 		description = "Load locally built development plugins without the KLite client source code.",
-		position = 2
+		position = 3
 	)
 	String developmentSection = "development";
 
@@ -53,6 +60,18 @@ public interface KLiteConfig extends Config
 		position = 0
 	)
 	default boolean checkForClientUpdates()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "autoLogin",
+		name = "AutoLogin",
+		description = "Automatically enter the game when KLite has a saved Jagex Launcher session or complete login credentials",
+		section = loginSection,
+		position = 0
+	)
+	default boolean autoLogin()
 	{
 		return true;
 	}

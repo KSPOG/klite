@@ -16,7 +16,9 @@ account code, migrations, and deployment configuration are not web-accessible.
 - A Discord Dev-only bot dashboard with live application, server, command,
   role, channel, account, session, and announcement information.
 - Configurable bot role mappings, account-link automation, audit/welcome
-  channels, and scheduled plugin release/update announcements.
+  channels, scheduled plugin announcements, and Dev-posted client updates.
+- An opt-in client-update notification role managed by the bot through
+  `/client-updates action:subscribe` and `/client-updates action:unsubscribe`.
 - Capability-gated client hot reload for jars built into the local
   `sideloaded-plugins` directory.
 - A shared catalog in `public/plugins.json` for the website and client.
@@ -65,8 +67,9 @@ authorized request resolves that role by name, after which its stable role ID is
 stored in D1.
 
 The bot needs View Channels, Send Messages, Embed Links, and Read Message
-History. It also needs Manage Roles when automatic account-link role assignment
-is enabled. The bot's highest role must be above the configured member role.
+History. It also needs Manage Roles when automatic account-link assignment or
+client-update subscriptions are enabled. The bot's highest role must be above
+the configured member and client-update notification roles.
 
 Register the global slash commands from a trusted terminal with
 `DISCORD_APPLICATION_ID` and `DISCORD_BOT_TOKEN` set:

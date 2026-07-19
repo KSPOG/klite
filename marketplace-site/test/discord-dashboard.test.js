@@ -20,23 +20,32 @@ test("normalizes Discord bot role and channel settings", () => {
     pluginDevRoleId: null,
     marketplaceReviewerRoleId: "",
     memberRoleId: null,
+    clientUpdateRoleId: null,
     announcementChannelId: null,
+    clientUpdateChannelId: null,
     auditChannelId: null,
     welcomeChannelId: null,
     botEnabled: true,
     autoAssignMemberRole: false,
-    announcementsEnabled: false
+    announcementsEnabled: false,
+    clientUpdatesEnabled: false
   }), {
     devRoleId: DEV_ROLE_ID,
     pluginDevRoleId: null,
     marketplaceReviewerRoleId: null,
     memberRoleId: null,
+    clientUpdateRoleId: null,
     announcementChannelId: null,
+    clientUpdateChannelId: null,
     auditChannelId: null,
     welcomeChannelId: null,
     botEnabled: true,
     autoAssignMemberRole: false,
-    announcementsEnabled: false
+    announcementsEnabled: false,
+    clientUpdatesEnabled: false,
+    postClientUpdate: false,
+    clientUpdateVersion: "",
+    clientUpdateNotes: ""
   });
 });
 
