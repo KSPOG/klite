@@ -9,13 +9,20 @@ on:
       - ".github/patches/apply-discord-client-updates-backend.py"
       - ".github/patches/apply-discord-client-updates-frontend.py"
       - ".github/workflows/apply-client-version-autologin-discord-updates.yml"
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   apply-and-verify:
-    if: github.actor != 'github-actions[bot]'
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      (github.event_name == 'push' ||
+       github.head_ref == 'feature/client-version-autologin-discord-updates')
     runs-on: ubuntu-latest
     steps:
       - name: Check out feature branch
