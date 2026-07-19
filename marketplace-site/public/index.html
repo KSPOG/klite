@@ -228,6 +228,7 @@
         <article class="account-card"><span class="account-label">Linked accounts</span><strong id="discord-linked-count">0</strong><p id="discord-session-count" class="account-note"></p></article>
         <article class="account-card"><span class="account-label">Commands</span><strong id="discord-command-count">0</strong><p class="account-note">Registered server commands</p></article>
         <article class="account-card"><span class="account-label">Announcements</span><strong id="discord-announcement-count">0</strong><p class="account-note">Marketplace announcements sent</p></article>
+        <article class="account-card"><span class="account-label">Client updates</span><strong id="discord-client-update-count">0</strong><p class="account-note">Client update posts sent</p></article>
       </div>
       <form id="discord-bot-settings-form" class="bot-settings-form">
         <div class="bot-settings-group">
@@ -236,16 +237,27 @@
           <label class="form-field"><span>Plugin Dev role</span><select id="discord-plugin-dev-role"></select></label>
           <label class="form-field"><span>Marketplace reviewer role</span><select id="discord-reviewer-role"></select></label>
           <label class="form-field"><span>Default member role</span><select id="discord-member-role"></select></label>
+          <label class="form-field"><span>Client update notification role</span><select id="discord-client-update-role"></select></label>
         </div>
         <div class="bot-settings-group">
           <div><h3>Channel settings</h3><p class="account-note">Only text and announcement channels from the designated server are accepted.</p></div>
           <label class="form-field"><span>Bot audit log</span><select id="discord-audit-channel"></select></label>
           <label class="form-field"><span>Member welcome channel</span><select id="discord-welcome-channel"></select></label>
+          <label class="form-field"><span>Client update channel</span><select id="discord-client-update-channel"></select></label>
         </div>
         <div class="bot-settings-group bot-settings-toggles">
           <h3>Behaviour</h3>
           <label class="toggle-field"><input id="discord-bot-enabled" type="checkbox"><span>Bot automation enabled</span></label>
           <label class="toggle-field"><input id="discord-auto-member-role" type="checkbox"><span>Automatically assign the default member role</span></label>
+        </div>
+        <div class="bot-settings-group">
+          <div><h3>Client updates</h3><p class="account-note">Post a client release into the configured channel and mention only members who opted into the notification role with <code>/client-updates</code>.</p></div>
+          <label class="toggle-field"><input id="discord-client-updates-enabled" type="checkbox"><span>Client update posts and role subscriptions enabled</span></label>
+          <label class="form-field"><span>Client version</span><input id="discord-client-update-version" type="text" maxlength="64" placeholder="1.0.95"></label>
+          <label class="form-field submission-wide"><span>Updates</span><textarea id="discord-client-update-notes" rows="6" maxlength="3000" placeholder="- Added AutoLogin to KLite Core&#10;- Improved update notifications"></textarea></label>
+          <div class="review-actions bot-settings-actions"><button id="discord-client-update-post" class="button button-secondary" type="button">Post client update</button></div>
+          <p id="discord-client-update-status" class="account-note" aria-live="polite"></p>
+          <div><h4>Recent client updates</h4><div id="discord-client-update-history" class="submission-list bot-scroll-list"></div></div>
         </div>
         <div class="bot-settings-group">
           <div><h3>Marketplace announcements</h3><p class="account-note">Choose the channel used for approved plugin release and update announcements.</p></div>
@@ -317,7 +329,7 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=release-20260718-2" defer></script>
+  <script src="app.js?v=release-20260719-client-updates" defer></script>
   <script src="enhancements.js?v=release-20260718-1" defer></script>
   <script src="site-shell.js?v=release-20260718-2" defer></script>
   <script src="/homepage-featured.js?v=release-20260718-2" defer></script>

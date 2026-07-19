@@ -53,13 +53,16 @@ const discordLinkedCount = document.querySelector("#discord-linked-count");
 const discordSessionCount = document.querySelector("#discord-session-count");
 const discordCommandCount = document.querySelector("#discord-command-count");
 const discordAnnouncementCount = document.querySelector("#discord-announcement-count");
+const discordClientUpdateCount = document.querySelector("#discord-client-update-count");
 const discordBotSettingsForm = document.querySelector("#discord-bot-settings-form");
 const discordDevRole = document.querySelector("#discord-dev-role");
 const discordPluginDevRole = document.querySelector("#discord-plugin-dev-role");
 const discordReviewerRole = document.querySelector("#discord-reviewer-role");
 const discordMemberRole = document.querySelector("#discord-member-role");
+const discordClientUpdateRole = document.querySelector("#discord-client-update-role");
 const discordAuditChannel = document.querySelector("#discord-audit-channel");
 const discordWelcomeChannel = document.querySelector("#discord-welcome-channel");
+const discordClientUpdateChannel = document.querySelector("#discord-client-update-channel");
 const discordBotEnabled = document.querySelector("#discord-bot-enabled");
 const discordAutoMemberRole = document.querySelector("#discord-auto-member-role");
 const discordCommandList = document.querySelector("#discord-command-list");
@@ -69,6 +72,12 @@ const announcementEnabled = document.querySelector("#announcement-enabled");
 const announcementSync = document.querySelector("#announcement-sync");
 const announcementStatus = document.querySelector("#announcement-status");
 const announcementHistory = document.querySelector("#announcement-history");
+const discordClientUpdatesEnabled = document.querySelector("#discord-client-updates-enabled");
+const discordClientUpdateVersion = document.querySelector("#discord-client-update-version");
+const discordClientUpdateNotes = document.querySelector("#discord-client-update-notes");
+const discordClientUpdatePost = document.querySelector("#discord-client-update-post");
+const discordClientUpdateStatus = document.querySelector("#discord-client-update-status");
+const discordClientUpdateHistory = document.querySelector("#discord-client-update-history");
 
 const statusLabels = {
   bundled: "Bundled with KLite",
@@ -430,6 +439,7 @@ function renderDiscordBotDashboard(payload) {
   discordCommandCount.textContent = String(payload.commands.length);
   discordAnnouncementCount.textContent =
     `${payload.stats.announcementsSent} marketplace announcements sent`;
+  discordClientUpdateCount.textContent = String(payload.clientUpdates?.history?.length || 0);
 
   const roles = payload.roles.filter((role) => role.name !== "@everyone");
   populateDiscordSelect(discordDevRole,
@@ -440,15 +450,42 @@ function renderDiscordBotDashboard(payload) {
     settings.marketplaceReviewerRoleId, "Not configured");
   populateDiscordSelect(discordMemberRole, roles.filter((role) => !role.managed),
     settings.memberRoleId, "Not configured");
+  populateDiscordSelect(discordClientUpdateRole, roles.filter((role) => !role.managed),
+    settings.clientUpdateRoleId, "Not configured");
   populateDiscordSelect(announcementChannelId, payload.channels,
     settings.announcementChannelId, "Not configured");
   populateDiscordSelect(discordAuditChannel, payload.channels,
     settings.auditChannelId, "Not configured");
   populateDiscordSelect(discordWelcomeChannel, payload.channels,
     settings.welcomeChannelId, "Not configured");
+  populateDiscordSelect(discordClientUpdateChannel, payload.channels,
+    settings.clientUpdateChannelId, "Not configured");
   discordBotEnabled.checked = settings.botEnabled;
   announcementEnabled.checked = settings.announcementsEnabled;
   discordAutoMemberRole.checked = settings.autoAssignMemberRole;
+  discordClientUpdatesEnabled.checked = settings.clientUpdatesEnabled;
+  if (!discordClientUpdateVersion.value && payload.clientUpdates?.currentRelease?.version) {
+    discordClientUpdateVersion.value = payload.clientUpdates.currentRelease.version;
+  }
+
+  discordClientUpdateHistory.replaceChildren();
+  for (const entry of payload.clientUpdates?.history || []) {
+    const card = document.createElement("article");
+    card.className = "submission-card";
+    const title = document.createElement("strong");
+    title.textContent = `Client ${entry.version}`;
+    const updates = document.createElement("p");
+    updates.textContent = entry.updates;
+    const metadata = document.createElement("p");
+    metadata.className = "submission-meta";
+    metadata.textContent = `Channel ${entry.channelId} - `
+      + new Date(entry.postedAt * 1000).toLocaleString();
+    card.append(title, updates, metadata);
+    discordClientUpdateHistory.append(card);
+  }
+  if (!discordClientUpdateHistory.childElementCount) {
+    discordClientUpdateHistory.textContent = "No client updates have been posted yet.";
+  }
 
   discordCommandList.replaceChildren();
   for (const command of payload.commands) {
@@ -671,6 +708,27 @@ submissionForm.addEventListener("submit", async (event) => {
 
 apiReferenceSearch.addEventListener("input", renderApiReference);
 
+function discordSettingsPayload(postClientUpdate = false) {
+  return {
+    devRoleId: discordDevRole.value,
+    pluginDevRoleId: discordPluginDevRole.value || null,
+    marketplaceReviewerRoleId: discordReviewerRole.value || null,
+    memberRoleId: discordMemberRole.value || null,
+    clientUpdateRoleId: discordClientUpdateRole.value || null,
+    announcementChannelId: announcementChannelId.value || null,
+    clientUpdateChannelId: discordClientUpdateChannel.value || null,
+    auditChannelId: discordAuditChannel.value || null,
+    welcomeChannelId: discordWelcomeChannel.value || null,
+    botEnabled: discordBotEnabled.checked,
+    announcementsEnabled: announcementEnabled.checked,
+    clientUpdatesEnabled: discordClientUpdatesEnabled.checked,
+    autoAssignMemberRole: discordAutoMemberRole.checked,
+    postClientUpdate,
+    clientUpdateVersion: discordClientUpdateVersion.value,
+    clientUpdateNotes: discordClientUpdateNotes.value
+  };
+}
+
 discordBotSettingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const submit = discordBotSettingsForm.querySelector("button[type='submit']");
@@ -679,18 +737,7 @@ discordBotSettingsForm.addEventListener("submit", async (event) => {
   try {
     const payload = await api("/api/discord-bot/settings", {
       method: "PUT",
-      body: JSON.stringify({
-        devRoleId: discordDevRole.value,
-        pluginDevRoleId: discordPluginDevRole.value || null,
-        marketplaceReviewerRoleId: discordReviewerRole.value || null,
-        memberRoleId: discordMemberRole.value || null,
-        announcementChannelId: announcementChannelId.value || null,
-        auditChannelId: discordAuditChannel.value || null,
-        welcomeChannelId: discordWelcomeChannel.value || null,
-        botEnabled: discordBotEnabled.checked,
-        announcementsEnabled: announcementEnabled.checked,
-        autoAssignMemberRole: discordAutoMemberRole.checked
-      })
+      body: JSON.stringify(discordSettingsPayload(false))
     });
     renderDiscordBotDashboard(payload);
     announcementStatus.textContent = "Discord bot settings saved.";
@@ -700,6 +747,26 @@ discordBotSettingsForm.addEventListener("submit", async (event) => {
     submit.disabled = false;
   }
 });
+
+if (discordClientUpdatePost) {
+  discordClientUpdatePost.addEventListener("click", async () => {
+    discordClientUpdatePost.disabled = true;
+    discordClientUpdateStatus.textContent = "Posting the client update...";
+    try {
+      const payload = await api("/api/discord-bot/settings", {
+        method: "PUT",
+        body: JSON.stringify(discordSettingsPayload(true))
+      });
+      renderDiscordBotDashboard(payload);
+      discordClientUpdateNotes.value = "";
+      discordClientUpdateStatus.textContent = "Client update posted.";
+    } catch (error) {
+      discordClientUpdateStatus.textContent = error.message;
+    } finally {
+      discordClientUpdatePost.disabled = false;
+    }
+  });
+}
 
 if (announcementSync) {
   announcementSync.addEventListener("click", async () => {

@@ -23,6 +23,11 @@ final class KLiteProcessLauncher
 		Map<String, String> environment = processBuilder.environment();
 		environment.keySet().removeIf(key -> key.startsWith("JX_"));
 		environment.putAll(credentials);
+		String clientVersion = System.getProperty("klite.launcher.version");
+		if (clientVersion != null && !clientVersion.isBlank())
+		{
+			environment.put("KLITE_CLIENT_VERSION", clientVersion);
+		}
 		processBuilder.redirectErrorStream(true);
 		processBuilder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 		return processBuilder.start();

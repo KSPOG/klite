@@ -2,6 +2,9 @@ import { API_REFERENCE } from "./api-reference.generated.js";
 import {
   syncPluginAnnouncements
 } from "./announcements.js";
+import {
+  setClientUpdateNotificationRole
+} from "./client-updates.js";
 
 import {
   DiscordSettingsError,
@@ -315,6 +318,16 @@ async function discordInteraction(request, env) {
   if (interaction.data?.name === "account") {
     return discordAccountCommand(env, discordUser.id,
       interaction.guild_id, interaction.member?.roles);
+  }
+  if (interaction.data?.name === "client-updates") {
+    const action = interaction.data.options
+      ?.find((option) => option.name === "action")?.value;
+    try {
+      return discordMessage(await setClientUpdateNotificationRole(
+        env, discordUser.id, interaction.guild_id, action));
+    } catch (error) {
+      return discordMessage(error.message || "Client update notifications could not be changed.");
+    }
   }
   return discordMessage("Unknown command.");
 }

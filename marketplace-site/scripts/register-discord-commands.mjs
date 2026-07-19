@@ -23,6 +23,22 @@ const commands = [
   {
     name: "account",
     description: "Show the KLite account linked to your Discord user"
+  },
+  {
+    name: "client-updates",
+    description: "Subscribe to or unsubscribe from KLite client update notifications",
+    options: [
+      {
+        type: 3,
+        name: "action",
+        description: "Choose whether to receive client update notifications",
+        required: true,
+        choices: [
+          { name: "Subscribe", value: "subscribe" },
+          { name: "Unsubscribe", value: "unsubscribe" }
+        ]
+      }
+    ]
   }
 ];
 

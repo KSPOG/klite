@@ -1,3 +1,9 @@
+import {
+  clientUpdateDashboardData,
+  postClientUpdateAnnouncement,
+  saveClientUpdateSettings
+} from "./client-updates.js";
+
 const DISCORD_API = "https://discord.com/api/v10";
 const TEXT_CHANNEL_TYPES = new Set([0, 5]);
 
@@ -28,9 +34,10 @@ export async function discordBotDashboard(env, userId) {
       count(env, "SELECT COUNT(*) AS total FROM sessions WHERE expires_at > ?", nowSeconds()),
       count(env, "SELECT COUNT(*) AS total FROM plugin_announcement_log")
     ]);
-  const botMember = await discordApi(
-    env, `/guilds/${env.DISCORD_GUILD_ID}/members/${bot.id}`
-  );
+  const [botMember, clientUpdates] = await Promise.all([
+    discordApi(env, `/guilds/${env.DISCORD_GUILD_ID}/members/${bot.id}`),
+    clientUpdateDashboardData(env)
+  ]);
 
   return {
     access: {
@@ -58,7 +65,8 @@ export async function discordBotDashboard(env, userId) {
       description: guild.description || null,
       verificationLevel: guild.verification_level
     },
-    settings: settingsPayload(context.settings, announcement, context.devRoleId),
+    settings: settingsPayload(context.settings, announcement, context.devRoleId,
+      clientUpdates.setting),
     roles: context.roles
       .map(rolePayload)
       .sort((left, right) => right.position - left.position),
@@ -81,6 +89,7 @@ export async function discordBotDashboard(env, userId) {
       defaultMemberPermissions: command.default_member_permissions || null,
       dmPermission: command.dm_permission ?? null
     })),
+    clientUpdates,
     announcementHistory: (history.results || []).map((entry) => ({
       pluginId: entry.plugin_id,
       version: entry.version,
@@ -123,11 +132,21 @@ export async function updateDiscordBotSettings(env, userId, input) {
   for (const roleId of [
     normalized.pluginDevRoleId,
     normalized.marketplaceReviewerRoleId,
-    normalized.memberRoleId
+    normalized.memberRoleId,
+    normalized.clientUpdateRoleId
   ]) {
     if (roleId && !roleById.has(roleId)) {
       throw new DiscordSettingsError("invalid_role", "A selected role no longer exists.");
     }
+  }
+
+  const clientUpdateRole = normalized.clientUpdateRoleId
+    ? roleById.get(normalized.clientUpdateRoleId) : null;
+  if (clientUpdateRole?.managed) {
+    throw new DiscordSettingsError(
+      "managed_client_update_role",
+      "The client update notification role must be a normal assignable server role."
+    );
   }
 
   const channels = await discordApi(env, `/guilds/${env.DISCORD_GUILD_ID}/channels`);
@@ -136,6 +155,7 @@ export async function updateDiscordBotSettings(env, userId, input) {
     .map((channel) => channel.id));
   for (const channelId of [
     normalized.announcementChannelId,
+    normalized.clientUpdateChannelId,
     normalized.auditChannelId,
     normalized.welcomeChannelId
   ]) {
@@ -144,6 +164,13 @@ export async function updateDiscordBotSettings(env, userId, input) {
         "invalid_channel", "A selected channel is not a server text channel."
       );
     }
+  }
+  if (normalized.clientUpdatesEnabled
+      && (!normalized.clientUpdateChannelId || !normalized.clientUpdateRoleId)) {
+    throw new DiscordSettingsError(
+      "client_update_configuration_required",
+      "Choose both a client update channel and notification role before enabling posts."
+    );
   }
   if (normalized.announcementsEnabled && !normalized.announcementChannelId) {
     throw new DiscordSettingsError(
@@ -180,6 +207,12 @@ export async function updateDiscordBotSettings(env, userId, input) {
     now
   ).run();
 
+  await saveClientUpdateSettings(env, userId, {
+    channelId: normalized.clientUpdateChannelId,
+    roleId: normalized.clientUpdateRoleId,
+    enabled: normalized.clientUpdatesEnabled
+  });
+
   if (normalized.announcementChannelId) {
     await env.DB.prepare(
       `INSERT INTO discord_announcement_settings
@@ -198,6 +231,17 @@ export async function updateDiscordBotSettings(env, userId, input) {
   } else {
     await env.DB.prepare("DELETE FROM discord_announcement_settings WHERE id = 1").run();
   }
+  if (normalized.postClientUpdate) {
+    try {
+      await postClientUpdateAnnouncement(env, userId, {
+        version: normalized.clientUpdateVersion,
+        updates: normalized.clientUpdateNotes
+      });
+    } catch (error) {
+      throw new DiscordSettingsError(error.code || "client_update_failed", error.message);
+    }
+  }
+
   if (normalized.botEnabled && normalized.auditChannelId) {
     await discordApi(env, `/channels/${normalized.auditChannelId}/messages`, {
       method: "POST",
@@ -250,14 +294,19 @@ export function normalizeDiscordBotSettings(input) {
   if (!devRoleId
       || typeof input.botEnabled !== "boolean"
       || typeof input.autoAssignMemberRole !== "boolean"
-      || typeof input.announcementsEnabled !== "boolean") {
+      || typeof input.announcementsEnabled !== "boolean"
+      || typeof input.clientUpdatesEnabled !== "boolean"
+      || (input.postClientUpdate !== undefined
+        && typeof input.postClientUpdate !== "boolean")) {
     return null;
   }
   const optionalKeys = [
     "pluginDevRoleId",
     "marketplaceReviewerRoleId",
     "memberRoleId",
+    "clientUpdateRoleId",
     "announcementChannelId",
+    "clientUpdateChannelId",
     "auditChannelId",
     "welcomeChannelId"
   ];
@@ -265,7 +314,13 @@ export function normalizeDiscordBotSettings(input) {
     devRoleId,
     botEnabled: input.botEnabled,
     autoAssignMemberRole: input.autoAssignMemberRole,
-    announcementsEnabled: input.announcementsEnabled
+    announcementsEnabled: input.announcementsEnabled,
+    clientUpdatesEnabled: input.clientUpdatesEnabled,
+    postClientUpdate: input.postClientUpdate === true,
+    clientUpdateVersion: typeof input.clientUpdateVersion === "string"
+      ? input.clientUpdateVersion.trim() : "",
+    clientUpdateNotes: typeof input.clientUpdateNotes === "string"
+      ? input.clientUpdateNotes : ""
   };
   for (const key of optionalKeys) {
     const value = normalizeOptionalSnowflake(input[key]);
@@ -337,7 +392,7 @@ async function botSettings(env) {
   }
 }
 
-function settingsPayload(settings, announcement, devRoleId) {
+function settingsPayload(settings, announcement, devRoleId, clientUpdates) {
   return {
     devRoleId: settings?.dev_role_id || devRoleId,
     pluginDevRoleId: settings?.plugin_dev_role_id || null,
@@ -345,6 +400,9 @@ function settingsPayload(settings, announcement, devRoleId) {
     memberRoleId: settings?.member_role_id || null,
     announcementChannelId: announcement?.channel_id || null,
     announcementsEnabled: announcement?.enabled === 1,
+    clientUpdateChannelId: clientUpdates?.channelId || null,
+    clientUpdateRoleId: clientUpdates?.roleId || null,
+    clientUpdatesEnabled: clientUpdates?.enabled === true,
     auditChannelId: settings?.audit_channel_id || null,
     welcomeChannelId: settings?.welcome_channel_id || null,
     botEnabled: settings ? settings.bot_enabled === 1 : true,

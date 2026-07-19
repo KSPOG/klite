@@ -1,9 +1,11 @@
-const fs = require("node:fs");
-const path = require("node:path");
-const test = require("node:test");
-const assert = require("node:assert/strict");
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
 
-const repositoryRoot = path.resolve(__dirname, "..", "..");
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const repositoryRoot = path.resolve(testDirectory, "..", "..");
 
 function read(relativePath) {
   return fs.readFileSync(path.join(repositoryRoot, relativePath), "utf8");
@@ -16,7 +18,8 @@ test("public API source bundle follows the documented API surface", () => {
   assert.match(builder, /\("Client API", "api"\)/);
   assert.match(builder, /\("Automation runtime", "automation"\)/);
   assert.match(builder, /\("Web walker", "walker"\)/);
-  assert.match(builder, /verify_reference_parity/);
+  assert.match(builder, /select_documented_types/);
+  assert.match(builder, /Documented API types have no matching Java source/);
 });
 
 test("the rolling SDK release publishes and verifies the source ZIP", () => {
