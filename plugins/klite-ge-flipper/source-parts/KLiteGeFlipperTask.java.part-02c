@@ -1,0 +1,118 @@
+  overlayStatus = "Opening Grand Exchange";
+
+        // "Exchange" is an NPC action on the Grand Exchange Clerk. Trying the
+        // booth first caused OPTION_NOT_FOUND and prevented the NPC fallback.
+        Optional<KLiteNpcSnapshot> clerk = await(context,
+            context.client().nearestNpc("Grand Exchange Clerk"));
+        if (clerk.isPresent())
+        {
+            KLiteInteractionResult result = await(context,
+                context.client().interactNpc(clerk.get().getIndex(), "Exchange"));
+            logActionResult("Open Grand Exchange through Clerk", result);
+            if (result.isDispatched())
+            {
+                overlayStatus = "Waiting for GE interface";
+                markGrandExchangeOpenRequest();
+                markAction();
+                return;
+            }
+        }
+
+        Optional<KLiteSceneObjectSnapshot> booth = await(context,
+            context.client().nearestSceneObject("Grand Exchange booth"));
+        if (booth.isPresent())
+        {
+            KLiteSceneObjectSnapshot target = booth.get();
+            overlayStatus = "Opening GE through booth";
+            KLiteInteractionResult result = await(context,
+                context.client().interactSceneObject(target.getObjectId(), target.getLocation(), "Exchange"));
+            logActionResult("Open Grand Exchange through booth fallback", result);
+            if (result.isDispatched())
+            {
+                overlayStatus = "Waiting for GE interface";
+                markGrandExchangeOpenRequest();
+            }
+            markAction();
+            return;
+        }
+
+        overlayStatus = "GE Clerk or booth not found";
+        throttledStatus("No nearby Grand Exchange Clerk or exchange-capable booth found");
+        markAction();
+    }
+
+    private void pressEscape()
+    {
+        virtualKeyboardBridge.pressEscape();
+    }
+
+    private boolean cooldownElapsed()
+    {
+        return System.currentTimeMillis() - lastActionAt >= nextActionCooldown;
+    }
+
+    private void markAction()
+    {
+        overlayActions++;
+        lastActionAt = System.currentTimeMillis();
+        nextActionCooldown = randomActionCooldown();
+        interactionTimeout = randomAround(
+            DEFAULT_INTERACTION_TIMEOUT_MS,
+            INTERACTION_TIMEOUT_VARIANCE_MS,
+            5_000L);
+    }
+
+    private static long randomActionCooldown()
+    {
+        return ThreadLocalRandom.current().nextLong(
+            MIN_ACTION_COOLDOWN_MS,
+            MAX_ACTION_COOLDOWN_MS + 1L);
+    }
+
+    private static long randomHighlightRepeatDelay()
+    {
+        return ThreadLocalRandom.current().nextLong(
+            MIN_HIGHLIGHT_REPEAT_DELAY_MS,
+            MAX_HIGHLIGHT_REPEAT_DELAY_MS + 1L);
+    }
+
+    private static long randomGrandExchangeOpenRetryDelay()
+    {
+        return ThreadLocalRandom.current().nextLong(
+            MIN_GE_OPEN_RETRY_DELAY_MS,
+            MAX_GE_OPEN_RETRY_DELAY_MS + 1L);
+    }
+
+    private void markGrandExchangeOpenRequest()
+    {
+        lastGrandExchangeOpenRequestAt = System.currentTimeMillis();
+        nextGrandExchangeOpenRetryDelay = randomGrandExchangeOpenRetryDelay();
+    }
+
+    private static long randomAround(long center, long variance, long minimum)
+    {
+        long lower = Math.max(minimum, center - variance);
+        long upper = Math.max(lower + 1L, center + variance + 1L);
+        return ThreadLocalRandom.current().nextLong(lower, upper);
+    }
+
+    private void throttledStatus(String message)
+    {
+        overlayStatus = message;
+        long now = System.currentTimeMillis();
+        if (now - lastStatusLogAt >= STATUS_LOG_INTERVAL_MS)
+        {
+            log.info("GE Flipper: {}", message);
+            lastStatusLogAt = now;
+        }
+    }
+
+    private static void logActionResult(String action, KLiteInteractionResult result)
+    {
+        if (result.isDispatched())
+        {
+            log.info("{}: dispatched", action);
+        }
+        else
+        {
+            log.warn("{}: {} - {}", actio
