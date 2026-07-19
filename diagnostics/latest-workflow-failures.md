@@ -1,8 +1,126 @@
 # Recent GitHub Actions failures
 
-Generated: 2026-07-19T11:48:03.686925+00:00
+Generated: 2026-07-19T11:49:23.001763+00:00
 Repository: `KSPOG/klite`
 Failed runs inspected: **15**
+
+## Diagnose failed workflow runs: Diagnose failed workflow runs
+
+- Run: [29685815395](https://github.com/KSPOG/klite/actions/runs/29685815395)
+- Conclusion: `cancelled`
+- Event: `workflow_run`
+- Commit: `2a8586bbf01df833d63ecfb7d80bb6a497058b08`
+- Created: `2026-07-19T11:48:40Z`
+
+### Failed jobs and steps
+
+- **diagnose** — `cancelled`
+  - Step 3: **Collect recent failure details** — `cancelled`
+
+### Relevant log context
+
+No matching error lines were available from `gh run view --log-failed`.
+
+## CI: Add client AutoLogin and Discord update notifications
+
+- Run: [29685785865](https://github.com/KSPOG/klite/actions/runs/29685785865)
+- Conclusion: `failure`
+- Event: `pull_request`
+- Commit: `2f8ffaf38cf66eea1a9ede1d39fcde38923c77c7`
+- Created: `2026-07-19T11:47:40Z`
+
+### Failed jobs and steps
+
+- **build** — `failure`
+  - Step 6: **Build and Test** — `failure`
+
+### Relevant log context
+
+```text
+build	Build and Test	2026-07-19T11:48:15.7104604Z > Task :runelite-api:build
+build	Build and Test	2026-07-19T11:48:24.4054808Z
+build	Build and Test	2026-07-19T11:48:24.4069532Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/ChatboxInput.java:32: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:48:24.4071912Z > Task :client:compileJava
+build	Build and Test	2026-07-19T11:48:24.4094221Z @Value
+build	Build and Test	2026-07-19T11:48:24.4125904Z ^
+build	Build and Test	2026-07-19T11:48:24.4148071Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/party/messages/PartyChatMessage.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:48:24.4150581Z @Value
+build	Build and Test	2026-07-19T11:48:24.4151013Z ^
+build	Build and Test	2026-07-19T11:48:24.4153270Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/PrivateMessageInput.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:48:24.4156027Z @Value
+build	Build and Test	2026-07-19T11:48:24.4156665Z ^
+build	Build and Test	2026-07-19T11:48:24.4158561Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/devtools/ScriptInspector.java:100: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:48:24.4188238Z 	@Data
+build	Build and Test	2026-07-19T11:48:24.4188578Z 	^
+build	Build and Test	2026-07-19T11:48:31.4048079Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/agility/Courses.java:88: warning: non-varargs call of varargs method with inexact argument type for last parameter;
+build	Build and Test	2026-07-19T11:48:31.4091024Z 		this(totalXp, -1, null);
+build	Build and Test	2026-07-19T11:48:31.4125103Z 		                  ^
+build	Build and Test	2026-07-19T11:48:31.4150900Z   cast to WorldPoint for a varargs call
+build	Build and Test	2026-07-19T11:48:31.4168643Z   cast to WorldPoint[] for a non-varargs call and to suppress this warning
+build	Build and Test	2026-07-19T11:48:34.6080673Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java:154: error: cannot find symbol
+build	Build and Test	2026-07-19T11:48:34.6106544Z 			client.getUsername(), client.getPassword());
+build	Build and Test	2026-07-19T11:48:34.6129418Z 			                            ^
+build	Build and Test	2026-07-19T11:48:34.6156103Z   symbol:   method getPassword()
+build	Build and Test	2026-07-19T11:48:34.6201762Z   location: variable client of type Client
+build	Build and Test	2026-07-19T11:48:35.5068461Z Note: Some input files use or override a deprecated API.
+build	Build and Test	2026-07-19T11:48:35.5096134Z Note: Recompile with -Xlint:deprecation for details.
+build	Build and Test	2026-07-19T11:48:35.5097480Z Note: Some input files use unchecked or unsafe operations.
+build	Build and Test	2026-07-19T11:48:35.5122222Z Note: Recompile with -Xlint:unchecked for details.
+build	Build and Test	2026-07-19T11:48:35.5146164Z 1 error
+build	Build and Test	2026-07-19T11:48:35.5176005Z 5 warnings
+build	Build and Test	2026-07-19T11:48:35.9045158Z
+build	Build and Test	2026-07-19T11:48:35.9046496Z > Task :client:compileJava FAILED
+build	Build and Test	2026-07-19T11:48:35.9048153Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784461681529.json
+build	Build and Test	2026-07-19T11:48:35.9049146Z
+build	Build and Test	2026-07-19T11:48:35.9049681Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-19T11:48:35.9051028Z 55 actionable tasks: 23 executed, 32 from cache
+build	Build and Test	2026-07-19T11:48:35.9051655Z
+build	Build and Test	2026-07-19T11:48:35.9054036Z * What went wrong:
+build	Build and Test	2026-07-19T11:48:35.9054830Z Execution failed for task ':client:compileJava'.
+build	Build and Test	2026-07-19T11:48:35.9056055Z > Compilation failed; see the compiler error output for details.
+build	Build and Test	2026-07-19T11:48:35.9056836Z
+build	Build and Test	2026-07-19T11:48:35.9057240Z * Try:
+build	Build and Test	2026-07-19T11:48:35.9057936Z > Run with --info option to get more log output.
+build	Build and Test	2026-07-19T11:48:35.9058767Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-19T11:48:35.9059358Z
+build	Build and Test	2026-07-19T11:48:35.9059757Z BUILD FAILED in 42s
+build	Build and Test	2026-07-19T11:48:36.3588950Z ##[error]Process completed with exit code 1.
+```
+
+## Apply client version, AutoLogin, and Discord updates: Add client AutoLogin and Discord update notifications
+
+- Run: [29685785861](https://github.com/KSPOG/klite/actions/runs/29685785861)
+- Conclusion: `failure`
+- Event: `pull_request`
+- Commit: `2f8ffaf38cf66eea1a9ede1d39fcde38923c77c7`
+- Created: `2026-07-19T11:47:40Z`
+
+### Failed jobs and steps
+
+- **verify-feature** — `failure`
+  - Step 7: **Report marketplace test failure** — `failure`
+
+### Relevant log context
+
+```text
+verify-feature	Report marketplace test failure	﻿2026-07-19T11:48:05.2562676Z ##[group]Run {
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2562966Z ^[[36;1m{^[[0m
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2563232Z ^[[36;1m  echo '### Marketplace test failure summary'^[[0m
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2563582Z ^[[36;1m  echo '```text'^[[0m
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2564103Z ^[[36;1m  grep -E -A 14 -B 3 'not ok|AssertionError|ReferenceError|SyntaxError|ERR_' marketplace-test.log | tail -n 180^[[0m
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2564657Z ^[[36;1m  echo '```'^[[0m
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2564922Z ^[[36;1m} > marketplace-test-comment.md^[[0m
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2565330Z ^[[36;1mgh pr comment 57 --body-file marketplace-test-comment.md^[[0m
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2565689Z ^[[36;1mexit 1^[[0m
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2629180Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2629551Z env:
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2629878Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.31-11/x64
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2630392Z   JAVA_HOME_11_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.31-11/x64
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2632987Z   GH_TOKEN: ***
+verify-feature	Report marketplace test failure	2026-07-19T11:48:05.2633267Z ##[endgroup]
+verify-feature	Report marketplace test failure	2026-07-19T11:48:08.3545149Z https://github.com/KSPOG/klite/pull/57#issuecomment-5015592290
+verify-feature	Report marketplace test failure	2026-07-19T11:48:08.3571548Z ##[error]Process completed with exit code 1.
+```
 
 ## Diagnose failed workflow runs: Diagnose failed workflow runs
 
@@ -20,6 +138,72 @@ Failed runs inspected: **15**
 ### Relevant log context
 
 No matching error lines were available from `gh run view --log-failed`.
+
+## CI: Correct marketplace test outcome condition
+
+- Run: [29685784605](https://github.com/KSPOG/klite/actions/runs/29685784605)
+- Conclusion: `failure`
+- Event: `push`
+- Commit: `2f8ffaf38cf66eea1a9ede1d39fcde38923c77c7`
+- Created: `2026-07-19T11:47:37Z`
+
+### Failed jobs and steps
+
+- **build** — `failure`
+  - Step 6: **Build and Test** — `failure`
+
+### Relevant log context
+
+```text
+build	Build and Test	2026-07-19T11:48:25.0170221Z > Task :runelite-api:build
+build	Build and Test	2026-07-19T11:48:35.3176041Z
+build	Build and Test	2026-07-19T11:48:35.3190310Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/PrivateMessageInput.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:48:35.3193067Z @Value
+build	Build and Test	2026-07-19T11:48:35.3193667Z > Task :client:compileJava
+build	Build and Test	2026-07-19T11:48:35.3194291Z ^
+build	Build and Test	2026-07-19T11:48:35.3196652Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/ChatboxInput.java:32: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:48:35.3198185Z @Value
+build	Build and Test	2026-07-19T11:48:35.3198528Z ^
+build	Build and Test	2026-07-19T11:48:35.3200524Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/party/messages/PartyChatMessage.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:48:35.3202486Z @Value
+build	Build and Test	2026-07-19T11:48:35.3202729Z ^
+build	Build and Test	2026-07-19T11:48:35.3204057Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/devtools/ScriptInspector.java:100: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:48:35.3205438Z 	@Data
+build	Build and Test	2026-07-19T11:48:35.3205658Z 	^
+build	Build and Test	2026-07-19T11:48:42.5191759Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/agility/Courses.java:88: warning: non-varargs call of varargs method with inexact argument type for last parameter;
+build	Build and Test	2026-07-19T11:48:42.5230503Z 		this(totalXp, -1, null);
+build	Build and Test	2026-07-19T11:48:42.5260287Z 		                  ^
+build	Build and Test	2026-07-19T11:48:42.5290055Z   cast to WorldPoint for a varargs call
+build	Build and Test	2026-07-19T11:48:42.5291080Z   cast to WorldPoint[] for a non-varargs call and to suppress this warning
+build	Build and Test	2026-07-19T11:48:46.2193867Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java:154: error: cannot find symbol
+build	Build and Test	2026-07-19T11:48:46.2220621Z 			client.getUsername(), client.getPassword());
+build	Build and Test	2026-07-19T11:48:46.2250213Z 			                            ^
+build	Build and Test	2026-07-19T11:48:46.2280084Z   symbol:   method getPassword()
+build	Build and Test	2026-07-19T11:48:46.2281009Z   location: variable client of type Client
+build	Build and Test	2026-07-19T11:48:47.2166843Z Note: Some input files use or override a deprecated API.
+build	Build and Test	2026-07-19T11:48:47.2190507Z Note: Recompile with -Xlint:deprecation for details.
+build	Build and Test	2026-07-19T11:48:47.2200515Z Note: Some input files use unchecked or unsafe operations.
+build	Build and Test	2026-07-19T11:48:47.2201511Z Note: Recompile with -Xlint:unchecked for details.
+build	Build and Test	2026-07-19T11:48:47.2202426Z 1 error
+build	Build and Test	2026-07-19T11:48:47.2202996Z 5 warnings
+build	Build and Test	2026-07-19T11:48:47.6165766Z
+build	Build and Test	2026-07-19T11:48:47.6166714Z > Task :client:compileJava FAILED
+build	Build and Test	2026-07-19T11:48:47.6167257Z
+build	Build and Test	2026-07-19T11:48:47.6168366Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784461691725.json
+build	Build and Test	2026-07-19T11:48:47.6170792Z 55 actionable tasks: 23 executed, 32 from cache
+build	Build and Test	2026-07-19T11:48:47.6173019Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-19T11:48:47.6173444Z
+build	Build and Test	2026-07-19T11:48:47.6174128Z * What went wrong:
+build	Build and Test	2026-07-19T11:48:47.6174680Z Execution failed for task ':client:compileJava'.
+build	Build and Test	2026-07-19T11:48:47.6175495Z > Compilation failed; see the compiler error output for details.
+build	Build and Test	2026-07-19T11:48:47.6176037Z
+build	Build and Test	2026-07-19T11:48:47.6176203Z * Try:
+build	Build and Test	2026-07-19T11:48:47.6176666Z > Run with --info option to get more log output.
+build	Build and Test	2026-07-19T11:48:47.6177316Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-19T11:48:47.6177710Z
+build	Build and Test	2026-07-19T11:48:47.6177902Z BUILD FAILED in 46s
+build	Build and Test	2026-07-19T11:48:48.0806779Z ##[error]Process completed with exit code 1.
+```
 
 ## Apply client version, AutoLogin, and Discord updates: Add client AutoLogin and Discord update notifications
 
@@ -1031,287 +1215,5 @@ verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.147528
 verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1475512Z # duration_ms 724.727697
 verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.9907831Z https://github.com/KSPOG/klite/pull/57#issuecomment-5015584193
 verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.9939683Z ##[error]Process completed with exit code 1.
-```
-
-## CI: Add client AutoLogin and Discord update notifications
-
-- Run: [29685704187](https://github.com/KSPOG/klite/actions/runs/29685704187)
-- Conclusion: `failure`
-- Event: `pull_request`
-- Commit: `0365c281d15705e1355d098f320d6b8f904f4144`
-- Created: `2026-07-19T11:45:02Z`
-
-### Failed jobs and steps
-
-- **build** — `failure`
-  - Step 6: **Build and Test** — `failure`
-
-### Relevant log context
-
-```text
-build	Build and Test	2026-07-19T11:45:37.0015232Z > Task :runelite-api:build
-build	Build and Test	2026-07-19T11:45:47.4014469Z
-build	Build and Test	2026-07-19T11:45:47.4026217Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/party/messages/PartyChatMessage.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T11:45:47.4029231Z > Task :client:compileJava
-build	Build and Test	2026-07-19T11:45:47.4029955Z @Value
-build	Build and Test	2026-07-19T11:45:47.4030372Z ^
-build	Build and Test	2026-07-19T11:45:47.4032651Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/PrivateMessageInput.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T11:45:47.4035381Z @Value
-build	Build and Test	2026-07-19T11:45:47.4035765Z ^
-build	Build and Test	2026-07-19T11:45:47.4037970Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/ChatboxInput.java:32: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T11:45:47.4040369Z @Value
-build	Build and Test	2026-07-19T11:45:47.4040759Z ^
-build	Build and Test	2026-07-19T11:45:47.4043157Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/devtools/ScriptInspector.java:100: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T11:45:47.4045901Z 	@Data
-build	Build and Test	2026-07-19T11:45:47.4046266Z 	^
-build	Build and Test	2026-07-19T11:45:54.3046323Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/agility/Courses.java:88: warning: non-varargs call of varargs method with inexact argument type for last parameter;
-build	Build and Test	2026-07-19T11:45:54.3067364Z 		this(totalXp, -1, null);
-build	Build and Test	2026-07-19T11:45:54.3068785Z 		                  ^
-build	Build and Test	2026-07-19T11:45:54.3069307Z   cast to WorldPoint for a varargs call
-build	Build and Test	2026-07-19T11:45:54.3070103Z   cast to WorldPoint[] for a non-varargs call and to suppress this warning
-build	Build and Test	2026-07-19T11:45:57.7004525Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java:154: error: cannot find symbol
-build	Build and Test	2026-07-19T11:45:57.7006800Z 			client.getUsername(), client.getPassword());
-build	Build and Test	2026-07-19T11:45:57.7007872Z 			                            ^
-build	Build and Test	2026-07-19T11:45:57.7008775Z   symbol:   method getPassword()
-build	Build and Test	2026-07-19T11:45:57.7009632Z   location: variable client of type Client
-build	Build and Test	2026-07-19T11:45:58.7015465Z Note: Some input files use or override a deprecated API.
-build	Build and Test	2026-07-19T11:45:58.7055398Z Note: Recompile with -Xlint:deprecation for details.
-build	Build and Test	2026-07-19T11:45:58.7114981Z Note: Some input files use unchecked or unsafe operations.
-build	Build and Test	2026-07-19T11:45:58.7144814Z Note: Recompile with -Xlint:unchecked for details.
-build	Build and Test	2026-07-19T11:45:58.7146259Z 1 error
-build	Build and Test	2026-07-19T11:45:58.7174589Z 5 warnings
-build	Build and Test	2026-07-19T11:45:59.0000050Z
-build	Build and Test	2026-07-19T11:45:59.0002185Z > Task :client:compileJava FAILED
-build	Build and Test	2026-07-19T11:45:59.1002099Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784461524731.json
-build	Build and Test	2026-07-19T11:45:59.1007625Z
-build	Build and Test	2026-07-19T11:45:59.1011803Z 55 actionable tasks: 23 executed, 32 from cache
-build	Build and Test	2026-07-19T11:45:59.1018583Z FAILURE: Build failed with an exception.
-build	Build and Test	2026-07-19T11:45:59.1035040Z
-build	Build and Test	2026-07-19T11:45:59.1036054Z * What went wrong:
-build	Build and Test	2026-07-19T11:45:59.1036935Z Execution failed for task ':client:compileJava'.
-build	Build and Test	2026-07-19T11:45:59.1038058Z > Compilation failed; see the compiler error output for details.
-build	Build and Test	2026-07-19T11:45:59.1038832Z
-build	Build and Test	2026-07-19T11:45:59.1039213Z * Try:
-build	Build and Test	2026-07-19T11:45:59.1039912Z > Run with --info option to get more log output.
-build	Build and Test	2026-07-19T11:45:59.1040832Z > Run with --scan to get full insights.
-build	Build and Test	2026-07-19T11:45:59.1041457Z
-build	Build and Test	2026-07-19T11:45:59.1041830Z BUILD FAILED in 42s
-build	Build and Test	2026-07-19T11:45:59.5445278Z ##[error]Process completed with exit code 1.
-```
-
-## CI: Run public API bundle tests as ES modules
-
-- Run: [29685702263](https://github.com/KSPOG/klite/actions/runs/29685702263)
-- Conclusion: `failure`
-- Event: `push`
-- Commit: `0365c281d15705e1355d098f320d6b8f904f4144`
-- Created: `2026-07-19T11:44:59Z`
-
-### Failed jobs and steps
-
-- **build** — `failure`
-  - Step 6: **Build and Test** — `failure`
-
-### Relevant log context
-
-```text
-build	Build and Test	2026-07-19T11:45:30.5255345Z > Task :runelite-api:build
-build	Build and Test	2026-07-19T11:45:37.6147652Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/party/messages/PartyChatMessage.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T11:45:37.6149886Z
-build	Build and Test	2026-07-19T11:45:37.6175398Z @Value
-build	Build and Test	2026-07-19T11:45:37.6176041Z ^
-build	Build and Test	2026-07-19T11:45:37.6176728Z > Task :client:compileJava
-build	Build and Test	2026-07-19T11:45:37.6236878Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/PrivateMessageInput.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T11:45:37.6265181Z @Value
-build	Build and Test	2026-07-19T11:45:37.6266576Z ^
-build	Build and Test	2026-07-19T11:45:37.6268744Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/ChatboxInput.java:32: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T11:45:37.6270870Z @Value
-build	Build and Test	2026-07-19T11:45:37.6271398Z ^
-build	Build and Test	2026-07-19T11:45:37.6305039Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/devtools/ScriptInspector.java:100: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T11:45:37.6306924Z 	@Data
-build	Build and Test	2026-07-19T11:45:37.6307339Z 	^
-build	Build and Test	2026-07-19T11:45:44.0117761Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/agility/Courses.java:88: warning: non-varargs call of varargs method with inexact argument type for last parameter;
-build	Build and Test	2026-07-19T11:45:44.0133175Z 		this(totalXp, -1, null);
-build	Build and Test	2026-07-19T11:45:44.0134985Z 		                  ^
-build	Build and Test	2026-07-19T11:45:44.0135709Z   cast to WorldPoint for a varargs call
-build	Build and Test	2026-07-19T11:45:44.0136551Z   cast to WorldPoint[] for a non-varargs call and to suppress this warning
-build	Build and Test	2026-07-19T11:45:46.9111171Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java:154: error: cannot find symbol
-build	Build and Test	2026-07-19T11:45:46.9113388Z 			client.getUsername(), client.getPassword());
-build	Build and Test	2026-07-19T11:45:46.9114309Z 			                            ^
-build	Build and Test	2026-07-19T11:45:46.9115621Z   symbol:   method getPassword()
-build	Build and Test	2026-07-19T11:45:46.9116518Z   location: variable client of type Client
-build	Build and Test	2026-07-19T11:45:47.4110678Z Note: Some input files use or override a deprecated API.
-build	Build and Test	2026-07-19T11:45:47.4132970Z Note: Recompile with -Xlint:deprecation for details.
-build	Build and Test	2026-07-19T11:45:47.4134312Z Note: Some input files use unchecked or unsafe operations.
-build	Build and Test	2026-07-19T11:45:47.4135598Z Note: Recompile with -Xlint:unchecked for details.
-build	Build and Test	2026-07-19T11:45:47.4136401Z 1 error
-build	Build and Test	2026-07-19T11:45:47.4136956Z 5 warnings
-build	Build and Test	2026-07-19T11:45:47.8115165Z
-build	Build and Test	2026-07-19T11:45:47.8115252Z
-build	Build and Test	2026-07-19T11:45:47.8116151Z FAILURE: Build failed with an exception.
-build	Build and Test	2026-07-19T11:45:47.8116864Z
-build	Build and Test	2026-07-19T11:45:47.8117111Z * What went wrong:
-build	Build and Test	2026-07-19T11:45:47.8117695Z Execution failed for task ':client:compileJava'.
-build	Build and Test	2026-07-19T11:45:47.8118491Z > Compilation failed; see the compiler error output for details.
-build	Build and Test	2026-07-19T11:45:47.8118935Z
-build	Build and Test	2026-07-19T11:45:47.8119100Z * Try:
-build	Build and Test	2026-07-19T11:45:47.8119846Z > Run with --info option to get more log output.
-build	Build and Test	2026-07-19T11:45:47.8120277Z > Run with --scan to get full insights.
-build	Build and Test	2026-07-19T11:45:47.8120596Z
-build	Build and Test	2026-07-19T11:45:47.8120762Z BUILD FAILED in 31s
-build	Build and Test	2026-07-19T11:45:47.8145775Z > Task :client:compileJava FAILED
-build	Build and Test	2026-07-19T11:45:47.8156412Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784461519754.json
-build	Build and Test	2026-07-19T11:45:47.8185807Z 55 actionable tasks: 23 executed, 32 from cache
-build	Build and Test	2026-07-19T11:45:48.2138420Z ##[error]Process completed with exit code 1.
-```
-
-## Diagnose failed workflow runs: Diagnose failed workflow runs
-
-- Run: [29685679077](https://github.com/KSPOG/klite/actions/runs/29685679077)
-- Conclusion: `cancelled`
-- Event: `workflow_run`
-- Commit: `626ef515cfe1c55d7b42cc6ad199919281b95356`
-- Created: `2026-07-19T11:44:16Z`
-
-### Failed jobs and steps
-
-- **diagnose** — `cancelled`
-  - Step 2: **Check out repository** — `cancelled`
-
-### Relevant log context
-
-No matching error lines were available from `gh run view --log-failed`.
-
-## Apply client version, AutoLogin, and Discord updates: Add client AutoLogin and Discord update notifications
-
-- Run: [29685646388](https://github.com/KSPOG/klite/actions/runs/29685646388)
-- Conclusion: `failure`
-- Event: `pull_request`
-- Commit: `6758c7ef858bb946c45360215b3d4d46da647f79`
-- Created: `2026-07-19T11:43:14Z`
-
-### Failed jobs and steps
-
-- **verify-feature** — `failure`
-  - Step 5: **Run marketplace tests with diagnostics** — `failure`
-
-### Relevant log context
-
-```text
-verify-feature	Run marketplace tests with diagnostics	﻿2026-07-19T11:43:32.4426635Z ##[group]Run set +e
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4426967Z ^[[36;1mset +e^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4427311Z ^[[36;1mnpm --prefix marketplace-site test 2>&1 | tee marketplace-test.log^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4427727Z ^[[36;1mstatus=${PIPESTATUS[0]}^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4428006Z ^[[36;1mif [ "$status" -ne 0 ]; then^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4428269Z ^[[36;1m  {^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4428510Z ^[[36;1m    echo '### Marketplace test failure'^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4428807Z ^[[36;1m    echo '```text'^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4429067Z ^[[36;1m    tail -n 240 marketplace-test.log^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4429345Z ^[[36;1m    echo '```'^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4429591Z ^[[36;1m  } > marketplace-test-comment.md^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4429951Z ^[[36;1m  gh pr comment 57 --body-file marketplace-test-comment.md^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4430291Z ^[[36;1m  exit "$status"^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.4430518Z ^[[36;1mfi^[[0m
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7718043Z ok 6 - API browser exposes working expand, collapse, and reset controls
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7718706Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7719130Z   duration_ms: 2.321668
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7719598Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7720015Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7720603Z # Subtest: API page links the downloadable public API source bundle
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7721629Z ok 7 - API page links the downloadable public API source bundle
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7722256Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7722651Z   duration_ms: 0.298635
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7723107Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7723513Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7724051Z # Subtest: Cloudflare serves API page files before dynamic API routes
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7725261Z ok 8 - Cloudflare serves API page files before dynamic API routes
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7725929Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7726349Z   duration_ms: 0.478161
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7726808Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7727225Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7727922Z # file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7728750Z # const fs = require("node:fs");
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7729246Z #            ^
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7729938Z # ReferenceError: require is not defined in ES module scope, you can use import instead
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7731867Z # This file is being treated as an ES module because it has a '.js' file extension and '/home/runner/work/klite/klite/marketplace-site/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7733811Z #     at file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:12
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7734839Z #     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7735777Z #     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7736754Z #     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7737492Z # Node.js v22.23.1
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7737982Z # Subtest: test/api-source-bundle.test.js
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7738584Z not ok 3 - test/api-source-bundle.test.js
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7739730Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7740188Z   duration_ms: 47.563748
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7740641Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7741769Z   location: '/home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:1'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7742645Z   failureType: 'testCodeFailure'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7743302Z   exitCode: 1
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7743710Z   signal: ~
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7744134Z   error: 'test failed'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7744597Z   code: 'ERR_TEST_FAILURE'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7745083Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7826546Z # Subtest: publishes only client-valid marketplace tags
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7832782Z ok 10 - publishes only client-valid marketplace tags
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7834694Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7835204Z   duration_ms: 6.477586
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7835683Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.7836113Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8420759Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8421348Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8880730Z # Subtest: normalizes Discord bot role and channel settings
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8913854Z ok 18 - normalizes Discord bot role and channel settings
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8914652Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8936408Z   duration_ms: 1.969683
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8938316Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8938890Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8939621Z # Subtest: shows the dashboard only when the linked member currently has Dev
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8965715Z ok 19 - shows the dashboard only when the linked member currently has Dev
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8966319Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8966621Z   duration_ms: 36.117671
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8966966Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.8967259Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9042375Z # Subtest: public pages serve the generated design system and scoped credit styles
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9059140Z not ok 20 - public pages serve the generated design system and scoped credit styles
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9072712Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9098482Z   duration_ms: 46.830499
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9125980Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9152262Z   location: '/home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:13:1'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9162993Z   failureType: 'testCodeFailure'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9172864Z   error: |-
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9183746Z     Expected values to be strictly equal:
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9184678Z
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9185042Z     2 !== 1
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9185394Z
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9185879Z   code: 'ERR_ASSERTION'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9186332Z   name: 'AssertionError'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9186757Z   expected: 1
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9187248Z   actual: 2
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9187664Z   operator: 'strictEqual'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9188411Z   stack: |-
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9189534Z     TestContext.<anonymous> (file:///home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:39:12)
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9190808Z     async Test.run (node:internal/test_runner/test:1054:7)
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:32.9192169Z     async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5078414Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5078811Z   duration_ms: 2.957692
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5079246Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5079654Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5080211Z # Subtest: requires a client login before serving paid plugin artifacts
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5081117Z ok 34 - requires a client login before serving paid plugin artifacts
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5081777Z   ---
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5082158Z   duration_ms: 0.803433
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5082600Z   type: 'test'
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5083009Z   ...
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5112028Z 1..34
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5118279Z # tests 34
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5118790Z # suites 0
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5119195Z # pass 32
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5119563Z # fail 2
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5119858Z # cancelled 0
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5120169Z # skipped 0
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5121076Z # todo 0
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:33.5121496Z # duration_ms 870.295572
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:34.2458869Z https://github.com/KSPOG/klite/pull/57#issuecomment-5015578954
-verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:43:34.2485769Z ##[error]Process completed with exit code 1.
 ```
 
