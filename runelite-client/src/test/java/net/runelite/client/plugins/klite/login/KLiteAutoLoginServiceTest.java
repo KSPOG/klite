@@ -15,26 +15,19 @@ public class KLiteAutoLoginServiceTest
 	@Test
 	public void acceptsLauncherSession()
 	{
-		assertTrue(KLiteAutoLoginService.hasCredentials("session", null, null, null));
+		assertTrue(KLiteAutoLoginService.hasLauncherSession("session", null));
 	}
 
 	@Test
 	public void acceptsLauncherDisplayName()
 	{
-		assertTrue(KLiteAutoLoginService.hasCredentials(null, "Character", null, null));
+		assertTrue(KLiteAutoLoginService.hasLauncherSession(null, "Character"));
 	}
 
 	@Test
-	public void acceptsCompleteClassicCredentials()
+	public void rejectsMissingLauncherSession()
 	{
-		assertTrue(KLiteAutoLoginService.hasCredentials(null, null, "user", "password"));
-	}
-
-	@Test
-	public void rejectsIncompleteCredentials()
-	{
-		assertFalse(KLiteAutoLoginService.hasCredentials(null, null, "user", null));
-		assertFalse(KLiteAutoLoginService.hasCredentials(null, null, null, "password"));
-		assertFalse(KLiteAutoLoginService.hasCredentials(" ", " ", " ", " "));
+		assertFalse(KLiteAutoLoginService.hasLauncherSession(null, null));
+		assertFalse(KLiteAutoLoginService.hasLauncherSession(" ", " "));
 	}
 }
