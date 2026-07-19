@@ -127,8 +127,11 @@ export default {
 
 function websiteControlEnvironment(env) {
   if (env.OWNER_RECOVERY_KEY || !env.SITE_OWNER_RECOVERY_KEY) return env;
-  return Object.assign({}, env, {
-    OWNER_RECOVERY_KEY: env.SITE_OWNER_RECOVERY_KEY
+  return new Proxy(env, {
+    get(target, property, receiver) {
+      if (property === "OWNER_RECOVERY_KEY") return target.SITE_OWNER_RECOVERY_KEY;
+      return Reflect.get(target, property, receiver);
+    }
   });
 }
 
