@@ -1,0 +1,101 @@
+
+            ? "Applying Copilot price"
+            : "Applying Copilot quantity";
+
+        FlippingCopilotBridge.SuggestionApplication application =
+            copilotBridge.applySuggestedAction(context, prompt.promptKind());
+        if (!application.applicable())
+        {
+            overlayStatus = application.promptKind() == FlippingCopilotBridge.PromptKind.PRICE
+                ? "Waiting for Copilot price"
+                : "Waiting for Copilot quantity";
+            return false;
+        }
+
+        if (!application.applied())
+        {
+            overlayStatus = application.promptKind() == FlippingCopilotBridge.PromptKind.PRICE
+                ? "Unable to apply Copilot price"
+                : "Unable to apply Copilot quantity";
+            log.warn(
+                "Unable to apply Copilot {} suggestion: {} (varc={}, input={})",
+                application.promptKind().name().toLowerCase(),
+                application.message(),
+                application.value(),
+                application.inputText());
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+        if (application.promptKind() == lastSubmittedPromptKind
+            && application.value().equals(lastSubmittedPromptValue)
+            && now - lastPromptSubmissionAt < PROMPT_SUBMISSION_RETRY_MS)
+        {
+            return true;
+        }
+
+        int listenerCount = virtualKeyboardBridge.pressEnter(prompt.canvas());
+        lastSubmittedPromptKind = application.promptKind();
+        lastSubmittedPromptValue = application.value();
+        lastPromptSubmissionAt = now;
+
+        overlayStatus = application.promptKind() == FlippingCopilotBridge.PromptKind.PRICE
+            ? "Submitted price: " + formatStatusNumber(application.value()) + " gp"
+            : "Submitted quantity: " + formatStatusNumber(application.value());
+
+        log.info(
+            "Applied Copilot {} value {} from prompt '{}' and submitted it through {} listener(s) on Copilot's exact game canvas",
+            application.promptKind().name().toLowerCase(),
+            application.value(),
+            prompt.title(),
+            listenerCount);
+        return true;
+    }
+
+    private boolean handleAbortOrModify(
+        AutomationContext context,
+        FlippingCopilotBridge.CopilotSnapshot copilot) throws Exception
+    {
+        FlippingCopilotBridge.SuggestionKind kind = copilot.suggestionKind();
+        if (kind != FlippingCopilotBridge.SuggestionKind.ABORT
+            && kind != FlippingCopilotBridge.SuggestionKind.MODIFY)
+        {
+            return false;
+        }
+
+        Optional<FlippingCopilotBridge.HighlightedWidget> target = copilot.highlightedWidgets().stream()
+            .filter(widget -> isGrandExchangeSlot(widget.componentId()))
+            .findFirst();
+        if (!target.isPresent())
+        {
+            return false;
+        }
+
+        String option = kind == FlippingCopilotBridge.SuggestionKind.MODIFY
+            ? "Modify offer"
+            : "Abort offer";
+        int operation = kind == FlippingCopilotBridge.SuggestionKind.MODIFY ? 3 : 2;
+
+        // Flipping Copilot highlights a GE offer-slot widget. Preserve the exact
+        // widget id from Copilot and use the same operation parameters as the
+        // original plugin instead of resolving the component again.
+        dispatchMenuAction(context, new KLiteMenuActionRequest(
+            2,
+            target.get().componentId(),
+            MenuAction.CC_OP,
+            operation,
+            target.get().itemId(),
+            option,
+            target.get().target()));
+        if (kind == FlippingCopilotBridge.SuggestionKind.ABORT)
+        {
+            armHomeOnlyRecovery("abort offer");
+        }
+        overlayStatus = kind == FlippingCopilotBridge.SuggestionKind.MODIFY
+            ? "Modifying active GE offer"
+            : "Aborting active GE offer";
+
+        log.info(
+            "Dispatched {} on GE slot component={} index={} operation={}",
+            option,
+ 

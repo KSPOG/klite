@@ -1,0 +1,183 @@
+ }
+    }
+
+    private static boolean hasCollectHighlight(FlippingCopilotBridge.CopilotSnapshot copilot)
+    {
+        return copilot.highlightedWidgets().stream().anyMatch(KLiteGeFlipperTask::isCollectWidget);
+    }
+
+    private static boolean isCollectWidget(FlippingCopilotBridge.HighlightedWidget widget)
+    {
+        if (widget.componentId() == InterfaceID.GeOffers.COLLECTALL
+            || widget.componentId() == InterfaceID.GeOffers.DETAILS_COLLECT)
+        {
+            return true;
+        }
+
+        FlippingCopilotBridge.HighlightedAction action = widget.firstUsableAction();
+        return action != null
+            && action.option() != null
+            && action.option().toLowerCase(Locale.ROOT).contains("collect");
+    }
+
+    private void armHomeOnlyRecovery(String reason)
+    {
+        homeOnlyRecoveryUntil = System.currentTimeMillis() + HOME_ONLY_ACTION_RECOVERY_MS;
+        homeOnlyRecoveryReason = reason == null ? "" : reason;
+    }
+
+    private void clearHomeOnlyRecovery()
+    {
+        homeOnlyRecoveryUntil = 0L;
+        homeOnlyRecoveryReason = "";
+    }
+
+    private void pressGeBackThroughApi(
+        AutomationContext context,
+        String page,
+        int attempt) throws Exception
+    {
+        KLiteInteractionResult result = await(
+            context,
+            context.client().interactWidget(InterfaceID.GeOffers.BACK, "Back"));
+        logActionResult(
+            "Press GE " + page + " back arrow (API attempt " + attempt + ")",
+            result);
+    }
+
+    private void pressGeBackThroughMenuAction(
+        AutomationContext context,
+        String page,
+        int attempt) throws Exception
+    {
+        Optional<KLiteWidgetSnapshot> back = await(
+            context,
+            context.client().widget(InterfaceID.GeOffers.BACK));
+        int childIndex = back.isPresent() ? back.get().getIndex() : -1;
+        int itemId = back.isPresent() ? back.get().getItemId() : -1;
+        String target = back.isPresent() && back.get().getName() != null
+            ? back.get().getName()
+            : "";
+
+        dispatchMenuAction(context, new KLiteMenuActionRequest(
+            childIndex,
+            InterfaceID.GeOffers.BACK,
+            MenuAction.CC_OP,
+            1,
+            itemId,
+            "Back",
+            target));
+        log.info(
+            "Dispatched explicit CC_OP Back for GE {} page attempt {} component={} childIndex={}",
+            page,
+            attempt,
+            InterfaceID.GeOffers.BACK,
+            childIndex);
+    }
+
+    private void pressGeBackThroughCanvas(
+        AutomationContext context,
+        String page,
+        int attempt) throws Exception
+    {
+        Optional<KLiteWidgetSnapshot> back = await(
+            context,
+            context.client().widget(InterfaceID.GeOffers.BACK));
+        if (!back.isPresent() || !isVisible(back.get()))
+        {
+            log.warn(
+                "GE {} recovery attempt {} could not find a visible back-arrow widget",
+                page,
+                attempt);
+            return;
+        }
+
+        KLiteWidgetSnapshot arrow = back.get();
+        Rectangle bounds = new Rectangle(
+            arrow.getX(),
+            arrow.getY(),
+            arrow.getWidth(),
+            arrow.getHeight());
+        try
+        {
+            VirtualCanvasClickBridge.ClickResult click =
+                virtualCanvasClickBridge.click(bounds);
+            log.info(
+                "Virtually pressed GE {} back arrow attempt {} component={} bounds={} click=({}, {}) mode={} source={}",
+                page,
+                attempt,
+                InterfaceID.GeOffers.BACK,
+                bounds,
+                click.clickX(),
+                click.clickY(),
+                click.mappingMode(),
+                click.canvasSource());
+        }
+        catch (RuntimeException exception)
+        {
+            log.warn(
+                "Unable to virtually press GE {} back arrow attempt {} component={} bounds={}: {}",
+                page,
+                attempt,
+                InterfaceID.GeOffers.BACK,
+                bounds,
+                exception.getMessage());
+        }
+    }
+
+    private void resetGeBackRecovery()
+    {
+        lastGeBackRecoveryAt = 0L;
+        geBackRecoveryAttempt = 0;
+        geBackRecoveryPage = "";
+    }
+
+    private static boolean isVisible(KLiteWidgetSnapshot widget)
+    {
+        return widget != null
+            && !widget.isHidden()
+            && widget.getWidth() > 0
+            && widget.getHeight() > 0;
+    }
+
+    private void clearHighlightRepeatGuard()
+    {
+        lastHighlightSignature = "";
+        lastHighlightClickAt = 0L;
+        nextHighlightRepeatDelay = randomHighlightRepeatDelay();
+        identicalHighlightAttempts = 0;
+        highlightStallRecoveryUntil = 0L;
+    }
+
+    private boolean handleCopilotKeyboardPrompts(
+        AutomationContext context,
+        List<KLiteWidgetSnapshot> widgets) throws Exception
+    {
+        if (!cooldownElapsed())
+        {
+            return false;
+        }
+
+        if (WidgetTreeScanner.findText(widgets, "Copilot item:") != null)
+        {
+            overlayPrompt = "Item";
+            overlayStatus = "Accepting suggested item";
+            virtualKeyboardBridge.pressEnter();
+            log.info("Virtually accepted the Flipping Copilot item suggestion");
+            return true;
+        }
+
+        // The generic KLite interface snapshot is capped and can omit the
+        // chatbox input group even while it is visibly open. Copilot already
+        // checks the exact live chatbox title component, so use that state.
+        FlippingCopilotBridge.PromptSnapshot prompt =
+            copilotBridge.capturePrompt(context);
+        if (!prompt.active())
+        {
+            overlayPrompt = "None";
+            resetPromptSubmissionGuard();
+            return false;
+        }
+
+        overlayPrompt = prompt.promptKind().name();
+        overlayStatus = prompt.promptKind() == FlippingCopilotBridge.PromptKind.PRICE
