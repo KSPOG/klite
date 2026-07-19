@@ -8,6 +8,7 @@ package net.runelite.client.plugins.klite.api;
 import java.awt.Canvas;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.IllegalComponentStateException;
 import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
@@ -85,14 +86,15 @@ public final class KLiteCanvasInput
 				return KLiteInteractionResult.invalidRequest(
 					"Canvas click point must not be null");
 			}
-			if (mapPointNow(point) == null)
+
+			DispatchTarget target = resolvePointTarget(point);
+			if (target == null)
 			{
 				return KLiteInteractionResult.targetNotFound(
 					"Canvas click point is outside the live canvas");
 			}
 
-			Point source = new Point(point.getX(), point.getY());
-			EventQueue.invokeLater(() -> dispatchPointNow(source));
+			EventQueue.invokeLater(() -> dispatchClickSequence(target));
 			return KLiteInteractionResult.dispatched();
 		});
 	}
@@ -110,14 +112,15 @@ public final class KLiteCanvasInput
 				return KLiteInteractionResult.invalidRequest(
 					"Canvas click bounds must have positive dimensions");
 			}
-			if (mapBoundsNow(bounds) == null)
+
+			DispatchTarget target = resolveBoundsTarget(bounds);
+			if (target == null)
 			{
 				return KLiteInteractionResult.targetNotFound(
 					"Canvas click bounds are outside the live canvas");
 			}
 
-			Rectangle source = new Rectangle(bounds);
-			EventQueue.invokeLater(() -> dispatchBoundsNow(source));
+			EventQueue.invokeLater(() -> dispatchClickSequence(target));
 			return KLiteInteractionResult.dispatched();
 		});
 	}
@@ -177,37 +180,82 @@ public final class KLiteCanvasInput
 		return clipToCanvas(mapped, canvas.getWidth(), canvas.getHeight());
 	}
 
-	private void dispatchPointNow(Point source)
+	@Nullable
+	private DispatchTarget resolvePointTarget(Point source)
 	{
 		Canvas canvas = client.getCanvas();
-		Point mapped = mapPointNow(source);
-		if (canvas == null || mapped == null)
+		if (canvas == null)
+		{
+			return null;
+		}
+
+		boolean stretched = client.isStretchedEnabled();
+		Dimension real = copy(client.getRealDimensions());
+		Dimension stretchedDimensions = copy(client.getStretchedDimensions());
+		Point mapped = mapPoint(source, stretched, real, stretchedDimensions);
+		if (!isInsideCanvas(mapped, canvas.getWidth(), canvas.getHeight()))
+		{
+			return null;
+		}
+
+		return new DispatchTarget(
+			canvas,
+			mapped,
+			canvas.getWidth(),
+			canvas.getHeight(),
+			client.isResized(),
+			stretched,
+			real,
+			stretchedDimensions);
+	}
+
+	@Nullable
+	private DispatchTarget resolveBoundsTarget(Rectangle source)
+	{
+		Canvas canvas = client.getCanvas();
+		if (canvas == null)
+		{
+			return null;
+		}
+
+		boolean stretched = client.isStretchedEnabled();
+		Dimension real = copy(client.getRealDimensions());
+		Dimension stretchedDimensions = copy(client.getStretchedDimensions());
+		Rectangle mapped = mapBounds(source, stretched, real, stretchedDimensions);
+		Rectangle clipped = clipToCanvas(mapped, canvas.getWidth(), canvas.getHeight());
+		if (clipped == null)
+		{
+			return null;
+		}
+
+		Point point = randomSafePoint(clipped);
+		if (!isInsideCanvas(point, canvas.getWidth(), canvas.getHeight()))
+		{
+			return null;
+		}
+
+		return new DispatchTarget(
+			canvas,
+			point,
+			canvas.getWidth(),
+			canvas.getHeight(),
+			client.isResized(),
+			stretched,
+			real,
+			stretchedDimensions);
+	}
+
+	private void dispatchClickSequence(DispatchTarget target)
+	{
+		if (!isCurrent(target))
 		{
 			return;
 		}
-		dispatchClickSequence(canvas, mapped);
-	}
 
-	private void dispatchBoundsNow(Rectangle source)
-	{
-		Canvas canvas = client.getCanvas();
-		Rectangle mapped = mapBoundsNow(source);
-		if (canvas == null || mapped == null)
-		{
-			return;
-		}
-
-		Point point = randomSafePoint(mapped);
-		if (isInsideCanvas(point, canvas.getWidth(), canvas.getHeight()))
-		{
-			dispatchClickSequence(canvas, point);
-		}
-	}
-
-	private static void dispatchClickSequence(Canvas canvas, Point point)
-	{
-		dispatchMouse(canvas, MouseEvent.MOUSE_MOVED, 0, point,
-			MouseEvent.NOBUTTON, 0);
+		dispatchMouse(target.canvas, MouseEvent.MOUSE_ENTERED, 0,
+			target.point, MouseEvent.NOBUTTON, 0);
+		dispatchMouse(target.canvas, MouseEvent.MOUSE_MOVED, 0,
+			target.point, MouseEvent.NOBUTTON, 0);
 
 		int moveToPress = randomInclusive(
 			MOVE_TO_PRESS_MIN_MILLIS, MOVE_TO_PRESS_MAX_MILLIS);
@@ -218,39 +266,89 @@ public final class KLiteCanvasInput
 
 		schedule(moveToPress, () ->
 		{
-			if (!isInsideCanvas(point, canvas.getWidth(), canvas.getHeight()))
+			if (!isCurrent(target))
 			{
 				return;
 			}
-			dispatchMouse(canvas, MouseEvent.MOUSE_PRESSED,
-				InputEvent.BUTTON1_DOWN_MASK, point, MouseEvent.BUTTON1, 1);
+			dispatchMouse(target.canvas, MouseEvent.MOUSE_PRESSED,
+				InputEvent.BUTTON1_DOWN_MASK, target.point, MouseEvent.BUTTON1, 1);
 
 			schedule(pressHold, () ->
 			{
-				if (!isInsideCanvas(point, canvas.getWidth(), canvas.getHeight()))
+				if (!isCurrent(target))
 				{
 					return;
 				}
-				dispatchMouse(canvas, MouseEvent.MOUSE_RELEASED, 0,
-					point, MouseEvent.BUTTON1, 1);
+				dispatchMouse(target.canvas, MouseEvent.MOUSE_RELEASED, 0,
+					target.point, MouseEvent.BUTTON1, 1);
 
 				schedule(releaseToClick, () ->
 				{
-					if (isInsideCanvas(point, canvas.getWidth(), canvas.getHeight()))
+					if (isCurrent(target))
 					{
-						dispatchMouse(canvas, MouseEvent.MOUSE_CLICKED, 0,
-							point, MouseEvent.BUTTON1, 1);
+						dispatchMouse(target.canvas, MouseEvent.MOUSE_CLICKED, 0,
+							target.point, MouseEvent.BUTTON1, 1);
 					}
 				});
 			});
 		});
 	}
 
+	private boolean isCurrent(DispatchTarget target)
+	{
+		Canvas current = client.getCanvas();
+		if (current == null
+			|| current != target.canvas
+			|| current.getWidth() != target.liveWidth
+			|| current.getHeight() != target.liveHeight
+			|| client.isResized() != target.resized
+			|| client.isStretchedEnabled() != target.stretched
+			|| !isInsideCanvas(target.point, current.getWidth(), current.getHeight()))
+		{
+			return false;
+		}
+
+		return !target.stretched
+			|| (sameDimensions(target.realDimensions, client.getRealDimensions())
+				&& sameDimensions(target.stretchedDimensions,
+					client.getStretchedDimensions()));
+	}
+
 	private static void dispatchMouse(Canvas canvas, int id, int modifiers,
 		Point point, int button, int clickCount)
 	{
-		canvas.dispatchEvent(new MouseEvent(canvas, id, System.currentTimeMillis(),
-			modifiers, point.getX(), point.getY(), clickCount, false, button));
+		canvas.dispatchEvent(createMouseEvent(canvas, id,
+			System.currentTimeMillis(), modifiers, point, button, clickCount));
+	}
+
+	static MouseEvent createMouseEvent(Canvas canvas, int id, long when,
+		int modifiers, Point point, int button, int clickCount)
+	{
+		java.awt.Point screenLocation = canvasScreenLocation(canvas);
+		return new MouseEvent(
+			canvas,
+			id,
+			when,
+			modifiers,
+			point.getX(),
+			point.getY(),
+			screenLocation.x + point.getX(),
+			screenLocation.y + point.getY(),
+			clickCount,
+			false,
+			button);
+	}
+
+	private static java.awt.Point canvasScreenLocation(Canvas canvas)
+	{
+		try
+		{
+			return canvas.getLocationOnScreen();
+		}
+		catch (IllegalComponentStateException ignored)
+		{
+			return new java.awt.Point(0, 0);
+		}
 	}
 
 	private static void schedule(int delayMillis, Runnable action)
@@ -386,6 +484,22 @@ public final class KLiteCanvasInput
 			&& dimensions.height > 0;
 	}
 
+	private static boolean sameDimensions(@Nullable Dimension first,
+		@Nullable Dimension second)
+	{
+		if (first == null || second == null)
+		{
+			return first == second;
+		}
+		return first.width == second.width && first.height == second.height;
+	}
+
+	@Nullable
+	private static Dimension copy(@Nullable Dimension dimensions)
+	{
+		return dimensions == null ? null : new Dimension(dimensions);
+	}
+
 	private static String mappingMode(boolean resized, boolean stretched)
 	{
 		if (stretched)
@@ -393,5 +507,34 @@ public final class KLiteCanvasInput
 			return "stretched-scale";
 		}
 		return resized ? "direct-resizable" : "direct-fixed";
+	}
+
+	private static final class DispatchTarget
+	{
+		private final Canvas canvas;
+		private final Point point;
+		private final int liveWidth;
+		private final int liveHeight;
+		private final boolean resized;
+		private final boolean stretched;
+		@Nullable
+		private final Dimension realDimensions;
+		@Nullable
+		private final Dimension stretchedDimensions;
+
+		private DispatchTarget(Canvas canvas, Point point, int liveWidth,
+			int liveHeight, boolean resized, boolean stretched,
+			@Nullable Dimension realDimensions,
+			@Nullable Dimension stretchedDimensions)
+		{
+			this.canvas = canvas;
+			this.point = point;
+			this.liveWidth = liveWidth;
+			this.liveHeight = liveHeight;
+			this.resized = resized;
+			this.stretched = stretched;
+			this.realDimensions = realDimensions;
+			this.stretchedDimensions = stretchedDimensions;
+		}
 	}
 }
