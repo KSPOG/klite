@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-07-18T05:31:52Z",
+  "updatedAt": "2026-07-19T02:55:07Z",
   "categories": [
     "Agility",
     "Bossing",
@@ -37,6 +37,40 @@
     "Premium"
   ],
   "plugins": [
+    {
+      "id": "klite-ge-flipper",
+      "descriptor": {
+        "name": "KLite GE Flipper",
+        "description": "Flips According to CoPilot suggestions.",
+        "tags": [
+          "klite",
+          "flip",
+          "ge",
+          "grand exchange",
+          "copilot",
+          "automation"
+        ],
+        "authors": [
+          "KSP"
+        ],
+        "version": "0.3.1",
+        "minClientVersion": "1.0.85",
+        "enabledByDefault": false,
+        "isExternal": true
+      },
+      "categories": [
+        "Moneymaking"
+      ],
+      "type": "Free",
+      "access": "Free",
+      "status": "coming-soon",
+      "homepageUrl": "https://github.com/KSPOG/klite",
+      "releasedAt": "2026-07-19T02:55:07Z",
+      "updatedAt": "2026-07-19T02:55:07Z",
+      "trendingDay": 0,
+      "trendingWeek": 0,
+      "trendingMonth": 0
+    },
     {
       "id": "copper-tin-miner",
       "descriptor": {
