@@ -34,12 +34,16 @@ const siteRouteDefinitions = {
   community: {
     eyebrow: "Discord integration",
     title: "Discord bot control center",
-    description: "Install the bot, configure roles and channels, register commands, and manage marketplace announcements.",
+    description: "Inspect live bot status, configure roles and channels, manage client updates and marketplace announcements, and review registered Discord resources.",
     subcategories: [
       { label: "Installation", target: "discord-bootstrap-slot" },
+      { label: "Overview", target: "discord-bot-status-grid" },
       { label: "Roles and channels", target: "discord-bot-settings-form" },
+      { label: "Client updates", target: "discord-client-update-history" },
+      { label: "Marketplace announcements", target: "announcement-history" },
       { label: "Commands", target: "discord-command-list" },
-      { label: "Announcements", target: "announcement-history" }
+      { label: "Server roles", target: "discord-role-list" },
+      { label: "Server channels", target: "discord-channel-list" }
     ]
   },
   account: {
@@ -76,6 +80,7 @@ const routeEmptyDescription = document.querySelector("#route-empty-description")
 const routeEmptyAction = document.querySelector("#route-empty-action");
 let currentSiteRoute = "home";
 let shellUpdatePending = false;
+let discordChannelInventorySignature = "";
 
 function requestedSiteRoute() {
   const raw = window.location.hash.replace(/^#/, "").trim().toLowerCase();
@@ -110,6 +115,100 @@ function assignDynamicPanels() {
     ownerDashboard.dataset.siteSection = "admin";
     ownerDashboard.classList.add("site-route-panel");
     routePanels.push(ownerDashboard);
+  }
+  ensureDiscordChannelInventory();
+}
+
+function ensureDiscordChannelInventory() {
+  const dashboard = document.querySelector("#discord-bot-dashboard");
+  const detailGrid = dashboard?.querySelector(".bot-detail-grid");
+  const statusGrid = dashboard?.querySelector("#discord-bot-status-grid");
+  if (!dashboard || !detailGrid || !statusGrid) return;
+
+  let channelCount = document.querySelector("#discord-channel-count");
+  if (!channelCount) {
+    const card = document.createElement("article");
+    card.className = "account-card";
+    card.innerHTML = '<span class="account-label">Server channels</span>'
+      + '<strong id="discord-channel-count">0</strong>'
+      + '<p class="account-note">Available Discord text and announcement channels</p>';
+    statusGrid.append(card);
+    channelCount = card.querySelector("#discord-channel-count");
+  }
+
+  let channelList = document.querySelector("#discord-channel-list");
+  if (!channelList) {
+    const section = document.createElement("section");
+    section.className = "bot-detail-wide";
+    section.style.gridColumn = "1 / -1";
+    const heading = document.createElement("h3");
+    heading.textContent = "Server channels";
+    channelList = document.createElement("div");
+    channelList.id = "discord-channel-list";
+    channelList.className = "submission-list bot-scroll-list";
+    section.append(heading, channelList);
+    detailGrid.append(section);
+  }
+
+  syncDiscordChannelInventory(channelList, channelCount);
+}
+
+function syncDiscordChannelInventory(channelList, channelCount) {
+  const selectDefinitions = [
+    ["announcement-channel-id", "Marketplace announcements"],
+    ["discord-audit-channel", "Audit log"],
+    ["discord-welcome-channel", "Member welcome"],
+    ["discord-client-update-channel", "Client updates"]
+  ];
+  const channels = new Map();
+  for (const [selectId, usageLabel] of selectDefinitions) {
+    const select = document.getElementById(selectId);
+    if (!select) continue;
+    for (const option of select.options) {
+      if (!option.value) continue;
+      const channel = channels.get(option.value) || { id: option.value, name: option.textContent, usages: [] };
+      if (option.value === select.value) channel.usages.push(usageLabel);
+      channels.set(option.value, channel);
+    }
+  }
+
+  const entries = [...channels.values()].sort((left, right) => left.name.localeCompare(right.name));
+  const signature = JSON.stringify(entries);
+  if (signature === discordChannelInventorySignature) return;
+  discordChannelInventorySignature = signature;
+  channelCount.textContent = String(entries.length);
+  channelList.replaceChildren();
+
+  for (const channel of entries) {
+    const card = document.createElement("article");
+    card.className = "submission-card";
+    const title = document.createElement("strong");
+    title.textContent = `#${channel.name}`;
+    const metadata = document.createElement("p");
+    metadata.className = "submission-meta";
+    metadata.textContent = `ID ${channel.id}`;
+    card.append(title, metadata);
+    if (channel.usages.length) {
+      const usage = document.createElement("p");
+      usage.className = "account-note";
+      usage.textContent = `Configured for: ${channel.usages.join(", ")}`;
+      card.append(usage);
+    }
+    channelList.append(card);
+  }
+  if (!entries.length) channelList.textContent = "No Discord channels are available.";
+}
+
+function applyRouteVisibility(panel, selectedRoute) {
+  const inactive = panel.dataset.siteSection !== selectedRoute;
+  panel.classList.toggle("route-inactive", inactive);
+  panel.inert = inactive;
+  if (inactive) {
+    panel.style.setProperty("display", "none", "important");
+    panel.setAttribute("aria-hidden", "true");
+  } else {
+    panel.style.removeProperty("display");
+    panel.removeAttribute("aria-hidden");
   }
 }
 
@@ -166,7 +265,7 @@ function setSiteRoute(route, options = {}) {
   updatePrivilegedNavigation();
   const selected = Object.hasOwn(siteRouteDefinitions, route) ? route : "home";
   currentSiteRoute = selected;
-  for (const panel of routePanels) panel.classList.toggle("route-inactive", panel.dataset.siteSection !== selected);
+  for (const panel of routePanels) applyRouteVisibility(panel, selected);
   for (const button of primaryRouteButtons) {
     button.classList.toggle("is-active", button.dataset.siteRoute === selected);
     button.setAttribute("aria-current", button.dataset.siteRoute === selected ? "page" : "false");
@@ -401,7 +500,7 @@ function scheduleShellUpdate() {
     shellUpdatePending = false;
     assignDynamicPanels();
     updatePrivilegedNavigation();
-    for (const panel of routePanels) panel.classList.toggle("route-inactive", panel.dataset.siteSection !== currentSiteRoute);
+    for (const panel of routePanels) applyRouteVisibility(panel, currentSiteRoute);
     renderRouteEmpty(currentSiteRoute);
   });
 }
