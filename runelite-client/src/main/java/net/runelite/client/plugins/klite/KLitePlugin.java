@@ -12,6 +12,8 @@ import javax.swing.Timer;
 import net.runelite.api.events.AccountHashChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.MenuEntryAdded;
+import net.runelite.api.events.MenuOpened;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -30,6 +32,7 @@ import net.runelite.client.plugins.klite.marketplace.KLitePluginPanel;
 import net.runelite.client.plugins.klite.update.KLiteUpdateService;
 import net.runelite.client.plugins.klite.walker.IntegratedShortestPathWebWalker;
 import net.runelite.client.plugins.klite.walker.KLiteShortestPathOverlay;
+import net.runelite.client.plugins.klite.walker.KLiteWorldMapWebWalkerController;
 import net.runelite.client.plugins.klite.walker.WebWalkBankCache;
 import net.runelite.client.plugins.klite.walker.WebWalker;
 import net.runelite.client.ui.ClientToolbar;
@@ -67,6 +70,9 @@ public class KLitePlugin extends Plugin
 
 	@Inject
 	private IntegratedShortestPathWebWalker webWalker;
+
+	@Inject
+	private KLiteWorldMapWebWalkerController worldMapWebWalkerController;
 
 	@Inject
 	private WebWalkBankCache bankCache;
@@ -143,6 +149,18 @@ public class KLitePlugin extends Plugin
 	public void onGameStateChanged(GameStateChanged event)
 	{
 		autoLoginService.onGameStateChanged(event.getGameState());
+	}
+
+	@Subscribe
+	public void onMenuOpened(MenuOpened event)
+	{
+		worldMapWebWalkerController.onMenuOpened(event);
+	}
+
+	@Subscribe
+	public void onMenuEntryAdded(MenuEntryAdded event)
+	{
+		worldMapWebWalkerController.onMenuEntryAdded(event);
 	}
 
 	@Subscribe
