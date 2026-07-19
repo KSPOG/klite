@@ -1,0 +1,165 @@
+t parentId;
+        private final int itemId;
+        private final String text;
+        private final String name;
+        private final List<HighlightedAction> actions;
+        private final Rectangle clickBounds;
+
+        HighlightedWidget(
+            int componentId,
+            int index,
+            int parentId,
+            int itemId,
+            String text,
+            String name,
+            List<HighlightedAction> actions,
+            Rectangle clickBounds)
+        {
+            this.componentId = componentId;
+            this.index = index;
+            this.parentId = parentId;
+            this.itemId = itemId;
+            this.text = text;
+            this.name = name;
+            this.actions = actions;
+            this.clickBounds = clickBounds == null ? null : new Rectangle(clickBounds);
+        }
+
+        int componentId()
+        {
+            return componentId;
+        }
+
+        int index()
+        {
+            return index;
+        }
+
+        int parentId()
+        {
+            return parentId;
+        }
+
+        int itemId()
+        {
+            return itemId;
+        }
+
+        String text()
+        {
+            return text;
+        }
+
+        String name()
+        {
+            return name;
+        }
+
+        List<HighlightedAction> actions()
+        {
+            return actions;
+        }
+
+        Rectangle clickBounds()
+        {
+            return clickBounds == null ? null : new Rectangle(clickBounds);
+        }
+
+        boolean hasUsableClickBounds()
+        {
+            return clickBounds != null && clickBounds.width > 0 && clickBounds.height > 0;
+        }
+
+        HighlightedAction firstUsableAction()
+        {
+            for (HighlightedAction action : actions)
+            {
+                if (!"Examine".equalsIgnoreCase(action.option()))
+                {
+                    return action;
+                }
+            }
+            return null;
+        }
+
+        String target()
+        {
+            if (name != null && !name.trim().isEmpty())
+            {
+                return name;
+            }
+            return text == null ? "" : text;
+        }
+    }
+
+    static final class CopilotSnapshot
+    {
+        private final boolean available;
+        private final String message;
+        private final SuggestionKind suggestionKind;
+        private final int suggestionItemId;
+        private final List<HighlightedWidget> highlightedWidgets;
+
+        private CopilotSnapshot(
+            boolean available,
+            String message,
+            SuggestionKind suggestionKind,
+            int suggestionItemId,
+            List<HighlightedWidget> highlightedWidgets)
+        {
+            this.available = available;
+            this.message = message;
+            this.suggestionKind = suggestionKind;
+            this.suggestionItemId = suggestionItemId;
+            this.highlightedWidgets = highlightedWidgets;
+        }
+
+        static CopilotSnapshot unavailable(String message)
+        {
+            return new CopilotSnapshot(
+                false,
+                message,
+                SuggestionKind.NONE,
+                -1,
+                Collections.emptyList());
+        }
+
+        static CopilotSnapshot available(
+            SuggestionKind kind,
+            int suggestionItemId,
+            List<HighlightedWidget> highlightedWidgets)
+        {
+            return new CopilotSnapshot(
+                true,
+                "Ready",
+                kind,
+                suggestionItemId,
+                highlightedWidgets);
+        }
+
+        boolean available()
+        {
+            return available;
+        }
+
+        String message()
+        {
+            return message;
+        }
+
+        SuggestionKind suggestionKind()
+        {
+            return suggestionKind;
+        }
+
+        int suggestionItemId()
+        {
+            return suggestionItemId;
+        }
+
+        List<HighlightedWidget> highlightedWidgets()
+        {
+            return highlightedWidgets;
+        }
+    }
+}
