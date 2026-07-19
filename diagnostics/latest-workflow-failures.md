@@ -1,8 +1,114 @@
 # Recent GitHub Actions failures
 
-Generated: 2026-07-19T18:16:01.805424+00:00
+Generated: 2026-07-19T18:24:01.668760+00:00
 Repository: `KSPOG/klite`
-Failed runs inspected: **2**
+Failed runs inspected: **3**
+
+## CI: Reconstruct reviewed GE Flipper sources in CI
+
+- Run: [29698611737](https://github.com/KSPOG/klite/actions/runs/29698611737)
+- Conclusion: `failure`
+- Event: `push`
+- Commit: `f799cdf81190ac2d096b067c7311012b321fb406`
+- Created: `2026-07-19T18:22:50Z`
+
+### Failed jobs and steps
+
+- **build** — `failure`
+  - Step 6: **Build and Test** — `failure`
+
+### Relevant log context
+
+```text
+build	Build and Test	2026-07-19T18:23:39.5554878Z > Task :runelite-api:runtimeJar
+build	Build and Test	2026-07-19T18:23:40.1557185Z > Task :client:compileJava FROM-CACHE
+build	Build and Test	2026-07-19T18:23:40.1571367Z > Task :client:classes
+build	Build and Test	2026-07-19T18:23:40.3565354Z > Task :runelite-api:sourcesJar
+build	Build and Test	2026-07-19T18:23:40.3592099Z > Task :runelite-api:assemble
+build	Build and Test	2026-07-19T18:23:40.4582477Z > Task :runelite-api:checkstyleMain FROM-CACHE
+build	Build and Test	2026-07-19T18:23:40.4583678Z > Task :runelite-api:generateTestEffectiveLombokConfig FROM-CACHE
+build	Build and Test	2026-07-19T18:23:41.1555631Z > Task :copper-tin-miner:compileJava FROM-CACHE
+build	Build and Test	2026-07-19T18:23:41.1592036Z > Task :copper-tin-miner:classes UP-TO-DATE
+build	Build and Test	2026-07-19T18:23:41.1616087Z > Task :copper-tin-miner:jar
+build	Build and Test	2026-07-19T18:23:41.1641924Z > Task :copper-tin-miner:assemble
+build	Build and Test	2026-07-19T18:23:41.4562860Z > Task :copper-tin-miner:checkstyleMain FROM-CACHE
+build	Build and Test	2026-07-19T18:23:41.5572574Z > Task :copper-tin-miner:compileTestJava NO-SOURCE
+build	Build and Test	2026-07-19T18:23:41.5591966Z > Task :copper-tin-miner:testClasses UP-TO-DATE
+build	Build and Test	2026-07-19T18:23:41.5615264Z > Task :copper-tin-miner:checkstyleTest NO-SOURCE
+build	Build and Test	2026-07-19T18:23:41.5671874Z > Task :copper-tin-miner:test NO-SOURCE
+build	Build and Test	2026-07-19T18:23:41.5691678Z > Task :copper-tin-miner:check UP-TO-DATE
+build	Build and Test	2026-07-19T18:23:41.5721534Z > Task :copper-tin-miner:build
+build	Build and Test	2026-07-19T18:23:41.6602309Z > Task :client:jar
+build	Build and Test	2026-07-19T18:23:41.6661954Z > Task :client:jarSign SKIPPED
+build	Build and Test	2026-07-19T18:23:42.1583808Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:34: error: cannot find symbol
+build	Build and Test	2026-07-19T18:23:42.1585107Z
+build	Build and Test	2026-07-19T18:23:42.1612012Z     private KLiteGeFlipperTask task;
+build	Build and Test	2026-07-19T18:23:42.1612652Z > Task :klite-ge-flipper:compileJava
+build	Build and Test	2026-07-19T18:23:42.1672166Z             ^
+build	Build and Test	2026-07-19T18:23:42.1742104Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:23:42.1756110Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:23:42.1771495Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:54: error: cannot find symbol
+build	Build and Test	2026-07-19T18:23:42.1777321Z         task = new KLiteGeFlipperTask(this, webWalker);
+build	Build and Test	2026-07-19T18:23:42.1778074Z                    ^
+build	Build and Test	2026-07-19T18:23:42.1778608Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:23:42.1779217Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:23:42.1781714Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:266: error: cannot find symbol
+build	Build and Test	2026-07-19T18:23:42.1782536Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:23:42.1782875Z         ^
+build	Build and Test	2026-07-19T18:23:42.1783218Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:23:42.1785228Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:23:42.1786411Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:272: error: cannot find symbol
+build	Build and Test	2026-07-19T18:23:42.1787633Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:23:42.1788142Z         ^
+build	Build and Test	2026-07-19T18:23:42.1788530Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:23:42.1789012Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:23:42.1790071Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:278: error: cannot find symbol
+build	Build and Test	2026-07-19T18:23:42.1791312Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:23:42.1791751Z         ^
+build	Build and Test	2026-07-19T18:23:42.1792089Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:23:42.1792566Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:23:42.1793616Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:284: error: cannot find symbol
+build	Build and Test	2026-07-19T18:23:42.1794703Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:23:42.1795159Z         ^
+build	Build and Test	2026-07-19T18:23:42.1795520Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:23:42.1795995Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:23:42.1797054Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:290: error: cannot find symbol
+build	Build and Test	2026-07-19T18:23:42.1798239Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:23:42.1798760Z         ^
+build	Build and Test	2026-07-19T18:23:42.1799525Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:23:42.1800064Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:23:42.1801613Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:296: error: cannot find symbol
+build	Build and Test	2026-07-19T18:23:42.1803046Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:23:42.1803542Z         ^
+build	Build and Test	2026-07-19T18:23:42.1803929Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:23:42.1804460Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:23:42.2560900Z 8 errors
+build	Build and Test	2026-07-19T18:23:42.2568221Z
+build	Build and Test	2026-07-19T18:23:42.2591604Z > Task :klite-ge-flipper:compileJava FAILED
+build	Build and Test	2026-07-19T18:23:42.2621427Z > Task :client:delombok FROM-CACHE
+build	Build and Test	2026-07-19T18:23:42.3585793Z > Task :runelite-api:compileTestJava FROM-CACHE
+build	Build and Test	2026-07-19T18:23:42.3611799Z > Task :runelite-api:processTestResources NO-SOURCE
+build	Build and Test	2026-07-19T18:23:42.3641568Z > Task :runelite-api:testClasses UP-TO-DATE
+build	Build and Test	2026-07-19T18:23:42.3642411Z > Task :runelite-api:checkstyleTest FROM-CACHE
+build	Build and Test	2026-07-19T18:23:42.3671654Z > Task :runelite-api:test FROM-CACHE
+build	Build and Test	2026-07-19T18:23:42.3691796Z > Task :runelite-api:check UP-TO-DATE
+build	Build and Test	2026-07-19T18:23:42.3701500Z > Task :runelite-api:build
+build	Build and Test	2026-07-19T18:23:42.4555621Z
+build	Build and Test	2026-07-19T18:23:42.4556884Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784485395862.json
+build	Build and Test	2026-07-19T18:23:42.4557944Z 62 actionable tasks: 24 executed, 38 from cache
+build	Build and Test	2026-07-19T18:23:42.4559018Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-19T18:23:42.4559382Z
+build	Build and Test	2026-07-19T18:23:42.4559559Z * What went wrong:
+build	Build and Test	2026-07-19T18:23:42.4560099Z Execution failed for task ':klite-ge-flipper:compileJava'.
+build	Build and Test	2026-07-19T18:23:42.4560882Z > Compilation failed; see the compiler error output for details.
+build	Build and Test	2026-07-19T18:23:42.4561519Z
+build	Build and Test	2026-07-19T18:23:42.4561636Z * Try:
+build	Build and Test	2026-07-19T18:23:42.4562005Z > Run with --info option to get more log output.
+build	Build and Test	2026-07-19T18:23:42.4562607Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-19T18:23:42.4562959Z
+build	Build and Test	2026-07-19T18:23:42.4563166Z BUILD FAILED in 33s
+build	Build and Test	2026-07-19T18:23:42.9702628Z ##[error]Process completed with exit code 1.
+```
 
 ## CI: Add GE Flipper overlay
 
