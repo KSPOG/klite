@@ -2,6 +2,30 @@
   const list = document.querySelector("#featured-plugin-list");
   if (!list) return;
 
+  function suppressPurchaseStateForComingSoonPlugins() {
+    const grid = document.querySelector("#plugin-grid");
+    if (!grid) return;
+
+    const clean = () => {
+      for (const card of grid.querySelectorAll(".plugin-card")) {
+        const metadata = Array.from(card.querySelectorAll(".plugin-meta span"));
+        const isComingSoon = metadata.some((item) => item.textContent.trim() === "Coming soon");
+        if (!isComingSoon) continue;
+
+        for (const item of metadata) {
+          const value = item.textContent.trim();
+          if (item.classList.contains("access-locked")
+            && (value === "Purchase required" || value === "Sign in required")) {
+            item.remove();
+          }
+        }
+      }
+    };
+
+    clean();
+    new MutationObserver(clean).observe(grid, { childList: true, subtree: true });
+  }
+
   function message(value) {
     list.replaceChildren();
     const item = document.createElement("p");
@@ -70,5 +94,6 @@
     }
   }
 
+  suppressPurchaseStateForComingSoonPlugins();
   load();
 })();
