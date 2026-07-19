@@ -39,7 +39,7 @@ jobs:
           node --check marketplace-site/scripts/register-discord-commands.mjs
 
       - name: Run marketplace tests
-        id: marketplace-tests
+        id: marketplace_tests
         continue-on-error: true
         shell: bash
         run: |
@@ -55,7 +55,7 @@ jobs:
           if-no-files-found: error
 
       - name: Report marketplace test failure
-        if: steps.marketplace-tests.outcome == 'failure'
+        if: steps.marketplace_tests.outcome == 'failure'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
