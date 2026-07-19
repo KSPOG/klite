@@ -1,8 +1,184 @@
 # Recent GitHub Actions failures
 
-Generated: 2026-07-19T18:24:01.668760+00:00
+Generated: 2026-07-19T18:24:35.158687+00:00
 Repository: `KSPOG/klite`
-Failed runs inspected: **3**
+Failed runs inspected: **4**
+
+## CI: Publish GE Flipper 0.3.13 with bounded Copilot recovery
+
+- Run: [29698620263](https://github.com/KSPOG/klite/actions/runs/29698620263)
+- Conclusion: `failure`
+- Event: `pull_request`
+- Commit: `f799cdf81190ac2d096b067c7311012b321fb406`
+- Created: `2026-07-19T18:23:09Z`
+
+### Failed jobs and steps
+
+- **build** — `failure`
+  - Step 6: **Build and Test** — `failure`
+
+### Relevant log context
+
+```text
+build	Build and Test	2026-07-19T18:23:58.7372877Z > Task :client:compileJava FROM-CACHE
+build	Build and Test	2026-07-19T18:23:58.7397208Z > Task :client:classes
+build	Build and Test	2026-07-19T18:23:59.1358905Z > Task :runelite-api:sourcesJar
+build	Build and Test	2026-07-19T18:23:59.1366966Z > Task :runelite-api:assemble
+build	Build and Test	2026-07-19T18:23:59.1368634Z > Task :runelite-api:checkstyleMain FROM-CACHE
+build	Build and Test	2026-07-19T18:23:59.1369843Z > Task :runelite-api:generateTestEffectiveLombokConfig FROM-CACHE
+build	Build and Test	2026-07-19T18:23:59.8365894Z > Task :client:jar
+build	Build and Test	2026-07-19T18:23:59.8372368Z > Task :client:jarSign SKIPPED
+build	Build and Test	2026-07-19T18:23:59.9362782Z > Task :copper-tin-miner:compileJava FROM-CACHE
+build	Build and Test	2026-07-19T18:23:59.9364331Z > Task :copper-tin-miner:classes UP-TO-DATE
+build	Build and Test	2026-07-19T18:23:59.9365399Z > Task :copper-tin-miner:jar
+build	Build and Test	2026-07-19T18:23:59.9366286Z > Task :copper-tin-miner:assemble
+build	Build and Test	2026-07-19T18:24:00.2401056Z > Task :copper-tin-miner:checkstyleMain FROM-CACHE
+build	Build and Test	2026-07-19T18:24:00.2462185Z > Task :copper-tin-miner:compileTestJava NO-SOURCE
+build	Build and Test	2026-07-19T18:24:00.2464436Z > Task :copper-tin-miner:testClasses UP-TO-DATE
+build	Build and Test	2026-07-19T18:24:00.3362256Z > Task :copper-tin-miner:checkstyleTest NO-SOURCE
+build	Build and Test	2026-07-19T18:24:00.3422137Z > Task :copper-tin-miner:test NO-SOURCE
+build	Build and Test	2026-07-19T18:24:00.3442394Z > Task :copper-tin-miner:check UP-TO-DATE
+build	Build and Test	2026-07-19T18:24:00.3471766Z > Task :copper-tin-miner:build
+build	Build and Test	2026-07-19T18:24:00.5385965Z > Task :client:delombok FROM-CACHE
+build	Build and Test	2026-07-19T18:24:00.7432854Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:34: error: cannot find symbol
+build	Build and Test	2026-07-19T18:24:00.7434290Z
+build	Build and Test	2026-07-19T18:24:00.7492287Z     private KLiteGeFlipperTask task;
+build	Build and Test	2026-07-19T18:24:00.7493277Z > Task :klite-ge-flipper:compileJava
+build	Build and Test	2026-07-19T18:24:00.7552184Z             ^
+build	Build and Test	2026-07-19T18:24:00.7612232Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:24:00.7622987Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:24:00.8373133Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:54: error: cannot find symbol
+build	Build and Test	2026-07-19T18:24:00.8421098Z         task = new KLiteGeFlipperTask(this, webWalker);
+build	Build and Test	2026-07-19T18:24:00.8474629Z                    ^
+build	Build and Test	2026-07-19T18:24:00.8498763Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:24:00.8548251Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:24:00.8576544Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:266: error: cannot find symbol
+build	Build and Test	2026-07-19T18:24:00.8624395Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:24:00.8673984Z         ^
+build	Build and Test	2026-07-19T18:24:00.8726485Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:24:00.8751276Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:24:00.9366318Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:272: error: cannot find symbol
+build	Build and Test	2026-07-19T18:24:00.9403881Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:24:00.9432202Z         ^
+build	Build and Test	2026-07-19T18:24:00.9462081Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:24:00.9463364Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:24:00.9492605Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:278: error: cannot find symbol
+build	Build and Test	2026-07-19T18:24:00.9494755Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:24:00.9495615Z         ^
+build	Build and Test	2026-07-19T18:24:00.9496255Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:24:00.9497618Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:24:00.9499125Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:284: error: cannot find symbol
+build	Build and Test	2026-07-19T18:24:00.9500985Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:24:00.9501941Z         ^
+build	Build and Test	2026-07-19T18:24:00.9502689Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:24:00.9503619Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:24:00.9505286Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:290: error: cannot find symbol
+build	Build and Test	2026-07-19T18:24:00.9506885Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:24:00.9508073Z         ^
+build	Build and Test	2026-07-19T18:24:00.9508764Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:24:00.9509619Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:24:00.9511392Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:296: error: cannot find symbol
+build	Build and Test	2026-07-19T18:24:00.9512837Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:24:00.9513592Z         ^
+build	Build and Test	2026-07-19T18:24:00.9514226Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:24:00.9515038Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:24:01.0365888Z 8 errors
+build	Build and Test	2026-07-19T18:24:01.0366310Z
+build	Build and Test	2026-07-19T18:24:01.0367299Z > Task :klite-ge-flipper:compileJava FAILED
+build	Build and Test	2026-07-19T18:24:01.3372732Z > Task :runelite-api:compileTestJava FROM-CACHE
+build	Build and Test	2026-07-19T18:24:01.3382078Z > Task :runelite-api:processTestResources NO-SOURCE
+build	Build and Test	2026-07-19T18:24:01.3383251Z > Task :runelite-api:testClasses UP-TO-DATE
+build	Build and Test	2026-07-19T18:24:01.3384613Z > Task :runelite-api:checkstyleTest FROM-CACHE
+build	Build and Test	2026-07-19T18:24:01.3385603Z > Task :runelite-api:test FROM-CACHE
+build	Build and Test	2026-07-19T18:24:01.3386547Z > Task :runelite-api:check UP-TO-DATE
+build	Build and Test	2026-07-19T18:24:01.3387516Z > Task :runelite-api:build
+build	Build and Test	2026-07-19T18:24:07.0574681Z 	public CompletableFuture<Optional<Point>> mapPoint(Point point)
+build	Build and Test	2026-07-19T18:24:07.0575353Z 	                                          ^
+build	Build and Test	2026-07-19T18:24:07.0576737Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/klite/api/KLiteCanvasInput.java:74: warning: no @param for bounds
+build	Build and Test	2026-07-19T18:24:07.0578407Z 	public CompletableFuture<Optional<Rectangle>> mapBounds(Rectangle bounds)
+build	Build and Test	2026-07-19T18:24:07.0579849Z 	                                              ^
+build	Build and Test	2026-07-19T18:24:07.0581455Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/klite/api/KLiteCanvasInput.java:74: warning: no @return
+build	Build and Test	2026-07-19T18:24:07.0583025Z 	public CompletableFuture<Optional<Rectangle>> mapBounds(Rectangle bounds)
+build	Build and Test	2026-07-19T18:24:07.0583754Z 	                                              ^
+build	Build and Test	2026-07-19T18:24:07.0585076Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/klite/api/KLiteCanvasInput.java:80: warning: no @param for point
+build	Build and Test	2026-07-19T18:24:07.0586738Z 	public CompletableFuture<KLiteInteractionResult> clickPoint(Point point)
+build	Build and Test	2026-07-19T18:24:07.0587735Z 	                                                 ^
+build	Build and Test	2026-07-19T18:24:07.0589093Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/klite/api/KLiteCanvasInput.java:80: warning: no @return
+build	Build and Test	2026-07-19T18:24:07.0590489Z 	public CompletableFuture<KLiteInteractionResult> clickPoint(Point point)
+build	Build and Test	2026-07-19T18:24:07.0591334Z 	                                                 ^
+build	Build and Test	2026-07-19T18:24:07.0592765Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/klite/api/KLiteCanvasInput.java:106: warning: no @param for bounds
+build	Build and Test	2026-07-19T18:24:07.0594462Z 	public CompletableFuture<KLiteInteractionResult> clickBounds(Rectangle bounds)
+build	Build and Test	2026-07-19T18:24:07.0595216Z 	                                                 ^
+build	Build and Test	2026-07-19T18:24:07.0596509Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/klite/api/KLiteCanvasInput.java:106: warning: no @return
+build	Build and Test	2026-07-19T18:24:07.0598107Z 	public CompletableFuture<KLiteInteractionResult> clickBounds(Rectangle bounds)
+build	Build and Test	2026-07-19T18:24:07.0598894Z 	                                                 ^
+build	Build and Test	2026-07-19T18:24:07.3372030Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:60: warning: no @throws for java.io.IOException
+build	Build and Test	2026-07-19T18:24:07.3401093Z 	public void play(File file, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-19T18:24:07.3431500Z 	            ^
+build	Build and Test	2026-07-19T18:24:07.3452796Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:60: warning: no @throws for javax.sound.sampled.UnsupportedAudioFileException
+build	Build and Test	2026-07-19T18:24:07.3472102Z 	public void play(File file, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-19T18:24:07.3491560Z 	            ^
+build	Build and Test	2026-07-19T18:24:07.3522559Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:60: warning: no @throws for javax.sound.sampled.LineUnavailableException
+build	Build and Test	2026-07-19T18:24:07.3552049Z 	public void play(File file, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-19T18:24:07.3553185Z 	            ^
+build	Build and Test	2026-07-19T18:24:07.3554657Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:73: warning: no @throws for java.io.IOException
+build	Build and Test	2026-07-19T18:24:07.3556694Z 	public void play(Class<?> c, String path, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-19T18:24:07.3557757Z 	            ^
+build	Build and Test	2026-07-19T18:24:07.3559133Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:73: warning: no @throws for javax.sound.sampled.UnsupportedAudioFileException
+build	Build and Test	2026-07-19T18:24:07.3561502Z 	public void play(Class<?> c, String path, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-19T18:24:07.3562908Z 	            ^
+build	Build and Test	2026-07-19T18:24:07.3564254Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:73: warning: no @throws for javax.sound.sampled.LineUnavailableException
+build	Build and Test	2026-07-19T18:24:07.3566448Z 	public void play(Class<?> c, String path, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-19T18:24:07.3567563Z 	            ^
+build	Build and Test	2026-07-19T18:24:07.3568776Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:85: warning: no @throws for java.io.IOException
+build	Build and Test	2026-07-19T18:24:07.3570749Z 	public void play(InputStream stream, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-19T18:24:07.3572308Z 	            ^
+build	Build and Test	2026-07-19T18:24:07.3573735Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:85: warning: no @throws for javax.sound.sampled.UnsupportedAudioFileException
+build	Build and Test	2026-07-19T18:24:07.3575892Z 	public void play(InputStream stream, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-19T18:24:07.3576990Z 	            ^
+build	Build and Test	2026-07-19T18:24:07.3578450Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/audio/AudioPlayer.java:85: warning: no @throws for javax.sound.sampled.LineUnavailableException
+build	Build and Test	2026-07-19T18:24:07.3580386Z 	public void play(InputStream stream, float gain) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+build	Build and Test	2026-07-19T18:24:07.3611907Z 	            ^
+build	Build and Test	2026-07-19T18:24:07.4359064Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/banktags/BankTag.java:41: warning: no description for @param
+build	Build and Test	2026-07-19T18:24:07.4391772Z 	 * @param itemId
+build	Build and Test	2026-07-19T18:24:07.4416736Z 	   ^
+build	Build and Test	2026-07-19T18:24:07.4452313Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/banktags/BankTag.java:42: warning: no description for @return
+build	Build and Test	2026-07-19T18:24:07.4481362Z 	 * @return
+build	Build and Test	2026-07-19T18:24:07.4482063Z 	   ^
+build	Build and Test	2026-07-19T18:24:07.7885568Z 		public CrypticClue.CrypticClueBuilder solution(final String solution) {
+build	Build and Test	2026-07-19T18:24:07.7886239Z 		                                      ^
+build	Build and Test	2026-07-19T18:24:07.7887670Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/cluescrolls/clues/CrypticClue.java:353: warning: no @param for questionText
+build	Build and Test	2026-07-19T18:24:07.7889494Z 		public CrypticClue.CrypticClueBuilder questionText(@Nullable final String questionText) {
+build	Build and Test	2026-07-19T18:24:07.7890571Z 		                                      ^
+build	Build and Test	2026-07-19T18:24:07.7892234Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/cluescrolls/clues/CrypticClue.java:361: warning: no @param for answer
+build	Build and Test	2026-07-19T18:24:07.7893985Z 		public CrypticClue.CrypticClueBuilder answer(@Nullable final String answer) {
+build	Build and Test	2026-07-19T18:24:07.7894843Z 		                                      ^
+build	Build and Test	2026-07-19T18:24:07.7896356Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/plugins/cluescrolls/clues/CrypticClue.java:369: warning: no @param for requiresLight
+build	Build and Test	2026-07-19T18:24:07.7898214Z 		public CrypticClue.CrypticClueBuilder requiresLight(final boolean requiresLight) {
+build	Build and Test	2026-07-19T18:24:07.7899068Z 		                                      ^
+build	Build and Test	2026-07-19T18:24:07.8372934Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/ui/overlay/OverlayPanel.java:97: warning: no @return
+build	Build and Test	2026-07-19T18:24:07.8374499Z 	public boolean isClearChildren() {
+build	Build and Test	2026-07-19T18:24:07.8375053Z 	               ^
+build	Build and Test	2026-07-19T18:24:07.8376325Z /home/runner/work/klite/klite/runelite-client/build/generated/sources/delombok/java/main/net/runelite/client/ui/overlay/OverlayPanel.java:104: warning: no @return
+build	Build and Test	2026-07-19T18:24:07.8377783Z 	public boolean isDynamicFont() {
+build	Build and Test	2026-07-19T18:24:07.8378325Z 	               ^
+build	Build and Test	2026-07-19T18:24:11.7357955Z 100 warnings
+build	Build and Test	2026-07-19T18:24:12.9357380Z
+build	Build and Test	2026-07-19T18:24:12.9358431Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784485415398.json
+build	Build and Test	2026-07-19T18:24:12.9359310Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-19T18:24:12.9359639Z
+build	Build and Test	2026-07-19T18:24:12.9360054Z * What went wrong:
+build	Build and Test	2026-07-19T18:24:12.9360413Z 63 actionable tasks: 25 executed, 38 from cache
+build	Build and Test	2026-07-19T18:24:12.9361163Z Execution failed for task ':klite-ge-flipper:compileJava'.
+build	Build and Test	2026-07-19T18:24:12.9361828Z > Compilation failed; see the compiler error output for details.
+build	Build and Test	2026-07-19T18:24:12.9362120Z
+build	Build and Test	2026-07-19T18:24:12.9362235Z * Try:
+build	Build and Test	2026-07-19T18:24:12.9362519Z > Run with --info option to get more log output.
+build	Build and Test	2026-07-19T18:24:12.9362891Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-19T18:24:12.9363107Z
+build	Build and Test	2026-07-19T18:24:12.9363220Z BUILD FAILED in 43s
+build	Build and Test	2026-07-19T18:24:13.3560022Z ##[error]Process completed with exit code 1.
+```
 
 ## CI: Reconstruct reviewed GE Flipper sources in CI
 
