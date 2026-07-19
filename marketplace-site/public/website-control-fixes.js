@@ -79,34 +79,13 @@
     }, true);
   }
 
-  function resetPasswordFormAction() {
-    const submit = document.querySelector("#password-reset-submit");
-    if (!submit) return;
-    submit.type = "submit";
-    submit.onclick = null;
-    submit.disabled = false;
-  }
-
-  function installPasswordRecoveryEntry() {
-    const signIn = document.querySelector("#sign-in-button");
-    const forgot = document.querySelector("#forgot-password-button");
-    if (!signIn || !forgot || document.querySelector("#recover-account-button")) return;
-
-    const recover = document.createElement("button");
-    recover.id = "recover-account-button";
-    recover.type = "button";
-    recover.className = "button button-secondary";
-    recover.textContent = "Recover account";
-    recover.hidden = signIn.hidden;
-    recover.addEventListener("click", () => {
-      resetPasswordFormAction();
-      forgot.click();
-    });
-    signIn.after(recover);
-
-    new MutationObserver(() => {
-      recover.hidden = signIn.hidden;
-    }).observe(signIn, { attributes: true, attributeFilter: ["hidden"] });
+  function removeLegacyAuthSurface() {
+    document.querySelector("#register-button")?.remove();
+    document.querySelector("#auth-dialog")?.remove();
+    document.querySelector("#password-reset-dialog")?.remove();
+    for (const node of document.querySelectorAll("#discord-bootstrap-slot .bootstrap-meta span")) {
+      if (node.textContent?.startsWith("Discord password-reset redirect URL:")) node.remove();
+    }
   }
 
   captureButton("#discord-oauth-button", async () => {
@@ -153,11 +132,10 @@
   document.addEventListener("click", (event) => {
     const button = event.target.closest("button, [role='button']");
     if (button) {
-      lastControlLabel = button.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) || "Website action";
+      lastControlLabel = button.textContent?.trim().replace(/\s+/g, " ").slice(0, 80)
+        || "Website action";
       lastControlAt = Date.now();
     }
-
-    if (event.target.closest("#forgot-password-button")) resetPasswordFormAction();
 
     const verify = event.target.closest("button");
     if (!verify || verify.textContent.trim() !== "Verify installation" || verify.disabled) return;
@@ -180,23 +158,21 @@
       .finally(() => {
         verify.disabled = false;
         verify.removeAttribute("aria-busy");
+        removeLegacyAuthSurface();
       });
   }, true);
 
   window.addEventListener("unhandledrejection", (event) => {
     const reason = event.reason;
-    const message = reason?.message || (typeof reason === "string" ? reason : "The action failed unexpectedly.");
+    const message = reason?.message
+      || (typeof reason === "string" ? reason : "The action failed unexpectedly.");
     const recentControl = Date.now() - lastControlAt < 5000 ? `${lastControlLabel}: ` : "";
     showNotice(`${recentControl}${message}`, true);
   });
 
-  const authDialog = document.querySelector("#auth-dialog");
-  const discordSignIn = document.querySelector("#sign-in-button");
-  if (authDialog?.open && discordSignIn?.textContent.includes("Discord")) {
-    authDialog.close();
-    if (typeof setSiteRoute === "function") setSiteRoute("account", { preserveHash: true });
-    showNotice("KLite website sign-in now uses Discord. Choose Continue with Discord.");
-  }
-
-  installPasswordRecoveryEntry();
+  removeLegacyAuthSurface();
+  new MutationObserver(removeLegacyAuthSurface).observe(document.body, {
+    subtree: true,
+    childList: true
+  });
 })();
