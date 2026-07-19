@@ -10,6 +10,21 @@ const pluginSourceUrl = new URL(
   import.meta.url
 );
 const pluginBuildUrl = new URL("../../examples/klite-copper-tin-miner/build.gradle.kts", import.meta.url);
+const clientTagPattern = /^[a-z0-9][a-z0-9-]{0,31}$/;
+
+test("publishes only client-valid marketplace tags", async () => {
+  const catalog = JSON.parse(await readFile(catalogUrl, "utf8"));
+
+  for (const plugin of catalog.plugins) {
+    for (const tag of plugin.descriptor?.tags ?? []) {
+      assert.match(
+        tag,
+        clientTagPattern,
+        `${plugin.id} uses a tag rejected by KLiteMarketplaceDescriptor: ${tag}`
+      );
+    }
+  }
+});
 
 test("publishes Copper and Tin Miner 0.0.2 as a verified streamed free plugin", async () => {
   const [catalogText, artifact, pluginSource, pluginBuild] = await Promise.all([
