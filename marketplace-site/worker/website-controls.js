@@ -1,4 +1,3 @@
-import { hashPassword, validatePassword } from "./index.js";
 import {
   clientUpdateDashboardData,
   postClientUpdateAnnouncement,
@@ -12,14 +11,11 @@ import {
 const DISCORD_API = "https://discord.com/api/v10";
 const TEXT_CHANNEL_TYPES = new Set([0, 5]);
 const MANAGED_WEBSITE_ROLES = new Set(["plugin_dev", "marketplace_reviewer"]);
-const RESET_STATE_SECONDS = 10 * 60;
-const RESET_TOKEN_SECONDS = 15 * 60;
 const encoder = new TextEncoder();
-let resetSchemaReady = null;
 
 export async function handleWebsiteControls(request, env, url, services) {
   if (request.method === "GET" && url.pathname === "/api/account") {
-    return decorateAccountResponse(await services.loadAccount(), request, env);
+    return decorateAccountResponse(await services.loadAccount(), env);
   }
   if (request.method === "GET" && url.pathname === "/api/discord-bot/dashboard") {
     return loadWebsiteDashboard(request, env, services.loadDashboard);
@@ -41,15 +37,6 @@ export async function handleWebsiteControls(request, env, url, services) {
   if (request.method === "PUT" && userRolesMatch) {
     return updateManagedUserRoles(request, env, userRolesMatch[1]);
   }
-  if (request.method === "POST" && url.pathname === "/api/auth/reset/start") {
-    return startPasswordReset(request, env);
-  }
-  if (request.method === "GET" && url.pathname === "/api/auth/reset/callback") {
-    return completePasswordResetAuthorization(url, env);
-  }
-  if (request.method === "POST" && url.pathname === "/api/auth/reset/complete") {
-    return completePasswordReset(request, env);
-  }
   return null;
 }
 
@@ -70,8 +57,11 @@ export async function loadWebsiteDashboard(request, env, loadCoreDashboard) {
     return json(await ownerDiscordDashboard(env, owner.user_id));
   } catch (error) {
     console.error("Unable to build the owner Discord dashboard", error);
-    return apiError(502, "discord_unavailable",
-      error.message || "Discord bot information is temporarily unavailable.");
+    return apiError(
+      502,
+      "discord_unavailable",
+      error.message || "Discord bot information is temporarily unavailable."
+    );
   }
 }
 
@@ -81,7 +71,7 @@ export async function updateWebsiteDashboardSettings(request, env, input, update
   return updateOwnerDiscordSettings(env, owner.user_id, input);
 }
 
-async function decorateAccountResponse(response, request, env) {
+async function decorateAccountResponse(response, env) {
   if (!response.ok) return response;
   const payload = await response.json();
   const accountId = payload.account?.id;
@@ -91,7 +81,9 @@ async function decorateAccountResponse(response, request, env) {
   ).bind(accountId).first();
   if (owner?.allowed) {
     payload.account.roles = [...new Set([...(payload.account.roles || []), "site_owner"])];
-    payload.account.capabilities = [...new Set([...(payload.account.capabilities || []), "site_owner"])];
+    payload.account.capabilities = [
+      ...new Set([...(payload.account.capabilities || []), "site_owner"])
+    ];
   }
   return responseWithJson(response, payload);
 }
@@ -184,9 +176,11 @@ async function createDiscordDevRole(request, env) {
       "SELECT discord_id FROM discord_accounts WHERE user_id = ?"
     ).bind(owner.user_id).first();
     if (account?.discord_id) {
-      await discordApi(env,
+      await discordApi(
+        env,
         `/guilds/${env.DISCORD_GUILD_ID}/members/${account.discord_id}/roles/${role.id}`,
-        { method: "PUT" });
+        { method: "PUT" }
+      );
     }
 
     const updated = await env.DB.prepare(
@@ -204,17 +198,20 @@ async function createDiscordDevRole(request, env) {
     return json(await ownerDiscordDashboard(env, owner.user_id));
   } catch (error) {
     console.error("Unable to create the Discord Dev role", error);
-    return apiError(502, "discord_role_creation_failed",
-      error.message || "The Discord Dev role could not be created.");
+    return apiError(
+      502,
+      "discord_role_creation_failed",
+      error.message || "The Discord Dev role could not be created."
+    );
   }
 }
 
 async function ownerDiscordDashboard(env, userId) {
   const applicationId = env.DISCORD_APPLICATION_ID || env.DISCORD_CLIENT_ID || null;
-  const bot = env.DISCORD_BOT_TOKEN
-    ? await discordMaybe(env, "/users/@me") : null;
+  const bot = env.DISCORD_BOT_TOKEN ? await discordMaybe(env, "/users/@me") : null;
   const guild = env.DISCORD_BOT_TOKEN && env.DISCORD_GUILD_ID
-    ? await discordMaybe(env, `/guilds/${env.DISCORD_GUILD_ID}?with_counts=true`) : null;
+    ? await discordMaybe(env, `/guilds/${env.DISCORD_GUILD_ID}?with_counts=true`)
+    : null;
   const installed = Boolean(bot && guild);
 
   let roles = [];
@@ -226,8 +223,11 @@ async function ownerDiscordDashboard(env, userId) {
       discordMaybe(env, `/guilds/${env.DISCORD_GUILD_ID}/roles`, []),
       discordMaybe(env, `/guilds/${env.DISCORD_GUILD_ID}/channels`, []),
       applicationId
-        ? discordMaybe(env,
-          `/applications/${applicationId}/guilds/${env.DISCORD_GUILD_ID}/commands`, [])
+        ? discordMaybe(
+          env,
+          `/applications/${applicationId}/guilds/${env.DISCORD_GUILD_ID}/commands`,
+          []
+        )
         : Promise.resolve([]),
       discordMaybe(env, `/guilds/${env.DISCORD_GUILD_ID}/members/${bot.id}`)
     ]);
@@ -340,9 +340,7 @@ async function ownerDiscordDashboard(env, userId) {
 async function updateOwnerDiscordSettings(env, userId, input) {
   try {
     const normalized = normalizeDiscordBotSettings(input);
-    if (!normalized) {
-      throw new DiscordSettingsError("invalid_settings", "Enter valid bot settings.");
-    }
+    if (!normalized) throw new DiscordSettingsError("invalid_settings", "Enter valid bot settings.");
     if (!env.DISCORD_BOT_TOKEN || !env.DISCORD_GUILD_ID) {
       return apiError(503, "discord_bot_unavailable", "The Discord bot is not configured.");
     }
@@ -354,7 +352,8 @@ async function updateOwnerDiscordSettings(env, userId, input) {
     const devRole = roleById.get(normalized.devRoleId);
     if (!devRole || devRole.name !== "Dev") {
       throw new DiscordSettingsError(
-        "invalid_dev_role", "Dashboard access must use the Discord role named Dev."
+        "invalid_dev_role",
+        "Dashboard access must use the Discord role named Dev."
       );
     }
     for (const roleId of [
@@ -384,7 +383,8 @@ async function updateOwnerDiscordSettings(env, userId, input) {
     ]) {
       if (channelId && !channelIds.has(channelId)) {
         throw new DiscordSettingsError(
-          "invalid_channel", "A selected channel is not a server text channel."
+          "invalid_channel",
+          "A selected channel is not a server text channel."
         );
       }
     }
@@ -397,7 +397,8 @@ async function updateOwnerDiscordSettings(env, userId, input) {
     }
     if (normalized.announcementsEnabled && !normalized.announcementChannelId) {
       throw new DiscordSettingsError(
-        "announcement_channel_required", "Choose an announcement channel before enabling posts."
+        "announcement_channel_required",
+        "Choose an announcement channel before enabling posts."
       );
     }
 
@@ -479,168 +480,12 @@ async function updateOwnerDiscordSettings(env, userId, input) {
       return apiError(400, error.code || "invalid_settings", error.message);
     }
     console.error("Unable to update owner Discord settings", error);
-    return apiError(502, "discord_unavailable",
-      error.message || "Discord bot settings could not be updated.");
+    return apiError(
+      502,
+      "discord_unavailable",
+      error.message || "Discord bot settings could not be updated."
+    );
   }
-}
-
-async function startPasswordReset(request, env) {
-  await ensureResetSchema(env);
-  const body = await readJson(request);
-  const email = normalizeEmail(body?.email);
-  if (!email) return apiError(400, "invalid_email", "Enter a valid marketplace email address.");
-  const user = await env.DB.prepare(
-    `SELECT users.id, users.email, discord_accounts.discord_id
-     FROM users
-     LEFT JOIN discord_accounts ON discord_accounts.user_id = users.id
-     WHERE users.email = ?`
-  ).bind(email).first();
-
-  if (user && body?.recoveryKey && env.OWNER_RECOVERY_KEY
-      && await constantTimeTextEqual(String(body.recoveryKey), String(env.OWNER_RECOVERY_KEY))) {
-    const owner = await env.DB.prepare(
-      "SELECT 1 AS allowed FROM user_roles WHERE user_id = ? AND role = 'site_owner'"
-    ).bind(user.id).first();
-    if (owner?.allowed) {
-      return json({ resetToken: await issueResetToken(env, user.id) });
-    }
-  }
-
-  if (!user?.discord_id || !env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
-    return json({
-      message: "If this account can be recovered, continue through its linked Discord identity."
-    });
-  }
-  const state = randomToken(32);
-  await env.DB.prepare("DELETE FROM password_reset_states WHERE user_id = ?").bind(user.id).run();
-  await env.DB.prepare(
-    "INSERT INTO password_reset_states (state_hash, user_id, expires_at) VALUES (?, ?, ?)"
-  ).bind(await sha256(state), user.id, nowSeconds() + RESET_STATE_SECONDS).run();
-  const authorize = new URL("https://discord.com/oauth2/authorize");
-  authorize.searchParams.set("client_id", env.DISCORD_CLIENT_ID);
-  authorize.searchParams.set("redirect_uri", passwordResetRedirect(env));
-  authorize.searchParams.set("response_type", "code");
-  authorize.searchParams.set("scope", "identify email");
-  authorize.searchParams.set("state", state);
-  authorize.searchParams.set("prompt", "consent");
-  return json({ authorizeUrl: authorize.toString() });
-}
-
-async function completePasswordResetAuthorization(url, env) {
-  await ensureResetSchema(env);
-  const state = url.searchParams.get("state");
-  const code = url.searchParams.get("code");
-  const oauthError = url.searchParams.get("error");
-  if (!state || !code || oauthError) return redirectReset(env, null, "discord_authorization_failed");
-  const stateHash = await sha256(state);
-  const pending = await env.DB.prepare(
-    `SELECT password_reset_states.user_id, users.email, discord_accounts.discord_id
-     FROM password_reset_states
-     JOIN users ON users.id = password_reset_states.user_id
-     LEFT JOIN discord_accounts ON discord_accounts.user_id = users.id
-     WHERE password_reset_states.state_hash = ? AND password_reset_states.expires_at > ?`
-  ).bind(stateHash, nowSeconds()).first();
-  if (!pending?.discord_id) return redirectReset(env, null, "reset_state_expired");
-
-  try {
-    const tokenResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: env.DISCORD_CLIENT_ID,
-        client_secret: env.DISCORD_CLIENT_SECRET,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: passwordResetRedirect(env)
-      })
-    });
-    if (!tokenResponse.ok) throw new Error(`Discord token exchange returned ${tokenResponse.status}`);
-    const oauth = await tokenResponse.json();
-    const profileResponse = await fetch("https://discord.com/api/v10/users/@me", {
-      headers: { authorization: `Bearer ${oauth.access_token}` }
-    });
-    if (!profileResponse.ok) throw new Error(`Discord profile request returned ${profileResponse.status}`);
-    const profile = await profileResponse.json();
-    const emailMatches = profile.verified === true
-      && normalizeEmail(profile.email) === normalizeEmail(pending.email);
-    if (profile.id !== pending.discord_id || !emailMatches) {
-      return redirectReset(env, null, "discord_identity_mismatch");
-    }
-    await env.DB.prepare("DELETE FROM password_reset_states WHERE state_hash = ?")
-      .bind(stateHash).run();
-    return redirectReset(env, await issueResetToken(env, pending.user_id), null);
-  } catch (error) {
-    console.error("Password reset Discord verification failed", error);
-    return redirectReset(env, null, "discord_verification_failed");
-  }
-}
-
-async function completePasswordReset(request, env) {
-  await ensureResetSchema(env);
-  const body = await readJson(request);
-  const passwordError = validatePassword(body?.password);
-  if (typeof body?.token !== "string" || passwordError) {
-    return apiError(400, "invalid_password_reset", passwordError || "The reset token is required.");
-  }
-  const tokenHash = await sha256(body.token);
-  const pending = await env.DB.prepare(
-    `SELECT user_id FROM password_reset_tokens
-     WHERE token_hash = ? AND expires_at > ? AND consumed_at IS NULL`
-  ).bind(tokenHash, nowSeconds()).first();
-  if (!pending) return apiError(400, "reset_token_invalid", "The password reset link is invalid or expired.");
-  const consumed = await env.DB.prepare(
-    `UPDATE password_reset_tokens SET consumed_at = ?
-     WHERE token_hash = ? AND expires_at > ? AND consumed_at IS NULL`
-  ).bind(nowSeconds(), tokenHash, nowSeconds()).run();
-  if (!consumed.meta?.changes) {
-    return apiError(400, "reset_token_invalid", "The password reset link is invalid or expired.");
-  }
-  await env.DB.prepare(
-    "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?"
-  ).bind(await hashPassword(body.password, env.PASSWORD_PEPPER), nowSeconds(), pending.user_id).run();
-  return json({ message: "Password updated. You can now sign in." });
-}
-
-async function issueResetToken(env, userId) {
-  const token = randomToken(32);
-  await env.DB.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").bind(userId).run();
-  await env.DB.prepare(
-    `INSERT INTO password_reset_tokens
-      (token_hash, user_id, expires_at, consumed_at) VALUES (?, ?, ?, NULL)`
-  ).bind(await sha256(token), userId, nowSeconds() + RESET_TOKEN_SECONDS).run();
-  return token;
-}
-
-async function ensureResetSchema(env) {
-  if (!resetSchemaReady) {
-    resetSchemaReady = (async () => {
-      await env.DB.prepare(
-        `CREATE TABLE IF NOT EXISTS password_reset_states (
-          state_hash TEXT PRIMARY KEY,
-          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          expires_at INTEGER NOT NULL
-        )`
-      ).run();
-      await env.DB.prepare(
-        `CREATE TABLE IF NOT EXISTS password_reset_tokens (
-          token_hash TEXT PRIMARY KEY,
-          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          expires_at INTEGER NOT NULL,
-          consumed_at INTEGER
-        )`
-      ).run();
-      await env.DB.prepare(
-        "CREATE INDEX IF NOT EXISTS password_reset_states_expires_idx ON password_reset_states(expires_at)"
-      ).run();
-      await env.DB.prepare(
-        "CREATE INDEX IF NOT EXISTS password_reset_tokens_expires_idx ON password_reset_tokens(expires_at)"
-      ).run();
-    })().catch((error) => {
-      resetSchemaReady = null;
-      throw error;
-    });
-  }
-  return resetSchemaReady;
 }
 
 export function installPayload(env, installed) {
@@ -669,8 +514,7 @@ export function installPayload(env, installed) {
     missing,
     inviteUrl,
     guildId: env.DISCORD_GUILD_ID || null,
-    interactionEndpoint: `${origin(env)}/api/discord/interactions`,
-    passwordResetRedirect: passwordResetRedirect(env)
+    interactionEndpoint: `${origin(env)}/api/discord/interactions`
   };
 }
 
@@ -717,7 +561,9 @@ function rolePayload(role) {
 }
 
 async function discordApi(env, path, options = {}) {
-  if (!env.DISCORD_BOT_TOKEN) throw codedError("discord_bot_unavailable", "The Discord bot token is not configured.");
+  if (!env.DISCORD_BOT_TOKEN) {
+    throw codedError("discord_bot_unavailable", "The Discord bot token is not configured.");
+  }
   const response = await fetch(`${DISCORD_API}${path}`, {
     method: options.method || "GET",
     headers: {
@@ -741,26 +587,29 @@ async function discordMaybe(env, path, fallback = null) {
   }
 }
 
-async function safeFirst(env, query, value) {
+async function safeFirst(env, query, ...values) {
   try {
-    const statement = env.DB.prepare(query);
-    return value === undefined ? statement.first() : statement.bind(value).first();
+    let statement = env.DB.prepare(query);
+    if (values.length) statement = statement.bind(...values);
+    return await statement.first();
   } catch {
     return null;
   }
 }
 
-async function safeAll(env, query) {
+async function safeAll(env, query, ...values) {
   try {
-    const result = await env.DB.prepare(query).all();
+    let statement = env.DB.prepare(query);
+    if (values.length) statement = statement.bind(...values);
+    const result = await statement.all();
     return result.results || [];
   } catch {
     return [];
   }
 }
 
-async function count(env, query, value) {
-  const row = await safeFirst(env, query, value);
+async function count(env, query, ...values) {
+  const row = await safeFirst(env, query, ...values);
   return Number(row?.total || 0);
 }
 
@@ -769,14 +618,10 @@ function normalizeSnowflake(value) {
   return /^\d{17,20}$/.test(normalized) ? normalized : null;
 }
 
-function normalizeEmail(value) {
-  if (typeof value !== "string") return null;
-  const email = value.trim().toLowerCase();
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
-}
-
 async function readJson(request) {
-  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) return null;
+  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+    return null;
+  }
   try {
     const raw = await request.text();
     if (encoder.encode(raw).byteLength > 16_384) return null;
@@ -784,21 +629,6 @@ async function readJson(request) {
   } catch {
     return null;
   }
-}
-
-function redirectReset(env, token, error) {
-  const location = new URL("/", origin(env));
-  location.hash = token
-    ? `reset-token=${encodeURIComponent(token)}`
-    : `reset-error=${encodeURIComponent(error || "reset_failed")}`;
-  return new Response(null, {
-    status: 302,
-    headers: { location: location.toString(), "cache-control": "no-store" }
-  });
-}
-
-function passwordResetRedirect(env) {
-  return `${origin(env)}/api/auth/reset/callback`;
 }
 
 function origin(env) {
@@ -827,26 +657,6 @@ async function sha256(value) {
   const digest = await crypto.subtle.digest("SHA-256", encoder.encode(value));
   return Array.from(new Uint8Array(digest),
     (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-async function constantTimeTextEqual(left, right) {
-  const leftDigest = await crypto.subtle.digest("SHA-256", encoder.encode(left));
-  const rightDigest = await crypto.subtle.digest("SHA-256", encoder.encode(right));
-  const a = new Uint8Array(leftDigest);
-  const b = new Uint8Array(rightDigest);
-  let difference = a.length ^ b.length;
-  for (let index = 0; index < Math.max(a.length, b.length); index += 1) {
-    difference |= (a[index] || 0) ^ (b[index] || 0);
-  }
-  return difference === 0;
-}
-
-function randomToken(byteLength) {
-  const bytes = new Uint8Array(byteLength);
-  crypto.getRandomValues(bytes);
-  let binary = "";
-  for (const value of bytes) binary += String.fromCharCode(value);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function apiError(status, code, message) {
