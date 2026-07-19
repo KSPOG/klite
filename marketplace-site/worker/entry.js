@@ -26,6 +26,7 @@ const DASHBOARD_ACTION_SCRIPT = "/discord-dashboard-actions.js?v=20260719-1";
 export default {
   async fetch(request, env, context) {
     const url = new URL(request.url);
+    const controlEnv = websiteControlEnvironment(env);
     const isAssetRequest = request.method === "GET" || request.method === "HEAD";
 
     if (isAssetRequest && url.pathname === "/api") {
@@ -58,19 +59,19 @@ export default {
     const updateCoreSettings = (body) => core.fetch(
       internalRequest(request, "/api/discord-bot/settings", "PUT", body), env, context
     );
-    const loadDashboard = () => loadWebsiteDashboard(request, env, loadCoreDashboard);
+    const loadDashboard = () => loadWebsiteDashboard(request, controlEnv, loadCoreDashboard);
     const updateSettings = (body) => updateWebsiteDashboardSettings(
-      request, env, body, updateCoreSettings
+      request, controlEnv, body, updateCoreSettings
     );
 
     try {
-      const websiteControl = await handleWebsiteControls(request, env, url, {
+      const websiteControl = await handleWebsiteControls(request, controlEnv, url, {
         loadAccount: loadCoreAccount,
         loadDashboard: loadCoreDashboard
       });
       if (websiteControl) return websiteControl;
 
-      const dashboardAction = await handleDiscordDashboardActions(request, env, url, {
+      const dashboardAction = await handleDiscordDashboardActions(request, controlEnv, url, {
         loadDashboard,
         updateSettings
       });
@@ -123,6 +124,13 @@ export default {
     return undefined;
   }
 };
+
+function websiteControlEnvironment(env) {
+  if (env.OWNER_RECOVERY_KEY || !env.SITE_OWNER_RECOVERY_KEY) return env;
+  return Object.assign({}, env, {
+    OWNER_RECOVERY_KEY: env.SITE_OWNER_RECOVERY_KEY
+  });
+}
 
 function internalRequest(source, pathname, method, body) {
   const target = new URL(source.url);
