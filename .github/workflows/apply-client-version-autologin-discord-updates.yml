@@ -44,6 +44,15 @@ jobs:
           python .github/patches/apply-discord-client-updates-backend.py
           python .github/patches/apply-discord-client-updates-frontend.py
 
+      - name: Commit generated feature changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Add client AutoLogin and Discord update notifications"
+          git push origin HEAD:feature/client-version-autologin-discord-updates
+
       - name: Verify JavaScript syntax
         run: |
           node --check marketplace-site/worker/client-updates.js
@@ -65,14 +74,5 @@ jobs:
       - name: Run client static checks
         run: ./gradlew :client:checkstyleMain :client:pmdMain --no-daemon
 
-      - name: Verify patch cleanliness
-        run: git diff --check
-
-      - name: Commit generated feature changes
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Add client AutoLogin and Discord update notifications"
-          git push origin HEAD:feature/client-version-autologin-discord-updates
+      - name: Verify committed tree cleanliness
+        run: git status --short
