@@ -67,7 +67,7 @@ public interface KLiteConfig extends Config
 	@ConfigItem(
 		keyName = "autoLogin",
 		name = "AutoLogin",
-		description = "Automatically enter the game when KLite has a saved Jagex Launcher session or complete login credentials",
+		description = "Automatically enter the game and reconnect when KLite was launched with a saved Jagex character session",
 		section = loginSection,
 		position = 0
 	)
