@@ -1,9 +1,11 @@
-const fs = require("node:fs");
-const path = require("node:path");
-const test = require("node:test");
-const assert = require("node:assert/strict");
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
 
-const repositoryRoot = path.resolve(__dirname, "..", "..");
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const repositoryRoot = path.resolve(testDirectory, "..", "..");
 
 function read(relativePath) {
   return fs.readFileSync(path.join(repositoryRoot, relativePath), "utf8");
