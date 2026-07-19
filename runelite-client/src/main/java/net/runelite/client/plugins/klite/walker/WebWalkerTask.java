@@ -15,6 +15,7 @@ import net.runelite.client.plugins.klite.automation.AutomationTask;
 /** Automation task which advances the web walker once per game tick. */
 public final class WebWalkerTask implements AutomationTask
 {
+	public static final String TASK_NAME = "web-walk";
 	private static final Duration STEP_TIMEOUT = Duration.ofSeconds(2);
 
 	private final WebWalker walker;
@@ -40,7 +41,7 @@ public final class WebWalkerTask implements AutomationTask
 	@Override
 	public String name()
 	{
-		return "web-walk";
+		return TASK_NAME;
 	}
 
 	@Override
