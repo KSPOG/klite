@@ -116,15 +116,16 @@ function internalRequest(source, pathname, method, body) {
 
 async function injectDashboardActionScript(response) {
   const html = await response.text();
-  if (html.includes(DASHBOARD_ACTION_SCRIPT)) {
-    return new Response(html, response);
-  }
   const script = `<script src="${DASHBOARD_ACTION_SCRIPT}" defer></script>`;
-  const content = html.includes("</body>")
-    ? html.replace("</body>", `  ${script}\n</body>`)
-    : `${html}\n${script}`;
+  const content = html.includes(DASHBOARD_ACTION_SCRIPT)
+    ? html
+    : html.includes("</body>")
+      ? html.replace("</body>", `  ${script}\n</body>`)
+      : `${html}\n${script}`;
   const headers = new Headers(response.headers);
   headers.delete("content-length");
+  headers.delete("content-encoding");
+  headers.delete("etag");
   return new Response(content, {
     status: response.status,
     statusText: response.statusText,
