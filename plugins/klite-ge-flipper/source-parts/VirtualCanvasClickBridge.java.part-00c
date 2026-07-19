@@ -1,0 +1,123 @@
+dgetBounds(
+        Rectangle widgetBounds,
+        CanvasContext context,
+        Dimension componentSize)
+    {
+        // Widget.getBounds() already includes the centred viewport offset in
+        // normal resizable mode. Scaling it again is what caused large-window
+        // clicks to drift outside the GE interface.
+        if (!context.stretched)
+        {
+            return new Rectangle(widgetBounds);
+        }
+
+        if (context.realWidth <= 0
+            || context.realHeight <= 0
+            || componentSize.width <= 0
+            || componentSize.height <= 0)
+        {
+            return new Rectangle(widgetBounds);
+        }
+
+        double scaleX = componentSize.width / (double) context.realWidth;
+        double scaleY = componentSize.height / (double) context.realHeight;
+        if (!isUsableScale(scaleX) || !isUsableScale(scaleY))
+        {
+            return new Rectangle(widgetBounds);
+        }
+
+        return new Rectangle(
+            (int) Math.round(widgetBounds.x * scaleX),
+            (int) Math.round(widgetBounds.y * scaleY),
+            Math.max(1, (int) Math.round(widgetBounds.width * scaleX)),
+            Math.max(1, (int) Math.round(widgetBounds.height * scaleY)));
+    }
+
+    private static boolean isUsableScale(double scale)
+    {
+        return Double.isFinite(scale) && scale >= 0.40D && scale <= 4.00D;
+    }
+
+    private CanvasContext locateCanvasContextOnEventThread()
+    {
+        CanvasContext runtime = locateRuntimeClientCanvas();
+        if (runtime != null)
+        {
+            return runtime;
+        }
+
+        List<Component> candidates = new ArrayList<>();
+        for (Window window : Window.getWindows())
+        {
+            if (window != null && window.isShowing())
+            {
+                collectCanvases(window, candidates);
+            }
+        }
+
+        Component canvas = candidates.stream()
+            .filter(Component::isShowing)
+            .max(Comparator.comparingLong(VirtualCanvasClickBridge::area))
+            .orElseThrow(() -> new IllegalStateException(
+                "No visible KLite game canvas was found"));
+
+        Dimension size = canvas.getSize();
+        return new CanvasContext(
+            canvas,
+            false,
+            size.width,
+            size.height,
+            "direct-fallback",
+            "visible-canvas-fallback");
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private CanvasContext locateRuntimeClientCanvas()
+    {
+        try
+        {
+            Injector injector = owner.getInjector();
+            ClassLoader loader = owner.getClass().getClassLoader().getParent();
+            if (loader == null)
+            {
+                loader = owner.getClass().getClassLoader();
+            }
+
+            Class<?> clientType = Class.forName(
+                "net.runelite.api." + "Client",
+                true,
+                loader);
+            Object client = injector.getInstance((Class) clientType);
+
+            Method canvasMethod = clientType.getMethod("get" + "Canvas");
+            Object canvasValue = canvasMethod.invoke(client);
+            if (!(canvasValue instanceof Component))
+            {
+                return null;
+            }
+
+            Component canvas = (Component) canvasValue;
+            if (!canvas.isShowing() || canvas.getWidth() <= 0 || canvas.getHeight() <= 0)
+            {
+                return null;
+            }
+
+            boolean stretched = invokeBoolean(
+                clientType,
+                client,
+                "isStretchedEnabled",
+                false);
+
+            Dimension real = invokeDimension(
+                clientType,
+                client,
+                "getRealDimensions");
+            if (real == null || real.width <= 0 || real.height <= 0)
+            {
+                real = new Dimension(canvas.getWidth(), canvas.getHeight());
+            }
+
+            return new CanvasContext(
+                canvas,
+                stretched,
+                real.width
