@@ -38,24 +38,36 @@ jobs:
           node --check marketplace-site/public/app.js
           node --check marketplace-site/scripts/register-discord-commands.mjs
 
-      - name: Run marketplace tests with diagnostics
+      - name: Run marketplace tests
+        id: marketplace-tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm --prefix marketplace-site test 2>&1 | tee marketplace-test.log
+
+      - name: Upload marketplace test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-test-log
+          path: marketplace-test.log
+          if-no-files-found: error
+
+      - name: Report marketplace test failure
+        if: steps.marketplace-tests.outcome == 'failure'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set +e
-          npm --prefix marketplace-site test 2>&1 | tee marketplace-test.log
-          status=${PIPESTATUS[0]}
-          if [ "$status" -ne 0 ]; then
-            {
-              echo '### Marketplace test failure'
-              echo '```text'
-              tail -n 240 marketplace-test.log
-              echo '```'
-            } > marketplace-test-comment.md
-            gh pr comment 57 --body-file marketplace-test-comment.md
-            exit "$status"
-          fi
+          {
+            echo '### Marketplace test failure summary'
+            echo '```text'
+            grep -E -A 14 -B 3 'not ok|AssertionError|ReferenceError|SyntaxError|ERR_' marketplace-test.log | tail -n 180
+            echo '```'
+          } > marketplace-test-comment.md
+          gh pr comment 57 --body-file marketplace-test-comment.md
+          exit 1
 
       - name: Run focused client tests
         run: |
