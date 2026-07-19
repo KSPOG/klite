@@ -69,18 +69,26 @@ stored in D1.
 The bot needs View Channels, Send Messages, Embed Links, and Read Message
 History. It also needs Manage Roles when automatic account-link assignment or
 client-update subscriptions are enabled. The bot's highest role must be above
-the configured member and client-update notification roles.
+the configured member and client-update notification roles. To notify the
+client-update role, either make that role mentionable or grant the bot permission
+to mention roles in the configured update channel.
 
-Register the global slash commands from a trusted terminal with
-`DISCORD_APPLICATION_ID` and `DISCORD_BOT_TOKEN` set:
+The dashboard's **Register slash commands** control registers and verifies the
+commands directly in the designated Discord server. Guild registration is used
+so updates are available immediately and the dashboard can verify the same
+command collection it displays.
+
+You can perform the same guild registration from a trusted terminal with
+`DISCORD_APPLICATION_ID` (or `DISCORD_CLIENT_ID`), `DISCORD_BOT_TOKEN`, and
+`DISCORD_GUILD_ID` set:
 
 ```powershell
 npm run discord:commands
 ```
 
-The Worker uses the bot token only server-side to validate the configured text
-channel and post marketplace announcement embeds. The token is never returned
-to the browser or stored in D1.
+The Worker uses the bot token only server-side to validate configured channels,
+register commands, verify posted client-update messages, and publish Discord
+messages. The token is never returned to the browser or stored in D1.
 
 ## Production deployment
 
