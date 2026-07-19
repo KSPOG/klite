@@ -147,10 +147,14 @@ public final class KLiteWorldMapWebWalkerController
 	static void dispatchEscape(Canvas canvas)
 	{
 		long when = System.currentTimeMillis();
-		canvas.dispatchEvent(new KeyEvent(canvas, KeyEvent.KEY_PRESSED,
-			when, 0, KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED));
-		canvas.dispatchEvent(new KeyEvent(canvas, KeyEvent.KEY_RELEASED,
-			when, 0, KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED));
+		canvas.dispatchEvent(createEscapeEvent(canvas, KeyEvent.KEY_PRESSED, when));
+		canvas.dispatchEvent(createEscapeEvent(canvas, KeyEvent.KEY_RELEASED, when));
+	}
+
+	static KeyEvent createEscapeEvent(Canvas canvas, int id, long when)
+	{
+		return new KeyEvent(canvas, id, when, 0,
+			KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED);
 	}
 
 	private void clearPath(MenuEntry ignored)
