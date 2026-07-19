@@ -79,6 +79,36 @@
     }, true);
   }
 
+  function resetPasswordFormAction() {
+    const submit = document.querySelector("#password-reset-submit");
+    if (!submit) return;
+    submit.type = "submit";
+    submit.onclick = null;
+    submit.disabled = false;
+  }
+
+  function installPasswordRecoveryEntry() {
+    const signIn = document.querySelector("#sign-in-button");
+    const forgot = document.querySelector("#forgot-password-button");
+    if (!signIn || !forgot || document.querySelector("#recover-account-button")) return;
+
+    const recover = document.createElement("button");
+    recover.id = "recover-account-button";
+    recover.type = "button";
+    recover.className = "button button-secondary";
+    recover.textContent = "Recover account";
+    recover.hidden = signIn.hidden;
+    recover.addEventListener("click", () => {
+      resetPasswordFormAction();
+      forgot.click();
+    });
+    signIn.after(recover);
+
+    new MutationObserver(() => {
+      recover.hidden = signIn.hidden;
+    }).observe(signIn, { attributes: true, attributeFilter: ["hidden"] });
+  }
+
   captureButton("#discord-oauth-button", async () => {
     statusNode("#discord-code-output", "Opening Discord account linking...");
     try {
@@ -127,15 +157,7 @@
       lastControlAt = Date.now();
     }
 
-    const forgot = event.target.closest("#forgot-password-button");
-    if (forgot) {
-      const submit = document.querySelector("#password-reset-submit");
-      if (submit) {
-        submit.type = "submit";
-        submit.onclick = null;
-        submit.disabled = false;
-      }
-    }
+    if (event.target.closest("#forgot-password-button")) resetPasswordFormAction();
 
     const verify = event.target.closest("button");
     if (!verify || verify.textContent.trim() !== "Verify installation" || verify.disabled) return;
@@ -175,4 +197,6 @@
     if (typeof setSiteRoute === "function") setSiteRoute("account", { preserveHash: true });
     showNotice("KLite website sign-in now uses Discord. Choose Continue with Discord.");
   }
+
+  installPasswordRecoveryEntry();
 })();
