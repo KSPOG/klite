@@ -10,7 +10,7 @@ const execFileAsync = promisify(execFile);
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const siteDirectory = path.resolve(testDirectory, "..");
 
-test("public pages serve the generated design system and scoped credit styles", async () => {
+test("public pages serve the generated design system and scoped component styles", async () => {
   await execFileAsync(process.execPath, ["scripts/build-home-styles.mjs", "--check"], { cwd: siteDirectory });
 
   const [pages, stylesheet, creditStylesheet] = await Promise.all([
@@ -19,12 +19,12 @@ test("public pages serve the generated design system and scoped credit styles", 
       "public/docs/index.html",
       "public/api/index.html",
       "public/changelog/index.html",
-    ].map((file) => readFile(path.join(siteDirectory, file), "utf8"))),
+    ].map(async (file) => ({ file, html: await readFile(path.join(siteDirectory, file), "utf8") }))),
     readFile(path.join(siteDirectory, "public/home.css"), "utf8"),
     readFile(path.join(siteDirectory, "public/credits.css"), "utf8"),
   ]);
 
-  const [homepage, ...secondaryPages] = pages;
+  const [{ html: homepage }, ...secondaryPages] = pages;
   const homepageStylesheetLinks = homepage.match(/<link\s+rel="stylesheet"/g) ?? [];
   assert.equal(homepageStylesheetLinks.length, 2);
   assert.match(homepage, /href="\/home\.css\?v=20260718-5" data-klite-resources-menu/);
@@ -34,11 +34,15 @@ test("public pages serve the generated design system and scoped credit styles", 
     "credit component styles must load after the global design system",
   );
 
-  for (const html of secondaryPages) {
+  for (const { file, html } of secondaryPages) {
     const stylesheetLinks = html.match(/<link\s+rel="stylesheet"/g) ?? [];
-    assert.equal(stylesheetLinks.length, 1);
+    const expectedStylesheets = file === "public/api/index.html" ? 2 : 1;
+    assert.equal(stylesheetLinks.length, expectedStylesheets, `${file} stylesheet count`);
     assert.match(html, /href="\/home\.css\?v=20260718-5"/);
     assert.doesNotMatch(html, /credits\.css/);
+    if (file === "public/api/index.html") {
+      assert.match(html, /href="api\.css\?v=20260718-1"/);
+    }
   }
 
   assert.match(homepage, /data-klite-resources-menu/);
