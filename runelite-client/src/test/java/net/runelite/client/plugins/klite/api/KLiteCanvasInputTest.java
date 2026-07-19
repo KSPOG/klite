@@ -5,14 +5,17 @@
  */
 package net.runelite.client.plugins.klite.api;
 
+import java.awt.Canvas;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import net.runelite.api.Point;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class KLiteCanvasInputTest
@@ -65,5 +68,35 @@ public class KLiteCanvasInputTest
 			1_440, 900));
 		assertTrue(KLiteCanvasInput.isInsideCanvas(new Point(1_439, 899),
 			1_440, 900));
+	}
+
+	@Test
+	public void mouseEventsCarryLocalAndAbsoluteCanvasCoordinates()
+	{
+		Canvas canvas = new Canvas()
+		{
+			@Override
+			public java.awt.Point getLocationOnScreen()
+			{
+				return new java.awt.Point(320, 180);
+			}
+		};
+		Point point = new Point(77, 46);
+		MouseEvent event = KLiteCanvasInput.createMouseEvent(
+			canvas,
+			MouseEvent.MOUSE_PRESSED,
+			1234L,
+			0,
+			point,
+			MouseEvent.BUTTON1,
+			1);
+
+		assertSame(canvas, event.getSource());
+		assertEquals(77, event.getX());
+		assertEquals(46, event.getY());
+		assertEquals(397, event.getXOnScreen());
+		assertEquals(226, event.getYOnScreen());
+		assertEquals(MouseEvent.BUTTON1, event.getButton());
+		assertEquals(1234L, event.getWhen());
 	}
 }
