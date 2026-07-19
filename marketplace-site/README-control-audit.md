@@ -18,9 +18,9 @@ Every interactive control must have all of the following:
 
 - Added the missing owner account and role-management routes.
 - Added the missing Discord Dev-role creation route.
-- Added Discord-verified password recovery and its D1 persistence.
-- Restored a reachable **Recover account** control after Discord-only sign-in replaced
-  the legacy password dialog entry point.
+- Kept website authentication Discord-only and blocked legacy password login,
+  registration, and reset endpoints at the Worker entry point.
+- Removed the legacy password and recovery dialogs from the rendered website.
 - Added the missing dashboard installation payload expected by the browser renderer.
 - Restored `site_owner` capability decoration on the normal account endpoint.
 - Added visible progress and failure feedback for Discord linking, one-time link codes,
