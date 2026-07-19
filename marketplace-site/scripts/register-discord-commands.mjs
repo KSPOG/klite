@@ -1,61 +1,29 @@
-const applicationId = process.env.DISCORD_APPLICATION_ID;
-const botToken = process.env.DISCORD_BOT_TOKEN;
+import {
+  DISCORD_COMMANDS,
+  listGuildDiscordCommands,
+  registerGuildDiscordCommands,
+  verifyRegisteredCommands
+} from "../worker/discord-commands.js";
 
-if (!applicationId || !botToken) {
-  throw new Error("DISCORD_APPLICATION_ID and DISCORD_BOT_TOKEN are required");
+const env = {
+  DISCORD_APPLICATION_ID: process.env.DISCORD_APPLICATION_ID,
+  DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
+  DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
+  DISCORD_GUILD_ID: process.env.DISCORD_GUILD_ID
+};
+
+if (!(env.DISCORD_APPLICATION_ID || env.DISCORD_CLIENT_ID)
+    || !env.DISCORD_BOT_TOKEN || !env.DISCORD_GUILD_ID) {
+  throw new Error(
+    "DISCORD_APPLICATION_ID (or DISCORD_CLIENT_ID), DISCORD_BOT_TOKEN, and DISCORD_GUILD_ID are required"
+  );
 }
 
-const commands = [
-  {
-    name: "link",
-    description: "Link your Discord user to a KLite marketplace account",
-    options: [
-      {
-        type: 3,
-        name: "code",
-        description: "One-time code generated on the KLite account page",
-        required: true,
-        min_length: 8,
-        max_length: 8
-      }
-    ]
-  },
-  {
-    name: "account",
-    description: "Show the KLite account linked to your Discord user"
-  },
-  {
-    name: "client-updates",
-    description: "Subscribe to or unsubscribe from KLite client update notifications",
-    options: [
-      {
-        type: 3,
-        name: "action",
-        description: "Choose whether to receive client update notifications",
-        required: true,
-        choices: [
-          { name: "Subscribe", value: "subscribe" },
-          { name: "Unsubscribe", value: "unsubscribe" }
-        ]
-      }
-    ]
-  }
-];
+await registerGuildDiscordCommands(env);
+const commands = verifyRegisteredCommands(await listGuildDiscordCommands(env));
+const names = commands
+  .filter((command) => DISCORD_COMMANDS.some((expected) => expected.name === command.name))
+  .map((command) => `/${command.name}`)
+  .join(", ");
 
-const response = await fetch(
-  `https://discord.com/api/v10/applications/${applicationId}/commands`,
-  {
-    method: "PUT",
-    headers: {
-      authorization: `Bot ${botToken}`,
-      "content-type": "application/json"
-    },
-    body: JSON.stringify(commands)
-  }
-);
-
-if (!response.ok) {
-  throw new Error(`Discord command registration failed (${response.status}): ${await response.text()}`);
-}
-
-console.log(`Registered ${commands.length} global Discord commands.`);
+console.log(`Registered and verified ${DISCORD_COMMANDS.length} guild Discord commands: ${names}`);
