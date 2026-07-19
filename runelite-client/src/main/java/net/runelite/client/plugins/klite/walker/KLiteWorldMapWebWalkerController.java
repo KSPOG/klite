@@ -8,7 +8,10 @@
  */
 package net.runelite.client.plugins.klite.walker;
 
+import java.awt.Canvas;
+import java.awt.EventQueue;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -120,12 +123,34 @@ public final class KLiteWorldMapWebWalkerController
 
 		if (automationManager.start(new WebWalkerTask(webWalker, target)))
 		{
+			closeWorldMap();
 			message("Walking to " + formatPoint(target) + '.');
 		}
 		else
 		{
 			message("The WebWalker could not start because automation is busy.");
 		}
+	}
+
+	private void closeWorldMap()
+	{
+		Widget map = client.getWidget(InterfaceID.Worldmap.MAP_CONTAINER);
+		Canvas canvas = client.getCanvas();
+		if (map == null || map.isHidden() || canvas == null)
+		{
+			return;
+		}
+
+		EventQueue.invokeLater(() -> dispatchEscape(canvas));
+	}
+
+	static void dispatchEscape(Canvas canvas)
+	{
+		long when = System.currentTimeMillis();
+		canvas.dispatchEvent(new KeyEvent(canvas, KeyEvent.KEY_PRESSED,
+			when, 0, KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED));
+		canvas.dispatchEvent(new KeyEvent(canvas, KeyEvent.KEY_RELEASED,
+			when, 0, KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED));
 	}
 
 	private void clearPath(MenuEntry ignored)
