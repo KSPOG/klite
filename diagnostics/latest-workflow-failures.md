@@ -1,16 +1,16 @@
 # Recent GitHub Actions failures
 
-Generated: 2026-07-19T15:45:58.730077+00:00
+Generated: 2026-07-19T18:15:15.211717+00:00
 Repository: `KSPOG/klite`
-Failed runs inspected: **2**
+Failed runs inspected: **1**
 
-## CI: Add world map target controller for WebWalker
+## CI: Add GE Flipper plugin entrypoint
 
-- Run: [29693454362](https://github.com/KSPOG/klite/actions/runs/29693454362)
+- Run: [29698350334](https://github.com/KSPOG/klite/actions/runs/29698350334)
 - Conclusion: `failure`
 - Event: `push`
-- Commit: `e943a8df886a5898faa38f04532243199520ebba`
-- Created: `2026-07-19T15:44:39Z`
+- Commit: `11b011a1cd5551512bf70f1a078b69fc83031d28`
+- Created: `2026-07-19T18:13:52Z`
 
 ### Failed jobs and steps
 
@@ -20,110 +20,94 @@ Failed runs inspected: **2**
 ### Relevant log context
 
 ```text
-build	Build and Test	2026-07-19T15:45:17.5154421Z > Task :runelite-api:build
-build	Build and Test	2026-07-19T15:45:26.5156762Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/ChatboxInput.java:32: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T15:45:26.5159178Z
-build	Build and Test	2026-07-19T15:45:26.5184104Z @Value
-build	Build and Test	2026-07-19T15:45:26.5184598Z > Task :client:compileJava
-build	Build and Test	2026-07-19T15:45:26.5214134Z ^
-build	Build and Test	2026-07-19T15:45:26.5249323Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/party/messages/PartyChatMessage.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T15:45:26.5274899Z @Value
-build	Build and Test	2026-07-19T15:45:26.5304008Z ^
-build	Build and Test	2026-07-19T15:45:26.5336010Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/PrivateMessageInput.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T15:45:26.5363936Z @Value
-build	Build and Test	2026-07-19T15:45:26.5393941Z ^
-build	Build and Test	2026-07-19T15:45:26.5426086Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/devtools/ScriptInspector.java:100: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
-build	Build and Test	2026-07-19T15:45:26.5453997Z 	@Data
-build	Build and Test	2026-07-19T15:45:26.5483978Z 	^
-build	Build and Test	2026-07-19T15:45:33.2112703Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/agility/Courses.java:88: warning: non-varargs call of varargs method with inexact argument type for last parameter;
-build	Build and Test	2026-07-19T15:45:33.2124638Z 		this(totalXp, -1, null);
-build	Build and Test	2026-07-19T15:45:33.2134614Z 		                  ^
-build	Build and Test	2026-07-19T15:45:33.2154597Z   cast to WorldPoint for a varargs call
-build	Build and Test	2026-07-19T15:45:33.2155766Z   cast to WorldPoint[] for a non-varargs call and to suppress this warning
-build	Build and Test	2026-07-19T15:45:37.6125643Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/walker/KLiteWorldMapWebWalkerController.java:81: error: cannot find symbol
-build	Build and Test	2026-07-19T15:45:37.6154439Z 			|| WebWalkerTask.TASK_NAME.equals(automation.getTaskName()))
-build	Build and Test	2026-07-19T15:45:37.6169711Z 			                ^
-build	Build and Test	2026-07-19T15:45:37.6184009Z   symbol:   variable TASK_NAME
-build	Build and Test	2026-07-19T15:45:37.6214085Z   location: class WebWalkerTask
-build	Build and Test	2026-07-19T15:45:37.6244880Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/walker/KLiteWorldMapWebWalkerController.java:109: error: cannot find symbol
-build	Build and Test	2026-07-19T15:45:37.6270445Z 			if (!WebWalkerTask.TASK_NAME.equals(status.getTaskName()))
-build	Build and Test	2026-07-19T15:45:37.6271504Z 			                  ^
-build	Build and Test	2026-07-19T15:45:37.6293988Z   symbol:   variable TASK_NAME
-build	Build and Test	2026-07-19T15:45:37.6317073Z   location: class WebWalkerTask
-build	Build and Test	2026-07-19T15:45:37.6326333Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/walker/KLiteWorldMapWebWalkerController.java:134: error: cannot find symbol
-build	Build and Test	2026-07-19T15:45:37.6331867Z 		if (WebWalkerTask.TASK_NAME.equals(status.getTaskName()))
-build	Build and Test	2026-07-19T15:45:37.6336406Z 		                 ^
-build	Build and Test	2026-07-19T15:45:37.6340589Z   symbol:   variable TASK_NAME
-build	Build and Test	2026-07-19T15:45:37.6349740Z   location: class WebWalkerTask
-build	Build and Test	2026-07-19T15:45:38.4194874Z Note: Some input files use or override a deprecated API.
-build	Build and Test	2026-07-19T15:45:38.4224311Z Note: Recompile with -Xlint:deprecation for details.
-build	Build and Test	2026-07-19T15:45:38.4254989Z Note: Some input files use unchecked or unsafe operations.
-build	Build and Test	2026-07-19T15:45:38.4256485Z Note: Recompile with -Xlint:unchecked for details.
-build	Build and Test	2026-07-19T15:45:38.4257080Z 3 errors
-build	Build and Test	2026-07-19T15:45:38.4257444Z 5 warnings
-build	Build and Test	2026-07-19T15:45:38.8110843Z
-build	Build and Test	2026-07-19T15:45:38.8117844Z
-build	Build and Test	2026-07-19T15:45:38.8118518Z > Task :client:compileJava FAILED
-build	Build and Test	2026-07-19T15:45:38.8126268Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784475903361.json
-build	Build and Test	2026-07-19T15:45:38.8128351Z FAILURE: Build failed with an exception.
-build	Build and Test	2026-07-19T15:45:38.8129448Z 55 actionable tasks: 22 executed, 33 from cache
-build	Build and Test	2026-07-19T15:45:38.8129927Z
-build	Build and Test	2026-07-19T15:45:38.8141570Z * What went wrong:
-build	Build and Test	2026-07-19T15:45:38.8159542Z Execution failed for task ':client:compileJava'.
-build	Build and Test	2026-07-19T15:45:38.8162279Z > Compilation failed; see the compiler error output for details.
-build	Build and Test	2026-07-19T15:45:38.8162835Z
-build	Build and Test	2026-07-19T15:45:38.8163028Z * Try:
-build	Build and Test	2026-07-19T15:45:38.8163887Z > Run with --info option to get more log output.
-build	Build and Test	2026-07-19T15:45:38.8164629Z > Run with --scan to get full insights.
-build	Build and Test	2026-07-19T15:45:38.8165018Z
-build	Build and Test	2026-07-19T15:45:38.8165205Z BUILD FAILED in 44s
-build	Build and Test	2026-07-19T15:45:39.2883295Z ##[error]Process completed with exit code 1.
-```
-
-## KLite marketplace D1 migrations: Merge pull request #60 from KSPOG/agent/fix-discord-dashboard-actions
-
-- Run: [29691506140](https://github.com/KSPOG/klite/actions/runs/29691506140)
-- Conclusion: `failure`
-- Event: `push`
-- Commit: `e0cd9f7bf1196d6e40effe7bc28de8d3a0e233f9`
-- Created: `2026-07-19T14:46:43Z`
-
-### Failed jobs and steps
-
-- **Apply production migrations** — `failure`
-  - Step 7: **Apply D1 migrations** — `failure`
-
-### Relevant log context
-
-```text
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:53.8654715Z   CLOUDFLARE_API_TOKEN: ***
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:53.8655060Z   CLOUDFLARE_ACCOUNT_ID: ***
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:53.8655311Z ##[endgroup]
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.2932042Z
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.2933481Z  ⛅️ wrangler 4.111.0
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.2934535Z ────────────────────
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.2940358Z Resource location: remote
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.2940809Z
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8905865Z Migrations to be applied:
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8970363Z ┌─────────────────────────┐
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8971149Z │ name                    │
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8971929Z ├─────────────────────────┤
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8972590Z │ 0009_password_reset.sql │
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8973372Z └─────────────────────────┘
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8974142Z ? About to apply 1 migration(s)
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8975145Z Your database may not be available to serve requests during the migration, continue?
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8976223Z 🤖 Using fallback value in non-interactive context: yes
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8980035Z 🌀 Executing on remote database klite-marketplace (***):
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:55.8981524Z 🌀 To execute on your local development database, remove the --remote flag from your wrangler command.
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.0548382Z
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.1069589Z ^[[31m✘ ^[[41;31m[^[[41;97mERROR^[[41;31m]^[[0m ^[[1mA request to the Cloudflare API (/accounts/***/d1/database/***/query) failed.^[[0m
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.1070553Z
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.1071073Z   table password_reset_states already exists at offset 13: SQLITE_ERROR [code: 7500]
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.1071768Z
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.1072640Z   If you think this is a bug, please open an issue at: ^[[4mhttps://github.com/cloudflare/workers-sdk/issues/new/choose^[[0m
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.1073268Z
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.1073276Z
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.1184781Z 🪵  Logs were written to "/home/runner/.config/.wrangler/logs/wrangler-2026-07-19_14-46-54_898.log"
-Apply production migrations	Apply D1 migrations	2026-07-19T14:46:56.1517784Z ##[error]Process completed with exit code 1.
+build	Build and Test	2026-07-19T18:14:52.2743198Z > Task :copper-tin-miner:classes UP-TO-DATE
+build	Build and Test	2026-07-19T18:14:52.2775577Z > Task :copper-tin-miner:jar
+build	Build and Test	2026-07-19T18:14:52.2799122Z > Task :copper-tin-miner:assemble
+build	Build and Test	2026-07-19T18:14:52.6705920Z > Task :copper-tin-miner:checkstyleMain FROM-CACHE
+build	Build and Test	2026-07-19T18:14:52.6717979Z > Task :copper-tin-miner:compileTestJava NO-SOURCE
+build	Build and Test	2026-07-19T18:14:52.6745127Z > Task :copper-tin-miner:testClasses UP-TO-DATE
+build	Build and Test	2026-07-19T18:14:52.6775358Z > Task :copper-tin-miner:checkstyleTest NO-SOURCE
+build	Build and Test	2026-07-19T18:14:52.6793026Z > Task :copper-tin-miner:test NO-SOURCE
+build	Build and Test	2026-07-19T18:14:52.6814985Z > Task :copper-tin-miner:check UP-TO-DATE
+build	Build and Test	2026-07-19T18:14:52.6834999Z > Task :copper-tin-miner:build
+build	Build and Test	2026-07-19T18:14:52.6855207Z > Task :client:jar
+build	Build and Test	2026-07-19T18:14:52.6875049Z > Task :client:jarSign SKIPPED
+build	Build and Test	2026-07-19T18:14:52.7708327Z > Task :runelite-api:compileTestJava FROM-CACHE
+build	Build and Test	2026-07-19T18:14:52.7735459Z > Task :runelite-api:processTestResources NO-SOURCE
+build	Build and Test	2026-07-19T18:14:52.7753876Z > Task :runelite-api:testClasses UP-TO-DATE
+build	Build and Test	2026-07-19T18:14:52.7765431Z > Task :runelite-api:checkstyleTest FROM-CACHE
+build	Build and Test	2026-07-19T18:14:52.8687375Z > Task :runelite-api:test FROM-CACHE
+build	Build and Test	2026-07-19T18:14:52.8693335Z > Task :runelite-api:check UP-TO-DATE
+build	Build and Test	2026-07-19T18:14:52.8695046Z > Task :runelite-api:build
+build	Build and Test	2026-07-19T18:14:53.0678967Z
+build	Build and Test	2026-07-19T18:14:53.0686209Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:34: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0687699Z     private KLiteGeFlipperTask task;
+build	Build and Test	2026-07-19T18:14:53.0735270Z             ^
+build	Build and Test	2026-07-19T18:14:53.0735832Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:14:53.0736497Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0737934Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:35: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0739345Z     private KLiteGeFlipperOverlay overlay;
+build	Build and Test	2026-07-19T18:14:53.0739946Z             ^
+build	Build and Test	2026-07-19T18:14:53.0740424Z   symbol:   class KLiteGeFlipperOverlay
+build	Build and Test	2026-07-19T18:14:53.0741053Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0742413Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:47: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0743829Z         overlay = new KLiteGeFlipperOverlay(this);
+build	Build and Test	2026-07-19T18:14:53.0744694Z                       ^
+build	Build and Test	2026-07-19T18:14:53.0745215Z   symbol:   class KLiteGeFlipperOverlay
+build	Build and Test	2026-07-19T18:14:53.0745854Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0747212Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:54: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0748651Z         task = new KLiteGeFlipperTask(this, webWalker);
+build	Build and Test	2026-07-19T18:14:53.0749279Z                    ^
+build	Build and Test	2026-07-19T18:14:53.0749774Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:14:53.0750366Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0750986Z > Task :klite-ge-flipper:compileJava FAILED
+build	Build and Test	2026-07-19T18:14:53.0752400Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:266: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0763501Z
+build	Build and Test	2026-07-19T18:14:53.0784985Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:14:53.0805111Z > Task :client:delombok FROM-CACHE
+build	Build and Test	2026-07-19T18:14:53.0815130Z         ^
+build	Build and Test	2026-07-19T18:14:53.0845073Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:14:53.0865310Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0876015Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:272: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0879950Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:14:53.0881232Z         ^
+build	Build and Test	2026-07-19T18:14:53.0881860Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:14:53.0882678Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0884178Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:278: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0885962Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:14:53.0886734Z         ^
+build	Build and Test	2026-07-19T18:14:53.0887693Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:14:53.0888456Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0892961Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:284: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0894887Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:14:53.0895683Z         ^
+build	Build and Test	2026-07-19T18:14:53.0896376Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:14:53.0897197Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0898666Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:290: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0900102Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:14:53.0900839Z         ^
+build	Build and Test	2026-07-19T18:14:53.0901441Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:14:53.0902193Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0903624Z /home/runner/work/klite/klite/plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperPlugin.java:296: error: cannot find symbol
+build	Build and Test	2026-07-19T18:14:53.0905721Z         KLiteGeFlipperTask current = task;
+build	Build and Test	2026-07-19T18:14:53.0906432Z         ^
+build	Build and Test	2026-07-19T18:14:53.0907042Z   symbol:   class KLiteGeFlipperTask
+build	Build and Test	2026-07-19T18:14:53.0907796Z   location: class KLiteGeFlipperPlugin
+build	Build and Test	2026-07-19T18:14:53.0908530Z 10 errors
+build	Build and Test	2026-07-19T18:14:53.1679942Z
+build	Build and Test	2026-07-19T18:14:53.1681482Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784484865139.json
+build	Build and Test	2026-07-19T18:14:53.1682849Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-19T18:14:53.1683483Z 62 actionable tasks: 24 executed, 38 from cache
+build	Build and Test	2026-07-19T18:14:53.1684181Z
+build	Build and Test	2026-07-19T18:14:53.1684959Z * What went wrong:
+build	Build and Test	2026-07-19T18:14:53.1685785Z Execution failed for task ':klite-ge-flipper:compileJava'.
+build	Build and Test	2026-07-19T18:14:53.1686885Z > Compilation failed; see the compiler error output for details.
+build	Build and Test	2026-07-19T18:14:53.1687601Z
+build	Build and Test	2026-07-19T18:14:53.1687938Z * Try:
+build	Build and Test	2026-07-19T18:14:53.1688579Z > Run with --info option to get more log output.
+build	Build and Test	2026-07-19T18:14:53.1689426Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-19T18:14:53.1689988Z
+build	Build and Test	2026-07-19T18:14:53.1690353Z BUILD FAILED in 36s
+build	Build and Test	2026-07-19T18:14:53.6256545Z ##[error]Process completed with exit code 1.
 ```
 
