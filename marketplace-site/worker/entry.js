@@ -20,13 +20,19 @@ const API_PAGE_ASSETS = new Set([
 ]);
 const API_REFERENCE_STYLESHEET = "/api-reference.css";
 const HOMEPAGE_ASSETS = new Set(["/", "/index.html"]);
-const WEBSITE_CONTROL_SCRIPT = "/website-control-fixes.js?v=20260719-1";
+const WEBSITE_CONTROL_SCRIPT = "/website-control-fixes.js?v=20260719-2";
 const DASHBOARD_ACTION_SCRIPT = "/discord-dashboard-actions.js?v=20260719-1";
+const LEGACY_PASSWORD_AUTH_ROUTES = new Set([
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/reset/start",
+  "/api/auth/reset/complete",
+  "/api/auth/reset/callback"
+]);
 
 export default {
   async fetch(request, env, context) {
     const url = new URL(request.url);
-    const controlEnv = websiteControlEnvironment(env);
     const isAssetRequest = request.method === "GET" || request.method === "HEAD";
 
     if (isAssetRequest && url.pathname === "/api") {
@@ -50,6 +56,10 @@ export default {
         : response;
     }
 
+    if (LEGACY_PASSWORD_AUTH_ROUTES.has(url.pathname)) {
+      return discordOnlyAuthResponse();
+    }
+
     const loadCoreAccount = () => core.fetch(
       internalRequest(request, "/api/account", "GET"), env, context
     );
@@ -59,19 +69,19 @@ export default {
     const updateCoreSettings = (body) => core.fetch(
       internalRequest(request, "/api/discord-bot/settings", "PUT", body), env, context
     );
-    const loadDashboard = () => loadWebsiteDashboard(request, controlEnv, loadCoreDashboard);
+    const loadDashboard = () => loadWebsiteDashboard(request, env, loadCoreDashboard);
     const updateSettings = (body) => updateWebsiteDashboardSettings(
-      request, controlEnv, body, updateCoreSettings
+      request, env, body, updateCoreSettings
     );
 
     try {
-      const websiteControl = await handleWebsiteControls(request, controlEnv, url, {
+      const websiteControl = await handleWebsiteControls(request, env, url, {
         loadAccount: loadCoreAccount,
         loadDashboard: loadCoreDashboard
       });
       if (websiteControl) return websiteControl;
 
-      const dashboardAction = await handleDiscordDashboardActions(request, controlEnv, url, {
+      const dashboardAction = await handleDiscordDashboardActions(request, env, url, {
         loadDashboard,
         updateSettings
       });
@@ -125,12 +135,18 @@ export default {
   }
 };
 
-function websiteControlEnvironment(env) {
-  if (env.OWNER_RECOVERY_KEY || !env.SITE_OWNER_RECOVERY_KEY) return env;
-  return new Proxy(env, {
-    get(target, property, receiver) {
-      if (property === "OWNER_RECOVERY_KEY") return target.SITE_OWNER_RECOVERY_KEY;
-      return Reflect.get(target, property, receiver);
+function discordOnlyAuthResponse() {
+  return new Response(JSON.stringify({
+    error: {
+      code: "discord_auth_required",
+      message: "KLite authentication is Discord-only. Continue with Discord to sign in."
+    }
+  }), {
+    status: 410,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff"
     }
   });
 }

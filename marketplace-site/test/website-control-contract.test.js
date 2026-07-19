@@ -75,10 +75,7 @@ test("owner and Discord dashboard controls have concrete backend routes", () => 
   const source = read("worker/website-controls.js");
   for (const route of [
     "/api/admin/users",
-    "/api/discord-bot/roles/dev",
-    "/api/auth/reset/start",
-    "/api/auth/reset/callback",
-    "/api/auth/reset/complete"
+    "/api/discord-bot/roles/dev"
   ]) {
     assert.match(source, new RegExp(route.replaceAll("/", "\\/")));
   }
@@ -86,7 +83,21 @@ test("owner and Discord dashboard controls have concrete backend routes", () => 
   assert.match(source, /method: owner \? "site_owner" : "discord_role"/);
 });
 
-test("Discord installation metadata exposes the exact required controls", () => {
+test("website authentication remains Discord-only", () => {
+  const entry = read("worker/entry.js");
+  const controls = read("worker/website-controls.js");
+  const browser = read("public/website-control-fixes.js");
+
+  assert.match(entry, /LEGACY_PASSWORD_AUTH_ROUTES/);
+  assert.match(entry, /discord_auth_required/);
+  assert.match(entry, /\/api\/auth\/login/);
+  assert.match(entry, /\/api\/auth\/register/);
+  assert.doesNotMatch(controls, /password_reset|PasswordReset|resetToken|recoveryKey/);
+  assert.match(browser, /removeLegacyAuthSurface/);
+  assert.doesNotMatch(browser, /recover-account-button/);
+});
+
+test("Discord installation metadata exposes the required controls", () => {
   const payload = installPayload({
     PUBLIC_ORIGIN: "https://klite.example",
     DISCORD_CLIENT_ID: "12345678901234567",
@@ -101,5 +112,5 @@ test("Discord installation metadata exposes the exact required controls", () => 
   assert.deepEqual(payload.missing, []);
   assert.match(payload.inviteUrl, /applications\.commands/);
   assert.equal(payload.interactionEndpoint, "https://klite.example/api/discord/interactions");
-  assert.equal(payload.passwordResetRedirect, "https://klite.example/api/auth/reset/callback");
+  assert.equal(Object.hasOwn(payload, "passwordResetRedirect"), false);
 });

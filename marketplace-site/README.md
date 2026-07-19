@@ -6,10 +6,9 @@ account code, migrations, and deployment configuration are not web-accessible.
 
 ## Features
 
-- Website registration and sign-in with server-side, revocable sessions.
-- Discord OAuth sign-in, account linking, one-time `/link` bot codes, and
-  Discord-verified password recovery for legacy password accounts.
-- Client sign-in with memory-only tokens and server-authoritative paid-plugin
+- Discord OAuth website sign-in with server-side, revocable sessions.
+- Discord account linking and one-time `/link` bot codes.
+- Client Discord sign-in with memory-only tokens and server-authoritative paid-plugin
   entitlements.
 - A dual-role Plugin Dev capability, submission dashboard, and reviewer queue.
 - Site-owner account and role administration for registered marketplace users.
@@ -26,6 +25,9 @@ account code, migrations, and deployment configuration are not web-accessible.
 - A shared catalog in `public/plugins.json` for the website and client.
 - Click-to-run plugins streamed from private object storage into bounded client
   memory, with no manual download or persistent JAR installation.
+
+Website authentication is Discord-only. The Worker entry point rejects the old
+password login, password registration, and password-reset routes.
 
 The Worker enforces paid entitlements before returning a private artifact. The
 client verifies its exact byte length and SHA-256 before loading only declared
@@ -49,7 +51,7 @@ npm run db:migrate:local
 npm run dev
 ```
 
-Never commit `.dev.vars` or any real Discord/password secrets.
+Never commit `.dev.vars` or any real Discord secrets.
 
 ## Discord configuration
 
@@ -57,7 +59,6 @@ Create a Discord application and configure these endpoints using the value of
 `PUBLIC_ORIGIN` in `wrangler.jsonc`:
 
 - Website and client OAuth redirect: `<PUBLIC_ORIGIN>/api/discord/callback`
-- Password recovery OAuth redirect: `<PUBLIC_ORIGIN>/api/auth/reset/callback`
 - Interactions endpoint: `<PUBLIC_ORIGIN>/api/discord/interactions`
 
 Set `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`, and `DISCORD_PLUGIN_DEV_ROLE_ID` in
@@ -97,22 +98,15 @@ to the browser or stored in D1.
 
 ## Production deployment
 
-Use independent random secrets for password hashing and owner recovery:
+Configure the Discord secrets and deploy:
 
 ```powershell
-npx wrangler secret put PASSWORD_PEPPER
-npx wrangler secret put SITE_OWNER_RECOVERY_KEY
 npx wrangler secret put DISCORD_CLIENT_SECRET
 npx wrangler secret put DISCORD_PUBLIC_KEY
 npx wrangler secret put DISCORD_BOT_TOKEN
 npm run db:migrate:remote
 npm run deploy
 ```
-
-The recovery key is accepted only for the `site_owner` account. Other legacy
-password accounts must verify the Discord identity already linked to the same
-marketplace account before receiving a short-lived, one-time password reset
-token.
 
 Grant or revoke entitlements only from a trusted administrative path. For
 example, after resolving a user's ID in D1:

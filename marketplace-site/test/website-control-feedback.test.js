@@ -13,14 +13,15 @@ test("account controls expose visible loading and failure feedback", () => {
   for (const selector of [
     "#discord-oauth-button",
     "#discord-code-button",
-    "#sign-out-button",
-    "#recover-account-button"
+    "#sign-out-button"
   ]) {
-    assert.match(source, new RegExp(selector.replace("#", "#")));
+    assert.match(source, new RegExp(selector));
   }
   assert.match(source, /unhandledrejection/);
   assert.match(source, /aria-busy/);
   assert.match(source, /website-control-notice/);
+  assert.match(source, /removeLegacyAuthSurface/);
+  assert.doesNotMatch(source, /recover-account-button/);
 });
 
 test("credit administration keeps authorization errors visible", () => {
