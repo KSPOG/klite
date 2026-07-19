@@ -32,7 +32,17 @@ test("Discord dashboard navigation exposes every existing control group", async 
     "announcement-history",
     "discord-command-list",
     "discord-role-list",
+    "discord-channel-list",
   ]) {
     assert.match(shell, new RegExp(`target: "${target}"`), `missing Discord target ${target}`);
   }
+});
+
+test("Discord channel inventory is generated from the dashboard channel selectors", async () => {
+  const shell = await readFile(path.join(siteDirectory, "public/site-shell.js"), "utf8");
+
+  assert.match(shell, /function ensureDiscordChannelInventory\(\)/);
+  assert.match(shell, /function syncDiscordChannelInventory\(channelList, channelCount\)/);
+  assert.match(shell, /discord-channel-count/);
+  assert.match(shell, /Configured for:/);
 });
