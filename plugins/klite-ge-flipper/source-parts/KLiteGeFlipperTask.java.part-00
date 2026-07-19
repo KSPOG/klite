@@ -1,0 +1,405 @@
+package com.kspog.klite.geflipper;
+
+import java.awt.Rectangle;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+import net.runelite.api.GameState;
+import net.runelite.api.MenuAction;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.VarbitID;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.klite.api.KLiteBankQuantity;
+import net.runelite.client.plugins.klite.api.KLiteClientSnapshot;
+import net.runelite.client.plugins.klite.api.KLiteInteractionResult;
+import net.runelite.client.plugins.klite.api.KLiteMenuActionRequest;
+import net.runelite.client.plugins.klite.api.KLiteNpcSnapshot;
+import net.runelite.client.plugins.klite.api.KLiteSceneObjectSnapshot;
+import net.runelite.client.plugins.klite.api.KLiteWidgetSnapshot;
+import net.runelite.client.plugins.klite.automation.AutomationContext;
+import net.runelite.client.plugins.klite.automation.AutomationResult;
+import net.runelite.client.plugins.klite.automation.AutomationTask;
+import net.runelite.client.plugins.klite.walker.WebWalker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+final class KLiteGeFlipperTask implements AutomationTask
+{
+    private static final Logger log = LoggerFactory.getLogger(KLiteGeFlipperTask.class);
+
+    private static final Duration CLIENT_TIMEOUT = Duration.ofSeconds(2);
+    private static final Duration TICK_INTERVAL = Duration.ofMillis(100);
+    private static final WorldPoint GRAND_EXCHANGE_CENTER = new WorldPoint(3164, 3487, 0);
+    private static final int COINS = 995;
+    private static final int COPILOT_ITEM_SEARCH_COMPONENT = 10616884;
+    private static final int GE_OFFER_SETUP_COMPONENT = 30474266;
+    private static final int GE_QUANTITY_BUTTON_INDEX = 51;
+    private static final int GE_PRICE_BUTTON_INDEX = 54;
+    private static final int GE_CONFIRM_BUTTON_INDEX = 58;
+    private static final int CURRENT_GE_ITEM_VARP = 1151;
+
+    private static final int[] GRAND_EXCHANGE_SLOT_COMPONENTS = {
+        InterfaceID.GeOffers.INDEX_0,
+        InterfaceID.GeOffers.INDEX_1,
+        InterfaceID.GeOffers.INDEX_2,
+        InterfaceID.GeOffers.INDEX_3,
+        InterfaceID.GeOffers.INDEX_4,
+        InterfaceID.GeOffers.INDEX_5,
+        InterfaceID.GeOffers.INDEX_6,
+        InterfaceID.GeOffers.INDEX_7
+    };
+
+    private static final long MIN_ACTION_COOLDOWN_MS = 450L;
+    private static final long MAX_ACTION_COOLDOWN_MS = 850L;
+    private static final long DEFAULT_INTERACTION_TIMEOUT_MS = 12_000L;
+    private static final long INTERACTION_TIMEOUT_VARIANCE_MS = 2_000L;
+    private static final long STATUS_LOG_INTERVAL_MS = 15_000L;
+    private static final long PROMPT_SUBMISSION_RETRY_MS = 750L;
+    private static final long PROFIT_REFRESH_INTERVAL_MS = 1_000L;
+    private static final long INVENTORY_BOUNDS_REFRESH_INTERVAL_MS = 250L;
+    private static final long MIN_HIGHLIGHT_REPEAT_DELAY_MS = 1_800L;
+    private static final long MAX_HIGHLIGHT_REPEAT_DELAY_MS = 2_600L;
+    private static final int MAX_IDENTICAL_HIGHLIGHT_ATTEMPTS = 3;
+    private static final long HIGHLIGHT_STALL_RECOVERY_DELAY_MS = 5_000L;
+    private static final long MIN_GE_OPEN_RETRY_DELAY_MS = 1_800L;
+    private static final long MAX_GE_OPEN_RETRY_DELAY_MS = 2_800L;
+    private static final long GE_BACK_RECOVERY_RETRY_MS = 650L;
+    private static final long HOME_ONLY_ACTION_RECOVERY_MS = 6_000L;
+
+    private final WebWalker webWalker;
+    private final FlippingCopilotBridge copilotBridge;
+    private final VirtualKeyboardBridge virtualKeyboardBridge = new VirtualKeyboardBridge();
+    private final VirtualCanvasClickBridge virtualCanvasClickBridge;
+
+    private volatile State state = State.GOING_TO_GE;
+    private volatile String overlayStatus = "Initializing KLite GE Flipper";
+    private volatile String overlayPrompt = "None";
+    private volatile long overlayCoins;
+    private volatile long overlayActions;
+    private volatile long overlayStartedAt;
+    private volatile long overlayRealizedProfitGp;
+    private volatile String overlayMostProfitableFlip = "-";
+    private volatile Rectangle overlayInventoryBounds;
+    private int overlaySessionStartEpochSecond;
+    private long lastProfitRefreshAt;
+    private long lastInventoryBoundsRefreshAt;
+    private long lastActionAt;
+    private long nextActionCooldown = MIN_ACTION_COOLDOWN_MS;
+    private long interactionTimeout = DEFAULT_INTERACTION_TIMEOUT_MS;
+    private long lastStatusLogAt;
+    private boolean closeBankAfterWithdrawal;
+    private FlippingCopilotBridge.PromptKind lastSubmittedPromptKind =
+        FlippingCopilotBridge.PromptKind.NONE;
+    private String lastSubmittedPromptValue = "";
+    private long lastPromptSubmissionAt;
+    private String lastHighlightSignature = "";
+    private long lastHighlightClickAt;
+    private long nextHighlightRepeatDelay = MIN_HIGHLIGHT_REPEAT_DELAY_MS;
+    private int identicalHighlightAttempts;
+    private long highlightStallRecoveryUntil;
+    private long lastGrandExchangeOpenRequestAt;
+    private long nextGrandExchangeOpenRetryDelay = MIN_GE_OPEN_RETRY_DELAY_MS;
+    private long homeOnlyRecoveryUntil;
+    private String homeOnlyRecoveryReason = "";
+    private long lastGeBackRecoveryAt;
+    private int geBackRecoveryAttempt;
+    private String geBackRecoveryPage = "";
+
+    KLiteGeFlipperTask(Plugin owner, WebWalker webWalker)
+    {
+        this.webWalker = webWalker;
+        this.copilotBridge = new FlippingCopilotBridge(owner);
+        this.virtualCanvasClickBridge = new VirtualCanvasClickBridge(owner);
+    }
+
+    @Override
+    public String name()
+    {
+        return "KLite GE Flipper";
+    }
+
+    @Override
+    public Duration interval()
+    {
+        return TICK_INTERVAL;
+    }
+
+    @Override
+    public void onStart(AutomationContext context)
+    {
+        state = State.GOING_TO_GE;
+        overlayStatus = "Starting";
+        overlayPrompt = "None";
+        overlayCoins = 0L;
+        overlayActions = 0L;
+        overlayStartedAt = System.currentTimeMillis();
+        overlayRealizedProfitGp = 0L;
+        overlayMostProfitableFlip = "-";
+        overlayInventoryBounds = null;
+        overlaySessionStartEpochSecond = (int) Instant.now().getEpochSecond();
+        lastProfitRefreshAt = 0L;
+        lastInventoryBoundsRefreshAt = 0L;
+        lastActionAt = 0L;
+        nextActionCooldown = randomActionCooldown();
+        lastStatusLogAt = 0L;
+        closeBankAfterWithdrawal = false;
+        lastHighlightSignature = "";
+        lastHighlightClickAt = 0L;
+        nextHighlightRepeatDelay = randomHighlightRepeatDelay();
+        identicalHighlightAttempts = 0;
+        highlightStallRecoveryUntil = 0L;
+        lastGrandExchangeOpenRequestAt = 0L;
+        nextGrandExchangeOpenRetryDelay = randomGrandExchangeOpenRetryDelay();
+        clearHomeOnlyRecovery();
+        resetGeBackRecovery();
+        resetPromptSubmissionGuard();
+        copilotBridge.reset();
+        log.info(
+            "GE Flipper initialized with a 100 ms state poll and randomized {}-{} ms action pacing.",
+            MIN_ACTION_COOLDOWN_MS,
+            MAX_ACTION_COOLDOWN_MS);
+    }
+
+    @Override
+    public AutomationResult tick(AutomationContext context) throws Exception
+    {
+        KLiteClientSnapshot client = await(context, context.client().snapshot());
+        if (client.getGameState() != GameState.LOGGED_IN || client.getPlayerLocation() == null)
+        {
+            overlayStatus = "Waiting for game login";
+            return AutomationResult.CONTINUE;
+        }
+
+        refreshInventoryOverlayBounds(context);
+
+        switch (state)
+        {
+            case GOING_TO_GE:
+                return goToGrandExchange(context, client.getPlayerLocation());
+            case GETTING_COINS:
+                return prepareCoins(context);
+            case MONITORING_COPILOT:
+                return monitorCopilot(context);
+            default:
+                throw new IllegalStateException("Unhandled state: " + state);
+        }
+    }
+
+    @Override
+    public void onStop(AutomationContext context)
+    {
+        overlayStatus = "Stopped";
+        overlayPrompt = "None";
+        closeBankAfterWithdrawal = false;
+        clearHomeOnlyRecovery();
+        resetGeBackRecovery();
+        resetPromptSubmissionGuard();
+        copilotBridge.reset();
+        webWalker.clear().exceptionally(error -> null);
+    }
+
+    private AutomationResult goToGrandExchange(AutomationContext context, WorldPoint location) throws Exception
+    {
+        if (isInsideGrandExchange(location))
+        {
+            state = State.GETTING_COINS;
+            overlayStatus = "Checking available coins";
+            log.info("Arrived at the Grand Exchange");
+            return AutomationResult.CONTINUE;
+        }
+
+        overlayStatus = "Walking to Grand Exchange";
+        await(context, webWalker.step(GRAND_EXCHANGE_CENTER, 4));
+        throttledStatus("Walking to the Grand Exchange");
+        return AutomationResult.CONTINUE;
+    }
+
+    private AutomationResult prepareCoins(AutomationContext context) throws Exception
+    {
+        long coinCount = await(context, context.client().inventoryCount(COINS));
+        overlayCoins = coinCount;
+        boolean bankOpen = await(context, context.client().isBankOpen());
+
+        // A successful withdrawal enters an explicit close-bank phase. Wait
+        // until the inventory container reports the coins, close the bank, and
+        // verify that it is closed before attempting to open the Grand Exchange.
+        if (closeBankAfterWithdrawal)
+        {
+            if (coinCount <= 0L)
+            {
+                overlayStatus = "Waiting for coin withdrawal";
+                throttledStatus("Waiting for withdrawn coins to appear in inventory");
+                return AutomationResult.CONTINUE;
+            }
+
+            if (bankOpen)
+            {
+                if (!cooldownElapsed())
+                {
+                    return AutomationResult.CONTINUE;
+                }
+
+                pressEscape();
+                overlayStatus = "Closing bank after withdrawal";
+                log.info("Closing bank after withdrawing {} coins", coinCount);
+                markAction();
+                return AutomationResult.CONTINUE;
+            }
+
+            closeBankAfterWithdrawal = false;
+            overlayStatus = "Opening Grand Exchange";
+            log.info("Bank closed after coin withdrawal; proceeding to the Grand Exchange");
+        }
+
+        // Coins already in the inventory are enough to begin flipping. Do not
+        // visit the bank, deposit other inventory items, or rearrange the
+        // inventory when a usable coin stack is already present.
+        if (coinCount > 0L)
+        {
+            if (bankOpen)
+            {
+                if (!cooldownElapsed())
+                {
+                    return AutomationResult.CONTINUE;
+                }
+
+                pressEscape();
+                overlayStatus = "Closing bank";
+                log.info("Closing bank before proceeding with {} inventory coins", coinCount);
+                markAction();
+                return AutomationResult.CONTINUE;
+            }
+
+            if (!await(context, context.client().isGrandExchangeOpen()))
+            {
+                openGrandExchange(context);
+                return AutomationResult.CONTINUE;
+            }
+
+            state = State.MONITORING_COPILOT;
+            overlayStatus = "Waiting for Copilot suggestion";
+            log.info(
+                "Found {} coins in inventory; skipped banking and started monitoring Flipping Copilot",
+                coinCount);
+            return AutomationResult.CONTINUE;
+        }
+
+        // The bank is used only when the inventory has no coins.
+        if (!bankOpen)
+        {
+            openBank(context);
+            return AutomationResult.CONTINUE;
+        }
+
+        Optional<Integer> bankSlot = await(context, context.client().firstBankSlot(COINS));
+        if (!bankSlot.isPresent())
+        {
+            overlayStatus = "No coins in inventory or bank";
+            throttledStatus("No coins found in the inventory or bank");
+            return AutomationResult.CONTINUE;
+        }
+
+        overlayStatus = "Withdrawing all coins";
+        KLiteInteractionResult result = await(context,
+            context.client().withdrawBankItem(bankSlot.get(), KLiteBankQuantity.ALL));
+        logActionResult("Withdraw coins", result);
+        if (result.isDispatched())
+        {
+            closeBankAfterWithdrawal = true;
+        }
+        markAction();
+        return AutomationResult.CONTINUE;
+    }
+
+    private AutomationResult monitorCopilot(AutomationContext context) throws Exception
+    {
+        if (!await(context, context.client().isGrandExchangeOpen()))
+        {
+            overlayStatus = "Reopening Grand Exchange";
+            openGrandExchange(context);
+            return AutomationResult.CONTINUE;
+        }
+
+        overlayCoins = await(context, context.client().inventoryCount(COINS));
+
+        FlippingCopilotBridge.CopilotSnapshot copilot = copilotBridge.capture(context);
+        if (!copilot.available())
+        {
+            overlayStatus = friendlyCopilotStatus(copilot.message());
+            throttledStatus(overlayStatus);
+            return AutomationResult.CONTINUE;
+        }
+
+        refreshRealizedProfit(context);
+
+        List<KLiteWidgetSnapshot> widgets = WidgetTreeScanner.scan(context);
+        if (handleUnexpectedGeSubpage(context, copilot))
+        {
+            return AutomationResult.CONTINUE;
+        }
+
+        if (handleCopilotKeyboardPrompts(context, widgets))
+        {
+            markAction();
+            return AutomationResult.CONTINUE;
+        }
+
+        if (!cooldownElapsed())
+        {
+            return AutomationResult.CONTINUE;
+        }
+
+        if (handleAbortOrModify(context, copilot))
+        {
+            markAction();
+            return AutomationResult.CONTINUE;
+        }
+
+        if (handleHighlightedWidget(context, copilot))
+        {
+            markAction();
+            return AutomationResult.CONTINUE;
+        }
+
+        if (lastActionAt > 0L && System.currentTimeMillis() - lastActionAt > interactionTimeout)
+        {
+            KLiteWidgetSnapshot back = WidgetTreeScanner.findAction(widgets, "Back");
+            if (back != null)
+            {
+                overlayStatus = "Recovering to GE overview";
+                KLiteInteractionResult result = await(context,
+                    context.client().interactWidget(back.getComponentId(), "Back"));
+                logActionResult("Return to Grand Exchange overview after timeout", result);
+                markAction();
+                return AutomationResult.CONTINUE;
+            }
+        }
+
+        overlayStatus = "Waiting for Copilot suggestion";
+        return AutomationResult.CONTINUE;
+    }
+
+    /**
+     * Recover only from Grand Exchange sub-pages that are provably wrong.
+     *
+     * <p>The offer setup page is a normal part of buy, sell, and modify flows,
+     * so it must never be rejected merely because Copilot has not redrawn its
+     * next highlight yet. It is considered wrong only when the opened item does
+     * not match Copilot, or when a home-screen-only action (abort/collect) has
+     * just opened it. Once recovery starts it stays active until the GE overview
+     * is actually visible, preventing alternating recovery and Copilot clicks.</p>
+     */
+    private boolean handleUnexpectedGeSubpage(
+        AutomationContext context,
+        FlippingCopilotBridge.CopilotSnapshot copilot) throws Exception
+    {
+        Optional<KLiteWidgetSnapshot> details = await(
+            context,
+            context.client().widget(InterfaceID.GeOffers.DETAILS));
+        Optional<KLiteWidgetSnapshot> setup = await(
+            context,
+            context.client().widget(InterfaceID.GeOffers.SETUP));

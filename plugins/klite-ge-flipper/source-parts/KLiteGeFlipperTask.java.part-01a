@@ -1,0 +1,163 @@
+      int selectedSlot = await(
+            context,
+            context.client().varbit(VarbitID.GE_SELECTEDSLOT));
+
+        boolean detailsVisible = details.isPresent() && isVisible(details.get());
+        boolean setupVisible = setup.isPresent() && isVisible(setup.get());
+        boolean overviewVisible = selectedSlot == 0;
+        long now = System.currentTimeMillis();
+
+        refreshHomeOnlyRecovery(copilot, overviewVisible, detailsVisible, setupVisible);
+
+        // Recovery is sticky. Do not let one transient Copilot redraw reset the
+        // attempt counter and resume normal clicks while the wrong page remains.
+        if (!geBackRecoveryPage.isEmpty())
+        {
+            if (overviewVisible && !detailsVisible && !setupVisible)
+            {
+                log.info("Grand Exchange overview restored after {} recovery", geBackRecoveryPage);
+                resetGeBackRecovery();
+                clearHomeOnlyRecovery();
+                return false;
+            }
+
+            if (!detailsVisible && !setupVisible)
+            {
+                overlayStatus = "Waiting for GE overview to return";
+                return true;
+            }
+
+            String visiblePage = detailsVisible ? "offer status" : "offer setup";
+            if (!visiblePage.equals(geBackRecoveryPage))
+            {
+                geBackRecoveryPage = visiblePage;
+                log.warn("GE recovery page changed to {}; keeping recovery active", visiblePage);
+            }
+            return retryGeBackRecovery(context, visiblePage, now);
+        }
+
+        boolean unexpectedSetup = setupVisible
+            && isUnexpectedSetupPage(context, copilot, now);
+        if (!detailsVisible && !unexpectedSetup)
+        {
+            return false;
+        }
+
+        String page = detailsVisible ? "offer status" : "offer setup";
+        int currentItemId = setupVisible
+            ? await(context, context.client().varp(CURRENT_GE_ITEM_VARP))
+            : -1;
+        geBackRecoveryPage = page;
+        geBackRecoveryAttempt = 0;
+        lastGeBackRecoveryAt = 0L;
+
+        log.warn(
+            "Unexpected GE {} page detected (openItemId={}, suggestionItemId={}, suggestionKind={}, recoveryReason={}); suppressing normal actions until overview is restored",
+            page,
+            currentItemId,
+            copilot.suggestionItemId(),
+            copilot.suggestionKind(),
+            homeOnlyRecoveryReason.isEmpty() ? "item mismatch/details page" : homeOnlyRecoveryReason);
+
+        return retryGeBackRecovery(context, page, now);
+    }
+
+    private boolean isUnexpectedSetupPage(
+        AutomationContext context,
+        FlippingCopilotBridge.CopilotSnapshot copilot,
+        long now) throws Exception
+    {
+        int currentItemId = await(context, context.client().varp(CURRENT_GE_ITEM_VARP));
+        int suggestionItemId = copilot.suggestionItemId();
+
+        // A known item mismatch is the strongest and safest indication that an
+        // adjacent offer or inventory item was opened accidentally.
+        if (currentItemId > 0
+            && suggestionItemId > 0
+            && currentItemId != suggestionItemId)
+        {
+            return true;
+        }
+
+        // Abort is a home-screen action. The setup page can never be the intended
+        // destination for an abort suggestion.
+        if (copilot.suggestionKind() == FlippingCopilotBridge.SuggestionKind.ABORT)
+        {
+            return true;
+        }
+
+        // Collect is also a home-screen action, but Copilot's suggestion type
+        // remains BUY/SELL while collection is required. Track the actual collect
+        // highlight click for a short, self-clearing recovery window.
+        return now < homeOnlyRecoveryUntil;
+    }
+
+    private boolean retryGeBackRecovery(
+        AutomationContext context,
+        String page,
+        long now) throws Exception
+    {
+        overlayStatus = "Returning from wrong GE " + page + " page";
+        if (now - lastGeBackRecoveryAt < GE_BACK_RECOVERY_RETRY_MS)
+        {
+            return true;
+        }
+
+        lastGeBackRecoveryAt = now;
+        int attempt = geBackRecoveryAttempt++;
+        switch (attempt % 4)
+        {
+            case 0:
+                // The API can report a dispatch without the client actually
+                // leaving this page. Press the live arrow bounds first.
+                pressGeBackThroughCanvas(context, page, attempt + 1);
+                break;
+            case 1:
+                pressGeBackThroughMenuAction(context, page, attempt + 1);
+                break;
+            case 2:
+                pressGeBackThroughApi(context, page, attempt + 1);
+                break;
+            default:
+                pressEscape();
+                log.info(
+                    "Pressed Escape as GE {} recovery attempt {}",
+                    page,
+                    attempt + 1);
+                break;
+        }
+
+        clearHighlightRepeatGuard();
+        resetPromptSubmissionGuard();
+        markAction();
+        return true;
+    }
+
+    private void refreshHomeOnlyRecovery(
+        FlippingCopilotBridge.CopilotSnapshot copilot,
+        boolean overviewVisible,
+        boolean detailsVisible,
+        boolean setupVisible)
+    {
+        if (homeOnlyRecoveryUntil <= 0L)
+        {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        if (now >= homeOnlyRecoveryUntil)
+        {
+            clearHomeOnlyRecovery();
+            return;
+        }
+
+        // Once the collect highlight has changed and the overview is still open,
+        // collection completed normally. Disarm before the next legitimate buy or
+        // sell setup page opens. Abort remains armed while the abort suggestion is
+        // active.
+        if (overviewVisible && !detailsVisible && !setupVisible
+            && copilot.suggestionKind() != FlippingCopilotBridge.SuggestionKind.ABORT
+            && !hasCollectHighlight(copilot))
+        {
+            clearHomeOnlyRecovery();
+       

@@ -1,0 +1,170 @@
+name: Verify and publish KLite GE Flipper
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/publish-ge-flipper.yml"
+      - "plugins/klite-ge-flipper/**"
+      - "marketplace-site/public/plugins.json"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/publish-ge-flipper.yml"
+      - "plugins/klite-ge-flipper/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-klite-ge-flipper
+  cancel-in-progress: true
+
+env:
+  PLUGIN_ID: klite-ge-flipper
+  PLUGIN_VERSION: 0.3.13
+  OBJECT_KEY: klite-ge-flipper/0.3.13/klite-ge-flipper-0.3.13.jar
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore reviewed GE Flipper sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_dir="plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper"
+          parts_dir="plugins/klite-ge-flipper/source-parts"
+          mkdir -p "$source_dir"
+
+          for source_name in \
+            FlippingCopilotBridge.java \
+            KLiteGeFlipperTask.java \
+            VirtualCanvasClickBridge.java
+          do
+            if ! compgen -G "$parts_dir/${source_name}.part-*" > /dev/null; then
+              echo "Missing reviewed source parts for ${source_name}" >&2
+              exit 1
+            fi
+            cat "$parts_dir/${source_name}.part-"* > "$source_dir/${source_name}"
+          done
+
+          test -s "$source_dir/FlippingCopilotBridge.java"
+          test -s "$source_dir/KLiteGeFlipperTask.java"
+          test -s "$source_dir/VirtualCanvasClickBridge.java"
+
+          cat >> settings.gradle.kts <<'GRADLE'
+          include("klite-ge-flipper")
+          project(":klite-ge-flipper").projectDir = file("./plugins/klite-ge-flipper")
+          GRADLE
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+          cache: gradle
+
+      - name: Build GE Flipper from a clean checkout
+        run: |
+          chmod +x gradlew
+          ./gradlew :klite-ge-flipper:clean :klite-ge-flipper:jar --no-daemon --no-build-cache
+
+      - name: Verify bounded highlight recovery and artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_file="plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperTask.java"
+          input_file="plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/VirtualCanvasClickBridge.java"
+          grep -F 'MAX_IDENTICAL_HIGHLIGHT_ATTEMPTS = 3' "$source_file"
+          grep -F 'dispatchKnownHighlightedAction' "$source_file"
+          grep -F 'Copilot highlight stalled after {} attempts' "$source_file"
+          grep -F 'net.runelite.client.plugins.klite.api.KLiteCanvasInput' "$input_file"
+          jar_file="plugins/klite-ge-flipper/build/libs/klite-ge-flipper-${PLUGIN_VERSION}.jar"
+          test -s "$jar_file"
+          jar tf "$jar_file" | grep -F 'com/kspog/klite/geflipper/KLiteGeFlipperPlugin.class'
+          jar tf "$jar_file" | grep -F 'runelite_plugin.json'
+          unzip -p "$jar_file" runelite_plugin.json | grep -F '"version": "0.3.13"'
+          sha256sum "$jar_file"
+
+      - name: Install Wrangler
+        if: github.event_name != 'pull_request'
+        run: npm install --global wrangler@4
+
+      - name: Publish premium artifact to R2
+        if: github.event_name != 'pull_request'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          jar_file="plugins/klite-ge-flipper/build/libs/klite-ge-flipper-${PLUGIN_VERSION}.jar"
+          wrangler r2 object put "klite-plugin-artifacts/${OBJECT_KEY}" \
+            --file "$jar_file" --remote
+
+      - name: Register immutable premium artifact in D1
+        if: github.event_name != 'pull_request'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar_file="plugins/klite-ge-flipper/build/libs/klite-ge-flipper-${PLUGIN_VERSION}.jar"
+          sha256="$(sha256sum "$jar_file" | awk '{print $1}')"
+          size="$(stat -c%s "$jar_file")"
+          published_at="$(date +%s)"
+          sql="INSERT INTO plugin_artifacts (plugin_id, version, object_key, sha256, size, access_type, published_at, revoked_at) VALUES ('${PLUGIN_ID}', '${PLUGIN_VERSION}', '${OBJECT_KEY}', '${sha256}', ${size}, 'Premium', ${published_at}, NULL) ON CONFLICT(plugin_id, version) DO UPDATE SET object_key=excluded.object_key, sha256=excluded.sha256, size=excluded.size, access_type=excluded.access_type, published_at=excluded.published_at, revoked_at=NULL;"
+          wrangler d1 execute klite-marketplace --remote --command "$sql"
+
+      - name: Publish catalog metadata
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar_file="plugins/klite-ge-flipper/build/libs/klite-ge-flipper-${PLUGIN_VERSION}.jar"
+          JAR_FILE="$jar_file" node <<'NODE'
+          const crypto = require('node:crypto');
+          const fs = require('node:fs');
+          const path = 'marketplace-site/public/plugins.json';
+          const bytes = fs.readFileSync(process.env.JAR_FILE);
+          const catalog = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const plugin = catalog.plugins.find((entry) => entry.id === process.env.PLUGIN_ID);
+          if (!plugin) throw new Error('KLite GE Flipper catalog entry is missing');
+          const now = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+          plugin.status = 'available';
+          plugin.descriptor.version = process.env.PLUGIN_VERSION;
+          plugin.descriptor.minClientVersion = '1.0.98';
+          plugin.artifact = {
+            version: process.env.PLUGIN_VERSION,
+            sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+            size: bytes.length,
+            entrypoints: ['com.kspog.klite.geflipper.KLiteGeFlipperPlugin']
+          };
+          plugin.updatedAt = now;
+          catalog.updatedAt = now;
+          fs.writeFileSync(path, `${JSON.stringify(catalog, null, 2)}\n`);
+          NODE
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf plugins/klite-ge-flipper/source-bundle plugins/klite-ge-flipper/source-parts
+          git add \
+            marketplace-site/public/plugins.json \
+            plugins/klite-ge-flipper/src \
+            plugins/klite-ge-flipper/source-bundle \
+            plugins/klite-ge-flipper/source-parts
+          if git diff --cached --quiet; then
+            echo "GE Flipper artifact, source, and catalog metadata are already current."
+            exit 0
+          fi
+          git commit -m "Publish KLite GE Flipper ${PLUGIN_VERSION} marketplace artifact"
+          git pull --rebase origin main
+          git push origin HEAD:main

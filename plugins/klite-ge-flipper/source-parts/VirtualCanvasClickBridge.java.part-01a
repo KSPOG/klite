@@ -1,0 +1,238 @@
+,
+                real.height,
+                stretched ? "stretched-scale" : "direct-resizable",
+                "plugin-injector-client");
+        }
+        catch (ReflectiveOperationException | RuntimeException ignored)
+        {
+            return null;
+        }
+    }
+
+    private static Dimension invokeDimension(
+        Class<?> clientType,
+        Object client,
+        String methodName)
+    {
+        try
+        {
+            Object value = clientType.getMethod(methodName).invoke(client);
+            return value instanceof Dimension
+                ? new Dimension((Dimension) value)
+                : null;
+        }
+        catch (ReflectiveOperationException | RuntimeException ignored)
+        {
+            return null;
+        }
+    }
+
+    private static boolean invokeBoolean(
+        Class<?> clientType,
+        Object client,
+        String methodName,
+        boolean fallback)
+    {
+        try
+        {
+            Object value = clientType.getMethod(methodName).invoke(client);
+            return value instanceof Boolean
+                ? (Boolean) value
+                : fallback;
+        }
+        catch (ReflectiveOperationException | RuntimeException ignored)
+        {
+            return fallback;
+        }
+    }
+
+    private static void dispatchMouseEvent(
+        Component canvas,
+        int eventId,
+        int modifiers,
+        int x,
+        int y,
+        int clickCount,
+        int button)
+    {
+        java.awt.Point screenLocation = canvasScreenLocation(canvas);
+        canvas.dispatchEvent(new MouseEvent(
+            canvas,
+            eventId,
+            System.currentTimeMillis(),
+            modifiers,
+            x,
+            y,
+            screenLocation.x + x,
+            screenLocation.y + y,
+            clickCount,
+            false,
+            button));
+    }
+
+    private static java.awt.Point canvasScreenLocation(Component canvas)
+    {
+        try
+        {
+            return canvas.getLocationOnScreen();
+        }
+        catch (IllegalComponentStateException ignored)
+        {
+            return new java.awt.Point(0, 0);
+        }
+    }
+
+    private static void schedule(int delayMillis, Runnable action)
+    {
+        Timer timer = new Timer(delayMillis, event ->
+        {
+            ((Timer) event.getSource()).stop();
+            action.run();
+        });
+        timer.setRepeats(false);
+        timer.start();
+    }
+
+    private static int randomSafeCoordinate(
+        int start,
+        int length,
+        int canvasMinimum,
+        int canvasMaximum)
+    {
+        if (length <= 2)
+        {
+            return clamp(
+                start + Math.max(0, length / 2),
+                canvasMinimum,
+                canvasMaximum);
+        }
+
+        int inset = Math.max(1, length / 5);
+        int minimum = start + inset;
+        int maximum = start + length - inset - 1;
+        if (maximum < minimum)
+        {
+            minimum = start;
+            maximum = start + length - 1;
+        }
+
+        return clamp(
+            randomInclusive(minimum, maximum),
+            canvasMinimum,
+            canvasMaximum);
+    }
+
+    private static int randomInclusive(int minimum, int maximum)
+    {
+        if (maximum <= minimum)
+        {
+            return minimum;
+        }
+        return ThreadLocalRandom.current().nextInt(minimum, maximum + 1);
+    }
+
+    private static void collectCanvases(
+        Component component,
+        List<Component> result)
+    {
+        if (component instanceof Canvas)
+        {
+            result.add(component);
+        }
+
+        if (component instanceof Container)
+        {
+            for (Component child : ((Container) component).getComponents())
+            {
+                collectCanvases(child, result);
+            }
+        }
+    }
+
+    private static long area(Component component)
+    {
+        Dimension size = component.getSize();
+        return (long) Math.max(0, size.width)
+            * Math.max(0, size.height);
+    }
+
+    private static int clamp(int value, int minimum, int maximum)
+    {
+        return Math.max(minimum, Math.min(maximum, value));
+    }
+
+    static final class ClickResult
+    {
+        private final Rectangle widgetBounds;
+        private final Rectangle dispatchBounds;
+        private final int clickX;
+        private final int clickY;
+        private final Dimension realCanvas;
+        private final Dimension componentCanvas;
+        private final String mappingMode;
+        private final String canvasSource;
+
+        private ClickResult(
+            Rectangle widgetBounds,
+            Rectangle dispatchBounds,
+            int clickX,
+            int clickY,
+            Dimension realCanvas,
+            Dimension componentCanvas,
+            String mappingMode,
+            String canvasSource)
+        {
+            this.widgetBounds = new Rectangle(widgetBounds);
+            this.dispatchBounds = new Rectangle(dispatchBounds);
+            this.clickX = clickX;
+            this.clickY = clickY;
+            this.realCanvas = new Dimension(realCanvas);
+            this.componentCanvas = new Dimension(componentCanvas);
+            this.mappingMode = mappingMode;
+            this.canvasSource = canvasSource;
+        }
+
+        Rectangle widgetBounds()
+        {
+            return new Rectangle(widgetBounds);
+        }
+
+        Rectangle dispatchBounds()
+        {
+            return new Rectangle(dispatchBounds);
+        }
+
+        int clickX()
+        {
+            return clickX;
+        }
+
+        int clickY()
+        {
+            return clickY;
+        }
+
+        Dimension realCanvas()
+        {
+            return new Dimension(realCanvas);
+        }
+
+        Dimension componentCanvas()
+        {
+            return new Dimension(componentCanvas);
+        }
+
+        String mappingMode()
+        {
+            return mappingMode;
+        }
+
+        String canvasSource()
+        {
+            return canvasSource;
+        }
+    }
+
+    private static final class CanvasContext
+    {
+      

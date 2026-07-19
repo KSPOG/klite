@@ -1,0 +1,587 @@
+
+
+            int suggestionItemId = ((Number) invokeNoArgs(
+                suggestion, "getItemId")).intValue();
+            if (suggestionItemId != currentItemId)
+            {
+                return SuggestedValue.unavailable(
+                    "Copilot quantity suggestion item does not match the open GE item");
+            }
+
+            int quantity = ((Number) invokeNoArgs(
+                suggestion, "getQuantity")).intValue();
+            return quantity > 0
+                ? SuggestedValue.available(quantity)
+                : SuggestedValue.unavailable(
+                    "Copilot returned a non-positive quantity");
+        }
+
+        if (suggestion != null)
+        {
+            int suggestionItemId = ((Number) invokeNoArgs(
+                suggestion, "getItemId")).intValue();
+            String suggestionOfferType = String.valueOf(
+                invokeNoArgs(suggestion, "offerType"));
+            String currentOfferType = String.valueOf(
+                invokeNoArgs(offerHandler, "getOfferType"));
+
+            if (suggestionItemId == currentItemId
+                && suggestionOfferType.equals(currentOfferType))
+            {
+                int price = ((Number) invokeNoArgs(
+                    suggestion, "getPrice")).intValue();
+                if (price > 0)
+                {
+                    return SuggestedValue.available(price);
+                }
+            }
+        }
+
+        Object offerManager = invokeNoArgs(offerHandler, "getOfferManager");
+        int viewedItemId = ((Number) invokeNoArgs(
+            offerManager, "getViewedSlotItemId")).intValue();
+        if (viewedItemId != currentItemId)
+        {
+            return SuggestedValue.unavailable(
+                "Copilot has no matching suggestion or viewed-slot price");
+        }
+
+        int viewedPrice = ((Number) invokeNoArgs(
+            offerManager, "getViewedSlotItemPrice")).intValue();
+        return viewedPrice > 0
+            ? SuggestedValue.available(viewedPrice)
+            : SuggestedValue.unavailable(
+                "Copilot returned a non-positive viewed-slot price");
+    }
+
+    private static Object invokeArguments(
+        Object target,
+        String methodName,
+        Object... arguments) throws ReflectiveOperationException
+    {
+        for (Method method : target.getClass().getMethods())
+        {
+            if (method.getName().equals(methodName)
+                && method.getParameterCount() == arguments.length)
+            {
+                return method.invoke(target, arguments);
+            }
+        }
+        throw new NoSuchMethodException(
+            target.getClass().getName() + "." + methodName);
+    }
+
+    private static Object invokeIntArgument(
+        Object target,
+        String methodName,
+        int argument) throws ReflectiveOperationException
+    {
+        Method method = target.getClass().getMethod(methodName, int.class);
+        return method.invoke(target, argument);
+    }
+
+    private static void invokeSingleArgument(
+        Object target,
+        String methodName,
+        Object argument) throws ReflectiveOperationException
+    {
+        for (Method method : target.getClass().getMethods())
+        {
+            if (method.getName().equals(methodName) && method.getParameterCount() == 1)
+            {
+                method.invoke(target, argument);
+                return;
+            }
+        }
+        throw new NoSuchMethodException(target.getClass().getName() + "." + methodName);
+    }
+
+    private static boolean isPositiveInteger(String value)
+    {
+        if (value == null || value.trim().isEmpty())
+        {
+            return false;
+        }
+
+        try
+        {
+            return Integer.parseInt(value.trim()) > 0;
+        }
+        catch (NumberFormatException ignored)
+        {
+            return false;
+        }
+    }
+
+    private static String nullToEmpty(String value)
+    {
+        return value == null ? "" : value;
+    }
+
+    private int readSuggestionItemId(Object suggestion)
+    {
+        if (suggestion == null)
+        {
+            return -1;
+        }
+
+        try
+        {
+            Object value = invokeNoArgs(suggestion, "getItemId");
+            return value instanceof Number ? ((Number) value).intValue() : -1;
+        }
+        catch (ReflectiveOperationException ignored)
+        {
+            return -1;
+        }
+    }
+
+    private SuggestionKind suggestionKind(Object suggestion)
+    {
+        if (suggestion == null)
+        {
+            return SuggestionKind.NONE;
+        }
+
+        try
+        {
+            if (Boolean.TRUE.equals(invokeNoArgs(suggestion, "isAbortSuggestion")))
+            {
+                return SuggestionKind.ABORT;
+            }
+            if (Boolean.TRUE.equals(invokeNoArgs(suggestion, "isModifySuggestion")))
+            {
+                return SuggestionKind.MODIFY;
+            }
+        }
+        catch (ReflectiveOperationException ignored)
+        {
+            // Older Copilot versions used a type field instead of helper methods.
+        }
+
+        try
+        {
+            Object type = readField(suggestion, "type");
+            String name = String.valueOf(type).toUpperCase(Locale.ROOT);
+            if (name.contains("ABORT"))
+            {
+                return SuggestionKind.ABORT;
+            }
+            if (name.contains("MODIFY"))
+            {
+                return SuggestionKind.MODIFY;
+            }
+            return SuggestionKind.OTHER;
+        }
+        catch (ReflectiveOperationException ignored)
+        {
+            return SuggestionKind.OTHER;
+        }
+    }
+
+    private List<HighlightedWidget> copyHighlightedWidgets() throws Exception
+    {
+        Object overlaysValue = readField(highlightController, "highlightOverlays");
+        if (!(overlaysValue instanceof Collection))
+        {
+            return Collections.emptyList();
+        }
+
+        List<HighlightedWidget> result = new ArrayList<>();
+        for (Object overlay : (Collection<?>) overlaysValue)
+        {
+            if (overlay == null || result.size() >= MAX_HIGHLIGHT_WIDGETS)
+            {
+                continue;
+            }
+
+            Object widgetValue;
+            try
+            {
+                widgetValue = readField(overlay, "widget");
+            }
+            catch (ReflectiveOperationException ignored)
+            {
+                // NPC and model-outline overlays do not contain a Widget.
+                continue;
+            }
+
+            if (!(widgetValue instanceof Widget))
+            {
+                continue;
+            }
+
+            Widget widget = (Widget) widgetValue;
+            if (widget.isHidden())
+            {
+                continue;
+            }
+
+            Rectangle widgetBounds = widget.getBounds();
+            if (!hasUsableBounds(widgetBounds))
+            {
+                continue;
+            }
+
+            Rectangle relativeBounds = readOptionalRectangle(overlay, "relativeBounds");
+            Rectangle clickBounds = applyRelativeBounds(widgetBounds, relativeBounds);
+
+            List<HighlightedAction> actions = new ArrayList<>();
+            String[] widgetActions = widget.getActions();
+            if (widgetActions != null)
+            {
+                for (int index = 0; index < widgetActions.length; index++)
+                {
+                    String action = widgetActions[index];
+                    if (action != null && !action.trim().isEmpty())
+                    {
+                        actions.add(new HighlightedAction(index + 1, action));
+                    }
+                }
+            }
+
+            result.add(new HighlightedWidget(
+                widget.getId(),
+                widget.getIndex(),
+                widget.getParentId(),
+                widget.getItemId(),
+                widget.getText(),
+                widget.getName(),
+                Collections.unmodifiableList(actions),
+                clickBounds));
+        }
+
+        return Collections.unmodifiableList(result);
+    }
+
+    private static Rectangle readOptionalRectangle(Object target, String fieldName)
+    {
+        try
+        {
+            Object value = readField(target, fieldName);
+            return value instanceof Rectangle ? new Rectangle((Rectangle) value) : null;
+        }
+        catch (ReflectiveOperationException ignored)
+        {
+            return null;
+        }
+    }
+
+    private static Rectangle applyRelativeBounds(
+        Rectangle widgetBounds,
+        Rectangle relativeBounds)
+    {
+        Rectangle result = new Rectangle(widgetBounds);
+        if (hasUsableBounds(relativeBounds))
+        {
+            result.x += relativeBounds.x;
+            result.y += relativeBounds.y;
+            result.width = relativeBounds.width;
+            result.height = relativeBounds.height;
+        }
+        return result;
+    }
+
+    private static boolean hasUsableBounds(Rectangle bounds)
+    {
+        return bounds != null && bounds.width > 0 && bounds.height > 0;
+    }
+
+    private static Object invokeNoArgs(Object target, String methodName) throws ReflectiveOperationException
+    {
+        Method method = target.getClass().getMethod(methodName);
+        return method.invoke(target);
+    }
+
+    private static Object readField(Object target, String fieldName) throws ReflectiveOperationException
+    {
+        if (target == null)
+        {
+            return null;
+        }
+
+        Class<?> type = target.getClass();
+        while (type != null)
+        {
+            try
+            {
+                Field field = type.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                return field.get(target);
+            }
+            catch (NoSuchFieldException ignored)
+            {
+                type = type.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(target.getClass().getName() + "." + fieldName);
+    }
+
+    static final class ProfitSnapshot
+    {
+        private final boolean available;
+        private final long realizedProfitGp;
+        private final int completedFlips;
+        private final String mostProfitableFlip;
+
+        private ProfitSnapshot(
+            boolean available,
+            long realizedProfitGp,
+            int completedFlips,
+            String mostProfitableFlip)
+        {
+            this.available = available;
+            this.realizedProfitGp = realizedProfitGp;
+            this.completedFlips = completedFlips;
+            this.mostProfitableFlip = mostProfitableFlip == null
+                ? "-"
+                : mostProfitableFlip;
+        }
+
+        static ProfitSnapshot unavailable()
+        {
+            return new ProfitSnapshot(false, 0L, 0, "-");
+        }
+
+        static ProfitSnapshot available(
+            long realizedProfitGp,
+            int completedFlips,
+            String mostProfitableFlip)
+        {
+            return new ProfitSnapshot(
+                true,
+                realizedProfitGp,
+                completedFlips,
+                mostProfitableFlip);
+        }
+
+        boolean available()
+        {
+            return available;
+        }
+
+        long realizedProfitGp()
+        {
+            return realizedProfitGp;
+        }
+
+        int completedFlips()
+        {
+            return completedFlips;
+        }
+
+        String mostProfitableFlip()
+        {
+            return mostProfitableFlip;
+        }
+    }
+
+    enum PromptKind
+    {
+        NONE,
+        PRICE,
+        QUANTITY
+    }
+
+    static final class PromptSnapshot
+    {
+        private final PromptKind promptKind;
+        private final Canvas canvas;
+        private final String title;
+
+        private PromptSnapshot(
+            PromptKind promptKind,
+            Canvas canvas,
+            String title)
+        {
+            this.promptKind = promptKind == null
+                ? PromptKind.NONE
+                : promptKind;
+            this.canvas = canvas;
+            this.title = title == null ? "" : title;
+        }
+
+        static PromptSnapshot inactive()
+        {
+            return new PromptSnapshot(PromptKind.NONE, null, "");
+        }
+
+        PromptKind promptKind()
+        {
+            return promptKind;
+        }
+
+        Canvas canvas()
+        {
+            return canvas;
+        }
+
+        String title()
+        {
+            return title;
+        }
+
+        boolean active()
+        {
+            return promptKind != PromptKind.NONE;
+        }
+    }
+
+    static final class SuggestedValue
+    {
+        private final boolean available;
+        private final int value;
+        private final String message;
+
+        private SuggestedValue(
+            boolean available,
+            int value,
+            String message)
+        {
+            this.available = available;
+            this.value = value;
+            this.message = message == null ? "" : message;
+        }
+
+        static SuggestedValue available(int value)
+        {
+            return new SuggestedValue(true, value, "");
+        }
+
+        static SuggestedValue unavailable(String message)
+        {
+            return new SuggestedValue(false, 0, message);
+        }
+
+        boolean available()
+        {
+            return available;
+        }
+
+        int value()
+        {
+            return value;
+        }
+
+        String message()
+        {
+            return message;
+        }
+    }
+
+    static final class SuggestionApplication
+    {
+        private final boolean applicable;
+        private final boolean applied;
+        private final PromptKind promptKind;
+        private final String message;
+        private final String value;
+        private final String inputText;
+
+        private SuggestionApplication(
+            boolean applicable,
+            boolean applied,
+            PromptKind promptKind,
+            String message,
+            String value,
+            String inputText)
+        {
+            this.applicable = applicable;
+            this.applied = applied;
+            this.promptKind = promptKind;
+            this.message = message;
+            this.value = value;
+            this.inputText = inputText;
+        }
+
+        static SuggestionApplication notApplicable(String message)
+        {
+            return new SuggestionApplication(
+                false, false, PromptKind.NONE, message, "", "");
+        }
+
+        static SuggestionApplication failed(
+            PromptKind promptKind,
+            String message,
+            String value,
+            String inputText)
+        {
+            return new SuggestionApplication(
+                true, false, promptKind, message, value, inputText);
+        }
+
+        static SuggestionApplication applied(
+            PromptKind promptKind,
+            String value,
+            String inputText)
+        {
+            return new SuggestionApplication(
+                true, true, promptKind, "Applied", value, inputText);
+        }
+
+        boolean applicable()
+        {
+            return applicable;
+        }
+
+        boolean applied()
+        {
+            return applied;
+        }
+
+        PromptKind promptKind()
+        {
+            return promptKind;
+        }
+
+        String message()
+        {
+            return message;
+        }
+
+        String value()
+        {
+            return value;
+        }
+
+        String inputText()
+        {
+            return inputText;
+        }
+    }
+
+    enum SuggestionKind
+    {
+        NONE,
+        ABORT,
+        MODIFY,
+        OTHER
+    }
+
+    static final class HighlightedAction
+    {
+        private final int operation;
+        private final String option;
+
+        HighlightedAction(int operation, String option)
+        {
+            this.operation = operation;
+            this.option = option;
+        }
+
+        int operation()
+        {
+            return operation;
+        }
+
+        String option()
+        {
+            return option;
+        }
+    }
+
+    static final class HighlightedWidget
+    {
+        private final int componentId;
+        private final int index;
+        private final in

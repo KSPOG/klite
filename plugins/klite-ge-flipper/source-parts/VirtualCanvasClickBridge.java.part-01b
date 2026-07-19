@@ -1,0 +1,24 @@
+  private final Component canvas;
+        private final boolean stretched;
+        private final int realWidth;
+        private final int realHeight;
+        private final String mappingMode;
+        private final String source;
+
+        private CanvasContext(
+            Component canvas,
+            boolean stretched,
+            int realWidth,
+            int realHeight,
+            String mappingMode,
+            String source)
+        {
+            this.canvas = canvas;
+            this.stretched = stretched;
+            this.realWidth = realWidth;
+            this.realHeight = realHeight;
+            this.mappingMode = mappingMode;
+            this.source = source;
+        }
+    }
+}

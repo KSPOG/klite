@@ -1,0 +1,207 @@
+Dimension(realWidth, realHeight),
+                new Dimension(liveWidth, liveHeight),
+                mappingMode,
+                "klite-core-canvas-input");
+        }
+        catch (ReflectiveOperationException | RuntimeException exception)
+        {
+            return null;
+        }
+    }
+
+    private static Object awaitCoreFuture(Object value)
+    {
+        if (!(value instanceof CompletableFuture))
+        {
+            return null;
+        }
+        try
+        {
+            return ((CompletableFuture<?>) value).get(2L, TimeUnit.SECONDS);
+        }
+        catch (Exception exception)
+        {
+            if (exception instanceof InterruptedException)
+            {
+                Thread.currentThread().interrupt();
+            }
+            return null;
+        }
+    }
+
+    private static int invokeInt(Object target, String methodName, int fallback)
+    {
+        if (target == null)
+        {
+            return fallback;
+        }
+        try
+        {
+            Object value = target.getClass().getMethod(methodName).invoke(target);
+            return value instanceof Number ? ((Number) value).intValue() : fallback;
+        }
+        catch (ReflectiveOperationException | RuntimeException exception)
+        {
+            return fallback;
+        }
+    }
+
+    private static String invokeString(Object target, String methodName, String fallback)
+    {
+        if (target == null)
+        {
+            return fallback;
+        }
+        try
+        {
+            Object value = target.getClass().getMethod(methodName).invoke(target);
+            return value == null ? fallback : String.valueOf(value);
+        }
+        catch (ReflectiveOperationException | RuntimeException exception)
+        {
+            return fallback;
+        }
+    }
+
+    private ClickResult clickOnEventThread(Rectangle widgetBounds)
+    {
+        CanvasContext context = locateCanvasContextOnEventThread();
+        Component canvas = context.canvas;
+        Dimension componentSize = canvas.getSize();
+
+        Rectangle dispatchBounds = mapWidgetBounds(
+            widgetBounds,
+            context,
+            componentSize);
+
+        Rectangle componentArea = new Rectangle(
+            0,
+            0,
+            componentSize.width,
+            componentSize.height);
+        Rectangle clickable = dispatchBounds.intersection(componentArea);
+        if (clickable.width <= 0 || clickable.height <= 0)
+        {
+            throw new IllegalArgumentException(
+                "Copilot bounds are outside KLite's game canvas: widget="
+                    + widgetBounds
+                    + ", dispatch="
+                    + dispatchBounds
+                    + ", mode="
+                    + context.mappingMode
+                    + ", real="
+                    + context.realWidth
+                    + "x"
+                    + context.realHeight
+                    + ", component="
+                    + componentSize.width
+                    + "x"
+                    + componentSize.height);
+        }
+
+        int x = randomSafeCoordinate(
+            clickable.x,
+            clickable.width,
+            1,
+            Math.max(1, componentSize.width - 2));
+        int y = randomSafeCoordinate(
+            clickable.y,
+            clickable.height,
+            1,
+            Math.max(1, componentSize.height - 2));
+
+        int moveToPressDelay = randomInclusive(30, 75);
+        int pressHoldDelay = randomInclusive(55, 125);
+        int releaseToClickDelay = randomInclusive(8, 24);
+
+        dispatchMouseEvent(
+            canvas,
+            MouseEvent.MOUSE_ENTERED,
+            0,
+            x,
+            y,
+            0,
+            MouseEvent.NOBUTTON);
+        dispatchMouseEvent(
+            canvas,
+            MouseEvent.MOUSE_MOVED,
+            0,
+            x,
+            y,
+            0,
+            MouseEvent.NOBUTTON);
+
+        schedule(moveToPressDelay, () ->
+        {
+            if (!isCurrentClickTarget(canvas, componentSize, x, y))
+            {
+                return;
+            }
+            dispatchMouseEvent(
+                canvas,
+                MouseEvent.MOUSE_PRESSED,
+                InputEvent.BUTTON1_DOWN_MASK,
+                x,
+                y,
+                1,
+                MouseEvent.BUTTON1);
+
+            schedule(pressHoldDelay, () ->
+            {
+                if (!isCurrentClickTarget(canvas, componentSize, x, y))
+                {
+                    return;
+                }
+                dispatchMouseEvent(
+                    canvas,
+                    MouseEvent.MOUSE_RELEASED,
+                    0,
+                    x,
+                    y,
+                    1,
+                    MouseEvent.BUTTON1);
+
+                schedule(releaseToClickDelay, () ->
+                {
+                    if (isCurrentClickTarget(canvas, componentSize, x, y))
+                    {
+                        dispatchMouseEvent(
+                            canvas,
+                            MouseEvent.MOUSE_CLICKED,
+                            0,
+                            x,
+                            y,
+                            1,
+                            MouseEvent.BUTTON1);
+                    }
+                });
+            });
+        });
+
+        return new ClickResult(
+            widgetBounds,
+            dispatchBounds,
+            x,
+            y,
+            new Dimension(context.realWidth, context.realHeight),
+            componentSize,
+            context.mappingMode,
+            context.source);
+    }
+
+    private static boolean isCurrentClickTarget(
+        Component canvas,
+        Dimension expectedSize,
+        int x,
+        int y)
+    {
+        return canvas.isShowing()
+            && canvas.getWidth() == expectedSize.width
+            && canvas.getHeight() == expectedSize.height
+            && x >= 0
+            && y >= 0
+            && x < canvas.getWidth()
+            && y < canvas.getHeight();
+    }
+
+    private static Rectangle mapWi

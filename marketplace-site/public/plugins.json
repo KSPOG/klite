@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-07-19T02:55:07Z",
+  "updatedAt": "2026-07-19T17:30:00Z",
   "categories": [
     "Agility",
     "Bossing",
@@ -41,7 +41,7 @@
       "id": "klite-ge-flipper",
       "descriptor": {
         "name": "KLite GE Flipper",
-        "description": "Flips According to CoPilot suggestions.",
+        "description": "Flips according to Flipping Copilot suggestions with bounded recovery when a highlighted GE action stalls.",
         "tags": [
           "klite",
           "flip",
@@ -51,10 +51,12 @@
           "automation"
         ],
         "authors": [
+          "Choken",
+          "afss0",
           "KSP"
         ],
-        "version": "0.3.1",
-        "minClientVersion": "1.0.85",
+        "version": "0.3.13",
+        "minClientVersion": "1.0.98",
         "enabledByDefault": false,
         "isExternal": true
       },
@@ -62,10 +64,11 @@
         "Moneymaking"
       ],
       "type": "Premium",
+      "access": "Premium",
       "status": "coming-soon",
-      "homepageUrl": "https://github.com/KSPOG/klite",
+      "homepageUrl": "https://github.com/KSPOG/klite/tree/main/plugins/klite-ge-flipper",
       "releasedAt": "2026-07-19T02:55:07Z",
-      "updatedAt": "2026-07-19T02:55:07Z",
+      "updatedAt": "2026-07-19T17:30:00Z",
       "trendingDay": 0,
       "trendingWeek": 0,
       "trendingMonth": 0

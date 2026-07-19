@@ -1,0 +1,176 @@
+n, result.getStatus(), result.getMessage());
+        }
+    }
+
+    private static boolean isInsideGrandExchange(WorldPoint point)
+    {
+        return point.getPlane() == 0
+            && point.getX() >= 3136
+            && point.getX() <= 3196
+            && point.getY() >= 3465
+            && point.getY() <= 3518;
+    }
+
+    private static boolean isGrandExchangeSlot(int componentId)
+    {
+        for (int slotComponent : GRAND_EXCHANGE_SLOT_COMPONENTS)
+        {
+            if (slotComponent == componentId)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * KLiteClientApi.menuAction returns CompletableFuture<Void>. Keep this in a
+     * dedicated void helper so Java never attempts to infer it as an
+     * interaction-result future.
+     */
+    private static void dispatchMenuAction(
+        AutomationContext context,
+        KLiteMenuActionRequest request) throws Exception
+    {
+        context.await(context.client().menuAction(request), CLIENT_TIMEOUT);
+    }
+
+    private static <T> T await(
+        AutomationContext context,
+        java.util.concurrent.CompletableFuture<T> future) throws Exception
+    {
+        return context.await(future, CLIENT_TIMEOUT);
+    }
+
+    String overlayStatus()
+    {
+        return overlayStatus;
+    }
+
+    String overlayStage()
+    {
+        switch (state)
+        {
+            case GOING_TO_GE:
+                return "Travelling";
+            case GETTING_COINS:
+                return "Preparing";
+            case MONITORING_COPILOT:
+                return "Flipping";
+            default:
+                return "Unknown";
+        }
+    }
+
+    String overlayPrompt()
+    {
+        return overlayPrompt;
+    }
+
+    long overlayCoins()
+    {
+        return overlayCoins;
+    }
+
+    long overlayActions()
+    {
+        return overlayActions;
+    }
+
+    long overlayRuntimeMillis()
+    {
+        long started = overlayStartedAt;
+        return started <= 0L
+            ? 0L
+            : Math.max(0L, System.currentTimeMillis() - started);
+    }
+
+    private void refreshInventoryOverlayBounds(AutomationContext context) throws Exception
+    {
+        long now = System.currentTimeMillis();
+        if (now - lastInventoryBoundsRefreshAt < INVENTORY_BOUNDS_REFRESH_INTERVAL_MS)
+        {
+            return;
+        }
+        lastInventoryBoundsRefreshAt = now;
+
+        Optional<KLiteWidgetSnapshot> inventory = await(
+            context,
+            context.client().widget(InterfaceID.Inventory.ITEMS));
+        if (!inventory.isPresent())
+        {
+            return;
+        }
+
+        KLiteWidgetSnapshot widget = inventory.get();
+        if (widget.isHidden() || widget.getWidth() <= 0 || widget.getHeight() <= 0)
+        {
+            return;
+        }
+
+        overlayInventoryBounds = new Rectangle(
+            widget.getX(),
+            widget.getY(),
+            widget.getWidth(),
+            widget.getHeight());
+    }
+
+    private void refreshRealizedProfit(AutomationContext context) throws Exception
+    {
+        long now = System.currentTimeMillis();
+        if (now - lastProfitRefreshAt < PROFIT_REFRESH_INTERVAL_MS)
+        {
+            return;
+        }
+        lastProfitRefreshAt = now;
+
+        FlippingCopilotBridge.ProfitSnapshot profit =
+            copilotBridge.captureRealizedProfit(
+                context,
+                overlaySessionStartEpochSecond);
+        if (!profit.available())
+        {
+            return;
+        }
+
+        overlayRealizedProfitGp = profit.realizedProfitGp();
+        overlayMostProfitableFlip = profit.mostProfitableFlip();
+    }
+
+    long overlayProfitGp()
+    {
+        return overlayRealizedProfitGp;
+    }
+
+    long overlayProfitPerHour()
+    {
+        long runtimeMillis = overlayRuntimeMillis();
+        if (runtimeMillis <= 0L)
+        {
+            return 0L;
+        }
+        return Math.round(
+            (double) overlayRealizedProfitGp
+                * 3_600_000d
+                / (double) runtimeMillis);
+    }
+
+    String overlayMostProfitableFlip()
+    {
+        return overlayMostProfitableFlip;
+    }
+
+    Rectangle overlayInventoryBounds()
+    {
+        Rectangle bounds = overlayInventoryBounds;
+        return bounds == null ? null : new Rectangle(bounds);
+    }
+
+    private enum State
+    {
+        GOING_TO_GE,
+        GETTING_COINS,
+        MONITORING_COPILOT
+    }
+}

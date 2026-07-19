@@ -1,0 +1,166 @@
+package com.kspog.klite.geflipper;
+
+import com.google.inject.Injector;
+import java.awt.Canvas;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.IllegalComponentStateException;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import javax.swing.Timer;
+import net.runelite.client.plugins.Plugin;
+
+/**
+ * Sends a synthetic click directly to KLite's live game canvas.
+ *
+ * <p>RuneLite widget bounds are already relative to the live game canvas in
+ * fixed and ordinary resizable modes. They must not be scaled merely because
+ * the window became larger. Coordinate scaling is applied only when RuneLite's
+ * stretched mode is explicitly enabled.</p>
+ *
+ * <p>No physical mouse input is generated.</p>
+ */
+final class VirtualCanvasClickBridge
+{
+    private final Plugin owner;
+
+    VirtualCanvasClickBridge(Plugin owner)
+    {
+        if (owner == null)
+        {
+            throw new IllegalArgumentException("Plugin owner must not be null");
+        }
+        this.owner = owner;
+    }
+
+    ClickResult click(Rectangle widgetBounds)
+    {
+        if (widgetBounds == null || widgetBounds.width <= 0 || widgetBounds.height <= 0)
+        {
+            throw new IllegalArgumentException("Highlighted widget has no usable canvas bounds");
+        }
+
+        // KLite 1.0.98+ owns the canonical fixed/resizable/stretched mapping and
+        // virtual event sequence. Prefer it so an external plugin cannot drift
+        // from the client input contract. Reflection keeps this plugin buildable
+        // against older standalone SDK bundles.
+        if (!EventQueue.isDispatchThread())
+        {
+            ClickResult coreResult = clickThroughCoreCanvasInput(widgetBounds);
+            if (coreResult != null)
+            {
+                return coreResult;
+            }
+        }
+
+        if (EventQueue.isDispatchThread())
+        {
+            return clickOnEventThread(widgetBounds);
+        }
+
+        final ClickResult[] result = new ClickResult[1];
+        final RuntimeException[] failure = new RuntimeException[1];
+        try
+        {
+            EventQueue.invokeAndWait(() ->
+            {
+                try
+                {
+                    result[0] = clickOnEventThread(widgetBounds);
+                }
+                catch (RuntimeException exception)
+                {
+                    failure[0] = exception;
+                }
+            });
+        }
+        catch (InterruptedException exception)
+        {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(
+                "Interrupted while dispatching a virtual canvas click",
+                exception);
+        }
+        catch (InvocationTargetException exception)
+        {
+            throw new IllegalStateException(
+                "Unable to dispatch a virtual canvas click",
+                exception.getCause());
+        }
+
+        if (failure[0] != null)
+        {
+            throw failure[0];
+        }
+        return result[0];
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ClickResult clickThroughCoreCanvasInput(Rectangle widgetBounds)
+    {
+        try
+        {
+            ClassLoader loader = owner.getClass().getClassLoader();
+            Class<?> inputType = Class.forName(
+                "net.runelite.client.plugins.klite.api.KLiteCanvasInput",
+                true,
+                loader);
+            Injector injector = owner.getInjector();
+            Object input = injector.getInstance((Class) inputType);
+
+            Rectangle mappedBounds = new Rectangle(widgetBounds);
+            Object mapFutureValue = inputType
+                .getMethod("mapBounds", Rectangle.class)
+                .invoke(input, new Rectangle(widgetBounds));
+            Object mappedValue = awaitCoreFuture(mapFutureValue);
+            if (mappedValue instanceof Optional)
+            {
+                Object mapped = ((Optional<?>) mappedValue).orElse(null);
+                if (mapped instanceof Rectangle)
+                {
+                    mappedBounds = new Rectangle((Rectangle) mapped);
+                }
+            }
+
+            Object snapshotFutureValue = inputType.getMethod("snapshot").invoke(input);
+            Object snapshot = awaitCoreFuture(snapshotFutureValue);
+
+            Object clickFutureValue = inputType
+                .getMethod("clickBounds", Rectangle.class)
+                .invoke(input, new Rectangle(widgetBounds));
+            Object interactionResult = awaitCoreFuture(clickFutureValue);
+            if (interactionResult == null
+                || !Boolean.TRUE.equals(interactionResult.getClass()
+                    .getMethod("isDispatched")
+                    .invoke(interactionResult)))
+            {
+                return null;
+            }
+
+            int liveWidth = invokeInt(snapshot, "getLiveWidth", mappedBounds.x + mappedBounds.width);
+            int liveHeight = invokeInt(snapshot, "getLiveHeight", mappedBounds.y + mappedBounds.height);
+            int realWidth = invokeInt(snapshot, "getRealWidth", liveWidth);
+            int realHeight = invokeInt(snapshot, "getRealHeight", liveHeight);
+            String mappingMode = invokeString(snapshot, "getMappingMode", "klite-core");
+            int clickX = mappedBounds.x + Math.max(0, mappedBounds.width / 2);
+            int clickY = mappedBounds.y + Math.max(0, mappedBounds.height / 2);
+
+            return new ClickResult(
+                widgetBounds,
+                mappedBounds,
+                clickX,
+                clickY,
+                new 

@@ -1,0 +1,176 @@
+           target.get().componentId(),
+            target.get().index(),
+            operation);
+        return true;
+    }
+
+    private boolean handleHighlightedWidget(
+        AutomationContext context,
+        FlippingCopilotBridge.CopilotSnapshot copilot) throws Exception
+    {
+        Optional<FlippingCopilotBridge.HighlightedWidget> target = copilot.highlightedWidgets().stream()
+            .filter(FlippingCopilotBridge.HighlightedWidget::hasUsableClickBounds)
+            .findFirst();
+        if (!target.isPresent())
+        {
+            clearHighlightRepeatGuard();
+            return false;
+        }
+
+        FlippingCopilotBridge.HighlightedWidget widget = target.get();
+        Rectangle logicalBounds = widget.clickBounds();
+        String signature = highlightSignature(widget, logicalBounds);
+        long now = System.currentTimeMillis();
+        boolean identical = signature.equals(lastHighlightSignature);
+
+        if (!identical)
+        {
+            identicalHighlightAttempts = 0;
+            highlightStallRecoveryUntil = 0L;
+        }
+        else if (now < highlightStallRecoveryUntil)
+        {
+            overlayStatus = "Paused after a stalled Copilot step";
+            return false;
+        }
+
+        if (identical && now - lastHighlightClickAt < nextHighlightRepeatDelay)
+        {
+            overlayStatus = "Waiting for highlighted step to change";
+            return false;
+        }
+
+        if (identical && identicalHighlightAttempts >= MAX_IDENTICAL_HIGHLIGHT_ATTEMPTS)
+        {
+            recoverStalledHighlight(context, widget, signature, now);
+            return true;
+        }
+
+        try
+        {
+            if (dispatchKnownHighlightedAction(context, widget))
+            {
+                recordHighlightAttempt(signature, now);
+                if (isCollectWidget(widget))
+                {
+                    armHomeOnlyRecovery("collect action");
+                }
+                overlayStatus = statusForHighlightedWidget(widget);
+                return true;
+            }
+
+            VirtualCanvasClickBridge.ClickResult click =
+                virtualCanvasClickBridge.click(logicalBounds);
+
+            recordHighlightAttempt(signature, now);
+            if (isCollectWidget(widget))
+            {
+                armHomeOnlyRecovery("collect action");
+            }
+            overlayStatus = statusForHighlightedWidget(widget);
+
+            log.info(
+                "Virtually clicked Copilot highlight component={} index={} parent={} "
+                    + "widgetBounds={} dispatchBounds={} click=({}, {}) "
+                    + "realCanvas={}x{} componentCanvas={}x{} mode={} source={} attempt={}",
+                widget.componentId(),
+                widget.index(),
+                widget.parentId(),
+                click.widgetBounds(),
+                click.dispatchBounds(),
+                click.clickX(),
+                click.clickY(),
+                click.realCanvas().width,
+                click.realCanvas().height,
+                click.componentCanvas().width,
+                click.componentCanvas().height,
+                click.mappingMode(),
+                click.canvasSource(),
+                identicalHighlightAttempts);
+            return true;
+        }
+        catch (RuntimeException exception)
+        {
+            log.warn(
+                "Unable to follow Copilot highlight component={} logicalBounds={}: {}",
+                widget.componentId(),
+                logicalBounds,
+                exception.getMessage());
+            return false;
+        }
+    }
+
+    private boolean dispatchKnownHighlightedAction(
+        AutomationContext context,
+        FlippingCopilotBridge.HighlightedWidget widget)
+    {
+        if (!isDirectActionWidget(widget))
+        {
+            return false;
+        }
+
+        FlippingCopilotBridge.HighlightedAction action = widget.firstUsableAction();
+        if (action == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            dispatchMenuAction(context, new KLiteMenuActionRequest(
+                widget.index(),
+                widget.componentId(),
+                MenuAction.CC_OP,
+                action.operation(),
+                widget.itemId(),
+                action.option(),
+                widget.target()));
+
+            log.info(
+                "Dispatched Copilot widget action option='{}' component={} index={} operation={} attempt={}",
+                action.option(),
+                widget.componentId(),
+                widget.index(),
+                action.operation(),
+                identicalHighlightAttempts + 1);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            log.warn(
+                "Direct Copilot widget action failed for option='{}' component={} index={}; falling back to KLite canvas input: {}",
+                action.option(),
+                widget.componentId(),
+                widget.index(),
+                exception.getMessage());
+            return false;
+        }
+    }
+
+    private static boolean isDirectActionWidget(
+        FlippingCopilotBridge.HighlightedWidget widget)
+    {
+        return widget.componentId() == GE_OFFER_SETUP_COMPONENT
+            || widget.componentId() == InterfaceID.GeOffers.COLLECTALL
+            || widget.componentId() == InterfaceID.GeOffers.DETAILS_COLLECT
+            || widget.componentId() == InterfaceID.GeOffers.BACK;
+    }
+
+    private void recordHighlightAttempt(String signature, long now)
+    {
+        if (signature.equals(lastHighlightSignature))
+        {
+            identicalHighlightAttempts++;
+        }
+        else
+        {
+            identicalHighlightAttempts = 1;
+        }
+        lastHighlightSignature = signature;
+        lastHighlightClickAt = now;
+        nextHighlightRepeatDelay = randomHighlightRepeatDelay();
+    }
+
+    private void recoverStalledHighlight(
+        AutomationContext context,
+        FlippingCopilotBridge.HighlightedWidget widget,
