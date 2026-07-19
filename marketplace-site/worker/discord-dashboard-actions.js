@@ -38,8 +38,10 @@ async function registerCommands(env, services) {
       );
     }
     return json({
-      registered: verifiedCommands.length,
-      commandNames: verifiedCommands.map((command) => command.name),
+      registered: DISCORD_COMMANDS.length,
+      commandNames: verifiedCommands
+        .filter((command) => expectedNames.has(command.name))
+        .map((command) => command.name),
       dashboard
     });
   } catch (error) {
@@ -67,8 +69,12 @@ async function postAndVerifyClientUpdate(request, env, services) {
   const dashboard = await updateResponse.json();
   const version = typeof input.clientUpdateVersion === "string"
     ? input.clientUpdateVersion.trim() : "";
+  const updates = normalizeUpdates(input.clientUpdateNotes);
   const latest = (dashboard.clientUpdates?.history || []).find((entry) =>
-    entry.version === version && entry.channelId && entry.messageId
+    entry.version === version
+      && (!updates || entry.updates === updates)
+      && entry.channelId
+      && entry.messageId
   );
   if (!latest) {
     return apiError(
@@ -98,7 +104,8 @@ async function postAndVerifyClientUpdate(request, env, services) {
       || message.channel_id !== latest.channelId
       || typeof message.content !== "string"
       || !message.content.includes(expectedVersionLine)
-      || !message.content.includes("**Updates:**")) {
+      || !message.content.includes("**Updates:**")
+      || (updates && !message.content.includes(updates))) {
     return apiError(
       502,
       "client_update_message_mismatch",
@@ -149,6 +156,15 @@ async function discordApi(env, path) {
     throw error;
   }
   return response.json();
+}
+
+function normalizeUpdates(value) {
+  if (typeof value !== "string") return null;
+  const normalized = value
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, " ")
+    .replace(/\r\n?/g, "\n")
+    .trim();
+  return normalized ? normalized.slice(0, 3_000) : null;
 }
 
 function apiError(status, code, message) {
