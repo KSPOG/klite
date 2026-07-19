@@ -1,0 +1,473 @@
+package com.kspog.klite.geflipper;
+
+import com.google.inject.Injector;
+import java.awt.Canvas;
+import java.awt.Rectangle;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
+import net.runelite.api.widgets.Widget;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.klite.automation.AutomationContext;
+
+/**
+ * Isolates the only non-public integration required by this port.
+ *
+ * <p>Flipping Copilot does not currently publish a KLite-facing suggestion API.
+ * Its suggestion and highlight data are therefore copied reflectively while on
+ * the RuneLite client thread. No live Widget instance escapes the callback.</p>
+ */
+final class FlippingCopilotBridge
+{
+    private static final Duration CLIENT_TIMEOUT = Duration.ofSeconds(2);
+    private static final String COPILOT_PLUGIN_SIMPLE_NAME = "FlippingCopilotPlugin";
+    private static final int MAX_HIGHLIGHT_WIDGETS = 32;
+    private static final int CHATBOX_TITLE_COMPONENT = 10616875;
+    private static final int CHATBOX_INPUT_COMPONENT = 10616876;
+    private static final int CURRENT_GE_ITEM_VARP = 1151;
+    private static final String PRICE_PROMPT = "Set a price for each item:";
+    private static final String BUY_QUANTITY_PROMPT = "How many do you wish to buy?";
+    private static final String SELL_QUANTITY_PROMPT = "How many do you wish to sell?";
+    private static final int CHATBOX_VALUE_VARC = 359;
+
+    private final Plugin owner;
+
+    private Object copilotPlugin;
+    private Object suggestionManager;
+    private Object highlightController;
+    private Object keybindHandler;
+    private Object offerHandler;
+    private Object flipManager;
+
+    FlippingCopilotBridge(Plugin owner)
+    {
+        this.owner = owner;
+    }
+
+    CopilotSnapshot capture(AutomationContext context) throws Exception
+    {
+        AtomicReference<CopilotSnapshot> result = new AtomicReference<>();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        context.await(context.client().onClientThread(() ->
+        {
+            try
+            {
+                result.set(captureOnClientThread());
+            }
+            catch (Throwable throwable)
+            {
+                failure.set(throwable);
+            }
+        }), CLIENT_TIMEOUT);
+
+        Throwable throwable = failure.get();
+        if (throwable != null)
+        {
+            throw new IllegalStateException("Unable to read Flipping Copilot state", throwable);
+        }
+
+        CopilotSnapshot snapshot = result.get();
+        return snapshot == null
+            ? CopilotSnapshot.unavailable("Flipping Copilot returned no state")
+            : snapshot;
+    }
+
+    PromptSnapshot capturePrompt(AutomationContext context) throws Exception
+    {
+        AtomicReference<PromptSnapshot> result = new AtomicReference<>();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        context.await(context.client().onClientThread(() ->
+        {
+            try
+            {
+                result.set(capturePromptOnClientThread());
+            }
+            catch (Throwable throwable)
+            {
+                failure.set(throwable);
+            }
+        }), CLIENT_TIMEOUT);
+
+        Throwable throwable = failure.get();
+        if (throwable != null)
+        {
+            throw new IllegalStateException(
+                "Unable to inspect the active Flipping Copilot prompt", throwable);
+        }
+
+        PromptSnapshot snapshot = result.get();
+        return snapshot == null
+            ? PromptSnapshot.inactive()
+            : snapshot;
+    }
+
+    SuggestionApplication applySuggestedAction(
+        AutomationContext context,
+        PromptKind expectedPromptKind) throws Exception
+    {
+        AtomicReference<SuggestionApplication> result = new AtomicReference<>();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        context.await(context.client().onClientThread(() ->
+        {
+            try
+            {
+                result.set(applySuggestedActionOnClientThread(expectedPromptKind));
+            }
+            catch (Throwable throwable)
+            {
+                failure.set(throwable);
+            }
+        }), CLIENT_TIMEOUT);
+
+        Throwable throwable = failure.get();
+        if (throwable != null)
+        {
+            throw new IllegalStateException(
+                "Unable to apply the Flipping Copilot price or quantity", throwable);
+        }
+
+        SuggestionApplication application = result.get();
+        return application == null
+            ? SuggestionApplication.notApplicable("Flipping Copilot returned no application result")
+            : application;
+    }
+
+    ProfitSnapshot captureRealizedProfit(
+        AutomationContext context,
+        int sessionStartEpochSecond) throws Exception
+    {
+        AtomicReference<ProfitSnapshot> result = new AtomicReference<>();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        context.await(context.client().onClientThread(() ->
+        {
+            try
+            {
+                result.set(captureRealizedProfitOnClientThread(
+                    sessionStartEpochSecond));
+            }
+            catch (Throwable throwable)
+            {
+                failure.set(throwable);
+            }
+        }), CLIENT_TIMEOUT);
+
+        Throwable throwable = failure.get();
+        if (throwable != null)
+        {
+            throw new IllegalStateException(
+                "Unable to read Flipping Copilot realized profit", throwable);
+        }
+
+        ProfitSnapshot snapshot = result.get();
+        return snapshot == null
+            ? ProfitSnapshot.unavailable()
+            : snapshot;
+    }
+
+    void reset()
+    {
+        copilotPlugin = null;
+        suggestionManager = null;
+        highlightController = null;
+        keybindHandler = null;
+        offerHandler = null;
+        flipManager = null;
+    }
+
+    private ProfitSnapshot captureRealizedProfitOnClientThread(
+        int sessionStartEpochSecond) throws Exception
+    {
+        if (!initializeOnClientThread())
+        {
+            return ProfitSnapshot.unavailable();
+        }
+
+        Object intervalAccount = invokeNoArgs(
+            flipManager,
+            "getIntervalAccount");
+        if (intervalAccount instanceof Number
+            && ((Number) intervalAccount).intValue() == -1)
+        {
+            intervalAccount = null;
+        }
+
+        Object flipsValue = invokeArguments(
+            flipManager,
+            "getPageFlips",
+            1,
+            Integer.MAX_VALUE,
+            sessionStartEpochSecond,
+            intervalAccount);
+        if (!(flipsValue instanceof List))
+        {
+            return ProfitSnapshot.unavailable();
+        }
+
+        long realizedProfit = 0L;
+        long bestProfit = Long.MIN_VALUE;
+        String bestFlip = "-";
+        int completedFlips = 0;
+
+        for (Object flip : (List<?>) flipsValue)
+        {
+            if (flip == null
+                || !Boolean.TRUE.equals(invokeNoArgs(flip, "isClosed")))
+            {
+                continue;
+            }
+
+            int closedTime = ((Number) invokeNoArgs(
+                flip,
+                "getClosedTime")).intValue();
+            if (closedTime < sessionStartEpochSecond)
+            {
+                continue;
+            }
+
+            long profit = ((Number) invokeNoArgs(
+                flip,
+                "getProfit")).longValue();
+            realizedProfit += profit;
+            completedFlips++;
+
+            if (profit > bestProfit)
+            {
+                bestProfit = profit;
+                Object cachedName = invokeNoArgs(flip, "getCachedItemName");
+                String itemName = cachedName == null
+                    ? ""
+                    : String.valueOf(cachedName).trim();
+                if (itemName.isEmpty())
+                {
+                    int itemId = ((Number) invokeNoArgs(
+                        flip,
+                        "getItemId")).intValue();
+                    itemName = "Item " + itemId;
+                }
+                bestFlip = itemName + " " + formatSignedGp(profit);
+            }
+        }
+
+        return ProfitSnapshot.available(
+            realizedProfit,
+            completedFlips,
+            bestFlip);
+    }
+
+    private static String formatSignedGp(long value)
+    {
+        return (value >= 0L ? "+" : "-")
+            + String.format(Locale.US, "%,d", Math.abs(value))
+            + " gp";
+    }
+
+    private PromptSnapshot capturePromptOnClientThread() throws Exception
+    {
+        if (!initializeOnClientThread())
+        {
+            return PromptSnapshot.inactive();
+        }
+
+        Object client = invokeNoArgs(offerHandler, "getClient");
+        Widget titleWidget = (Widget) invokeIntArgument(
+            client, "getWidget", CHATBOX_TITLE_COMPONENT);
+        Widget inputWidget = (Widget) invokeIntArgument(
+            client, "getWidget", CHATBOX_INPUT_COMPONENT);
+
+        boolean titleVisible = titleWidget != null && !titleWidget.isHidden();
+        boolean inputVisible = inputWidget != null && !inputWidget.isHidden();
+        String title = titleVisible
+            ? nullToEmpty(titleWidget.getText()).trim()
+            : "";
+
+        // Closed chatbox widgets retain their previous text. Treat the prompt
+        // as active only while both the title and input widgets are visible.
+        PromptKind kind = titleVisible && inputVisible
+            ? promptKindFromTitle(title)
+            : PromptKind.NONE;
+        Object canvasValue = invokeNoArgs(client, "getCanvas");
+        Canvas canvas = canvasValue instanceof Canvas ? (Canvas) canvasValue : null;
+
+        return new PromptSnapshot(kind, canvas, title);
+    }
+
+    private static PromptKind promptKindFromTitle(String title)
+    {
+        if (PRICE_PROMPT.equals(title))
+        {
+            return PromptKind.PRICE;
+        }
+        if (BUY_QUANTITY_PROMPT.equals(title)
+            || SELL_QUANTITY_PROMPT.equals(title))
+        {
+            return PromptKind.QUANTITY;
+        }
+        return PromptKind.NONE;
+    }
+
+    private CopilotSnapshot captureOnClientThread() throws Exception
+    {
+        if (!initializeOnClientThread())
+        {
+            return CopilotSnapshot.unavailable(
+                "Install, enable, sign in to, and resume suggestions in Flipping Copilot");
+        }
+
+        Object suggestion = readField(suggestionManager, "suggestion");
+        SuggestionKind kind = suggestionKind(suggestion);
+        int suggestionItemId = readSuggestionItemId(suggestion);
+        List<HighlightedWidget> highlightedWidgets = copyHighlightedWidgets();
+        return CopilotSnapshot.available(kind, suggestionItemId, highlightedWidgets);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private boolean initializeOnClientThread() throws Exception
+    {
+        if (copilotPlugin == null)
+        {
+            Injector injector = owner.getInjector();
+            Class<?> pluginManagerType = Class.forName("net.runelite.client.plugins.PluginManager");
+            Object pluginManager = injector.getInstance((Class) pluginManagerType);
+            Method getPlugins = pluginManagerType.getMethod("getPlugins");
+            Collection<?> plugins = (Collection<?>) getPlugins.invoke(pluginManager);
+            copilotPlugin = plugins.stream()
+                .filter(Plugin.class::isInstance)
+                .filter(plugin -> plugin.getClass().getSimpleName().equalsIgnoreCase(COPILOT_PLUGIN_SIMPLE_NAME))
+                .findFirst()
+                .orElse(null);
+        }
+
+        if (copilotPlugin == null)
+        {
+            return false;
+        }
+
+        if (suggestionManager == null)
+        {
+            suggestionManager = readField(copilotPlugin, "suggestionManager");
+        }
+        if (highlightController == null)
+        {
+            highlightController = readField(copilotPlugin, "highlightController");
+        }
+        if (keybindHandler == null)
+        {
+            keybindHandler = readField(copilotPlugin, "keybindHandler");
+        }
+        if (offerHandler == null && keybindHandler != null)
+        {
+            offerHandler = readField(keybindHandler, "offerHandler");
+        }
+        if (flipManager == null)
+        {
+            flipManager = readField(copilotPlugin, "flipManager");
+        }
+
+        return suggestionManager != null
+            && highlightController != null
+            && offerHandler != null
+            && flipManager != null;
+    }
+
+    private SuggestionApplication applySuggestedActionOnClientThread(
+        PromptKind expectedPromptKind) throws Exception
+    {
+        if (!initializeOnClientThread())
+        {
+            return SuggestionApplication.notApplicable(
+                "Flipping Copilot's offer handler is unavailable");
+        }
+
+        if (expectedPromptKind == null || expectedPromptKind == PromptKind.NONE)
+        {
+            return SuggestionApplication.notApplicable(
+                "No live price or quantity prompt was supplied");
+        }
+
+        Object client = invokeNoArgs(offerHandler, "getClient");
+        Widget titleWidget = (Widget) invokeIntArgument(
+            client, "getWidget", CHATBOX_TITLE_COMPONENT);
+        Widget inputWidget = (Widget) invokeIntArgument(
+            client, "getWidget", CHATBOX_INPUT_COMPONENT);
+
+        boolean titleVisible = titleWidget != null && !titleWidget.isHidden();
+        boolean inputVisible = inputWidget != null && !inputWidget.isHidden();
+        String title = titleVisible
+            ? nullToEmpty(titleWidget.getText()).trim()
+            : "";
+        PromptKind livePromptKind = titleVisible && inputVisible
+            ? promptKindFromTitle(title)
+            : PromptKind.NONE;
+
+        if (livePromptKind != expectedPromptKind)
+        {
+            return SuggestionApplication.notApplicable(
+                "Live Copilot prompt changed from "
+                    + expectedPromptKind + " to " + livePromptKind
+                    + " (title='" + title + "')");
+        }
+
+        Object suggestion = invokeNoArgs(suggestionManager, "getSuggestion");
+        SuggestedValue suggested = resolveSuggestedValue(
+            client, suggestion, expectedPromptKind);
+
+        if (!suggested.available())
+        {
+            return SuggestionApplication.failed(
+                expectedPromptKind,
+                suggested.message(),
+                "",
+                "");
+        }
+
+        invokeIntArgument(
+            offerHandler,
+            "setChatboxValue",
+            suggested.value());
+
+        String varcValue = String.valueOf(
+            invokeIntArgument(client, "getVarcStrValue", CHATBOX_VALUE_VARC));
+        String inputText = inputWidget == null
+            ? ""
+            : nullToEmpty(inputWidget.getText());
+
+        if (!Integer.toString(suggested.value()).equals(varcValue.trim()))
+        {
+            return SuggestionApplication.failed(
+                expectedPromptKind,
+                "Copilot's chatbox VARC did not match the resolved suggestion",
+                varcValue,
+                inputText);
+        }
+
+        return SuggestionApplication.applied(
+            expectedPromptKind,
+            varcValue,
+            inputText);
+    }
+
+    private SuggestedValue resolveSuggestedValue(
+        Object client,
+        Object suggestion,
+        PromptKind promptKind) throws Exception
+    {
+        int currentItemId = ((Number) invokeIntArgument(
+            client, "getVarpValue", CURRENT_GE_ITEM_VARP)).intValue();
+
+        if (promptKind == PromptKind.QUANTITY)
+        {
+            if (suggestion == null)
+            {
+                return SuggestedValue.unavailable(
+                    "Copilot has no active suggestion for the quantity prompt");
+            }
