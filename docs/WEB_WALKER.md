@@ -11,6 +11,17 @@ currently published by RuneLite Plugin Hub:
 KLite owns the walker API, scheduler integration, path cache, traversal state,
 and menu-action implementation. It does not bundle or call Microbot or TwiLite.
 
+## World map target
+
+With **KLite Core > Enable automation** enabled, right-click anywhere inside the
+RuneScape world map and choose **Set Target**. KLite uses the same map-center,
+widget-bounds, and zoom conversion as Shortest Path to resolve the selected
+surface tile, then starts the integrated WebWalker toward that location.
+
+Selecting another target while the WebWalker is active replaces the current
+WebWalker destination. It does not cancel an unrelated KLite automation task.
+Choose **Clear Path** on the world map to stop the active WebWalker route.
+
 ## Traversal model
 
 The walker follows a step-based model:
