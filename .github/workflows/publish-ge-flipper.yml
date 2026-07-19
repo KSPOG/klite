@@ -36,17 +36,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Restore review source bundle
+      - name: Restore reviewed GE Flipper sources
         shell: bash
         run: |
           set -euo pipefail
-          bundle_dir="plugins/klite-ge-flipper/source-bundle"
-          if compgen -G "$bundle_dir/source.tgz.b64.part-*" > /dev/null; then
-            cat "$bundle_dir"/source.tgz.b64.part-* | base64 --decode > /tmp/klite-ge-flipper-source.tgz
-            echo "7f60214d4de7478910399a0f73e0583c4bb57f1a24780c215ecd085a63007368  /tmp/klite-ge-flipper-source.tgz" | sha256sum --check --strict
-            tar -xzf /tmp/klite-ge-flipper-source.tgz
-          fi
-          test -f plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper/KLiteGeFlipperTask.java
+          source_dir="plugins/klite-ge-flipper/src/main/java/com/kspog/klite/geflipper"
+          parts_dir="plugins/klite-ge-flipper/source-parts"
+          mkdir -p "$source_dir"
+
+          for source_name in \
+            FlippingCopilotBridge.java \
+            KLiteGeFlipperTask.java \
+            VirtualCanvasClickBridge.java
+          do
+            if ! compgen -G "$parts_dir/${source_name}.part-*" > /dev/null; then
+              echo "Missing reviewed source parts for ${source_name}" >&2
+              exit 1
+            fi
+            cat "$parts_dir/${source_name}.part-"* > "$source_dir/${source_name}"
+          done
+
+          test -s "$source_dir/FlippingCopilotBridge.java"
+          test -s "$source_dir/KLiteGeFlipperTask.java"
+          test -s "$source_dir/VirtualCanvasClickBridge.java"
 
       - uses: actions/setup-java@v4
         with:
@@ -140,8 +152,12 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          rm -rf plugins/klite-ge-flipper/source-bundle
-          git add marketplace-site/public/plugins.json plugins/klite-ge-flipper/src plugins/klite-ge-flipper/source-bundle
+          rm -rf plugins/klite-ge-flipper/source-bundle plugins/klite-ge-flipper/source-parts
+          git add \
+            marketplace-site/public/plugins.json \
+            plugins/klite-ge-flipper/src \
+            plugins/klite-ge-flipper/source-bundle \
+            plugins/klite-ge-flipper/source-parts
           if git diff --cached --quiet; then
             echo "GE Flipper artifact, source, and catalog metadata are already current."
             exit 0
