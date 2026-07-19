@@ -34,12 +34,15 @@ const siteRouteDefinitions = {
   community: {
     eyebrow: "Discord integration",
     title: "Discord bot control center",
-    description: "Install the bot, configure roles and channels, register commands, and manage marketplace announcements.",
+    description: "Inspect live bot status, configure roles and channels, manage client updates and marketplace announcements, and review registered Discord resources.",
     subcategories: [
       { label: "Installation", target: "discord-bootstrap-slot" },
+      { label: "Overview", target: "discord-bot-status-grid" },
       { label: "Roles and channels", target: "discord-bot-settings-form" },
+      { label: "Client updates", target: "discord-client-update-history" },
+      { label: "Marketplace announcements", target: "announcement-history" },
       { label: "Commands", target: "discord-command-list" },
-      { label: "Announcements", target: "announcement-history" }
+      { label: "Server roles", target: "discord-role-list" }
     ]
   },
   account: {
@@ -113,6 +116,19 @@ function assignDynamicPanels() {
   }
 }
 
+function applyRouteVisibility(panel, selectedRoute) {
+  const inactive = panel.dataset.siteSection !== selectedRoute;
+  panel.classList.toggle("route-inactive", inactive);
+  panel.inert = inactive;
+  if (inactive) {
+    panel.style.setProperty("display", "none", "important");
+    panel.setAttribute("aria-hidden", "true");
+  } else {
+    panel.style.removeProperty("display");
+    panel.removeAttribute("aria-hidden");
+  }
+}
+
 function renderSecondaryNavigation(route) {
   secondarySiteNav.replaceChildren();
   for (const item of siteRouteDefinitions[route].subcategories) {
@@ -166,7 +182,7 @@ function setSiteRoute(route, options = {}) {
   updatePrivilegedNavigation();
   const selected = Object.hasOwn(siteRouteDefinitions, route) ? route : "home";
   currentSiteRoute = selected;
-  for (const panel of routePanels) panel.classList.toggle("route-inactive", panel.dataset.siteSection !== selected);
+  for (const panel of routePanels) applyRouteVisibility(panel, selected);
   for (const button of primaryRouteButtons) {
     button.classList.toggle("is-active", button.dataset.siteRoute === selected);
     button.setAttribute("aria-current", button.dataset.siteRoute === selected ? "page" : "false");
@@ -401,7 +417,7 @@ function scheduleShellUpdate() {
     shellUpdatePending = false;
     assignDynamicPanels();
     updatePrivilegedNavigation();
-    for (const panel of routePanels) panel.classList.toggle("route-inactive", panel.dataset.siteSection !== currentSiteRoute);
+    for (const panel of routePanels) applyRouteVisibility(panel, currentSiteRoute);
     renderRouteEmpty(currentSiteRoute);
   });
 }
