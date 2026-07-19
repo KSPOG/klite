@@ -1,0 +1,184 @@
+
+        String signature,
+        long now) throws Exception
+    {
+        highlightStallRecoveryUntil = now + HIGHLIGHT_STALL_RECOVERY_DELAY_MS;
+        log.warn(
+            "Copilot highlight stalled after {} attempts; component={} index={} signature={}. Suppressing repeated clicks and recovering the interface.",
+            identicalHighlightAttempts,
+            widget.componentId(),
+            widget.index(),
+            signature);
+
+        if (widget.componentId() == GE_OFFER_SETUP_COMPONENT)
+        {
+            geBackRecoveryPage = "offer setup";
+            geBackRecoveryAttempt = 1;
+            lastGeBackRecoveryAt = now;
+            overlayStatus = "Recovering stalled GE offer setup";
+            pressGeBackThroughMenuAction(context, "offer setup", 1);
+        }
+        else
+        {
+            overlayStatus = "Recovering stalled Copilot step";
+            pressEscape();
+        }
+
+        identicalHighlightAttempts = 0;
+        lastHighlightClickAt = now;
+        nextHighlightRepeatDelay = randomHighlightRepeatDelay();
+        resetPromptSubmissionGuard();
+    }
+
+    private static String highlightSignature(
+        FlippingCopilotBridge.HighlightedWidget widget,
+        Rectangle bounds)
+    {
+        return widget.componentId()
+            + ":"
+            + widget.index()
+            + ":"
+            + bounds.x
+            + ":"
+            + bounds.y
+            + ":"
+            + bounds.width
+            + ":"
+            + bounds.height;
+    }
+
+    private static String statusForHighlightedWidget(
+        FlippingCopilotBridge.HighlightedWidget widget)
+    {
+        if (isGrandExchangeSlot(widget.componentId()))
+        {
+            return "Opening empty GE offer slot";
+        }
+        if (widget.componentId() == COPILOT_ITEM_SEARCH_COMPONENT)
+        {
+            return "Selecting suggested item";
+        }
+        if (widget.componentId() == GE_OFFER_SETUP_COMPONENT)
+        {
+            switch (widget.index())
+            {
+                case GE_PRICE_BUTTON_INDEX:
+                    return "Opening price input";
+                case GE_QUANTITY_BUTTON_INDEX:
+                    return "Opening quantity input";
+                case GE_CONFIRM_BUTTON_INDEX:
+                    return "Confirming Grand Exchange offer";
+                default:
+                    return "Updating Grand Exchange offer";
+            }
+        }
+        return "Following Copilot instruction";
+    }
+
+    private static String friendlyCopilotStatus(String message)
+    {
+        String value = message == null ? "" : message.trim();
+        if (value.isEmpty())
+        {
+            return "Waiting for Flipping Copilot";
+        }
+
+        String lower = value.toLowerCase(Locale.ROOT);
+        if (lower.contains("not installed") || lower.contains("not found"))
+        {
+            return "Flipping Copilot is not installed";
+        }
+        if (lower.contains("disabled") || lower.contains("not enabled"))
+        {
+            return "Enable Flipping Copilot";
+        }
+        if (lower.contains("suggestion"))
+        {
+            return "Waiting for Copilot suggestion";
+        }
+        return value;
+    }
+
+    private static String formatStatusNumber(String value)
+    {
+        try
+        {
+            return String.format(Locale.US, "%,d", Long.parseLong(value));
+        }
+        catch (NumberFormatException ignored)
+        {
+            return value == null || value.isEmpty() ? "0" : value;
+        }
+    }
+
+    private void resetPromptSubmissionGuard()
+    {
+        lastSubmittedPromptKind = FlippingCopilotBridge.PromptKind.NONE;
+        lastSubmittedPromptValue = "";
+        lastPromptSubmissionAt = 0L;
+    }
+
+    private void openBank(AutomationContext context) throws Exception
+    {
+        if (!cooldownElapsed())
+        {
+            return;
+        }
+
+        overlayStatus = "Opening bank";
+
+        // At the Grand Exchange the verified "Bank" action belongs to the
+        // Banker NPC. The booth snapshot can exist without exposing that action,
+        // so NPC interaction must be attempted first.
+        Optional<KLiteNpcSnapshot> banker = await(context, context.client().nearestNpc("Banker"));
+        if (banker.isPresent())
+        {
+            KLiteInteractionResult result = await(context,
+                context.client().interactNpc(banker.get().getIndex(), "Bank"));
+            logActionResult("Open bank through Banker", result);
+            if (result.isDispatched())
+            {
+                overlayStatus = "Waiting for bank interface";
+                markAction();
+                return;
+            }
+        }
+
+        Optional<KLiteSceneObjectSnapshot> booth = await(context,
+            context.client().nearestSceneObject("Grand Exchange booth"));
+        if (booth.isPresent())
+        {
+            KLiteSceneObjectSnapshot target = booth.get();
+            overlayStatus = "Opening bank through booth";
+            KLiteInteractionResult result = await(context,
+                context.client().interactSceneObject(target.getObjectId(), target.getLocation(), "Bank"));
+            logActionResult("Open bank through Grand Exchange booth fallback", result);
+            if (result.isDispatched())
+            {
+                overlayStatus = "Waiting for bank interface";
+            }
+            markAction();
+            return;
+        }
+
+        overlayStatus = "Banker or bank booth not found";
+        throttledStatus("No nearby Banker or bank-capable Grand Exchange booth found");
+        markAction();
+    }
+
+    private void openGrandExchange(AutomationContext context) throws Exception
+    {
+        if (!cooldownElapsed())
+        {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        if (lastGrandExchangeOpenRequestAt > 0L
+            && now - lastGrandExchangeOpenRequestAt < nextGrandExchangeOpenRetryDelay)
+        {
+            overlayStatus = "Waiting for GE interface";
+            return;
+        }
+
+      
