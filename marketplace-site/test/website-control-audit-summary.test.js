@@ -10,7 +10,8 @@ const audit = fs.readFileSync(path.join(siteRoot, "README-control-audit.md"), "u
 
 test("website audit documents fixed and verified control areas", () => {
   assert.match(audit, /Owner account and role-management routes/i);
-  assert.match(audit, /Discord-verified password recovery/i);
+  assert.match(audit, /Discord-only authentication/i);
+  assert.doesNotMatch(audit, /password recovery/i);
   assert.match(audit, /API-reference search/i);
   assert.match(audit, /Changelog category filters/i);
 });
