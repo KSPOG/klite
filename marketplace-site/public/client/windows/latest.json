@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "platform": "windows-x64",
-  "version": "1.0.94",
-  "buildSha": "99c32146c665179d2372ca9d01edee4be37cb77b",
+  "version": "1.0.95",
+  "buildSha": "d42c3670dfb17381e6d4e5cff77aa977ee5a569e",
   "downloadUrl": "https://klite-marketplace.pages.dev/download/windows",
-  "assetName": "KLite-Setup-1.0.94-ad4c8650ae1b6da7.exe",
-  "sha256": "ad4c8650ae1b6da7d22efd998551fc0501b0afd4b86db967ec395006c01d1093",
-  "size": 89315840,
+  "assetName": "KLite-Setup-1.0.95-b5c575cb2b29d99a.exe",
+  "sha256": "b5c575cb2b29d99a3633e464957e0fb2e6319a192c2610ca2f2e091d7803aaa2",
+  "size": 89319936,
   "launcher": "KLiteLauncher.exe",
-  "publishedAt": "2026-07-19T11:13:08Z"
+  "publishedAt": "2026-07-19T12:15:54Z"
 }
