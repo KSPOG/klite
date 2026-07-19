@@ -1,8 +1,985 @@
 # Recent GitHub Actions failures
 
-Generated: 2026-07-19T11:44:42.831026+00:00
+Generated: 2026-07-19T11:46:57.904642+00:00
 Repository: `KSPOG/klite`
-Failed runs inspected: **13**
+Failed runs inspected: **15**
+
+## Diagnose failed workflow runs: Diagnose failed workflow runs
+
+- Run: [29685750633](https://github.com/KSPOG/klite/actions/runs/29685750633)
+- Conclusion: `cancelled`
+- Event: `workflow_run`
+- Commit: `cb389a60726ad53dd5b96d24276eb1eb0c59a6bb`
+- Created: `2026-07-19T11:46:29Z`
+
+### Failed jobs and steps
+
+No failed job metadata was returned.
+
+### Relevant log context
+
+No matching error lines were available from `gh run view --log-failed`.
+
+## Diagnose failed workflow runs: Diagnose failed workflow runs
+
+- Run: [29685736876](https://github.com/KSPOG/klite/actions/runs/29685736876)
+- Conclusion: `cancelled`
+- Event: `workflow_run`
+- Commit: `cb389a60726ad53dd5b96d24276eb1eb0c59a6bb`
+- Created: `2026-07-19T11:46:03Z`
+
+### Failed jobs and steps
+
+- **diagnose** — `cancelled`
+  - Step 3: **Collect recent failure details** — `cancelled`
+
+### Relevant log context
+
+No matching error lines were available from `gh run view --log-failed`.
+
+## Diagnose failed workflow runs: Diagnose failed workflow runs
+
+- Run: [29685731439](https://github.com/KSPOG/klite/actions/runs/29685731439)
+- Conclusion: `cancelled`
+- Event: `workflow_run`
+- Commit: `cb389a60726ad53dd5b96d24276eb1eb0c59a6bb`
+- Created: `2026-07-19T11:45:53Z`
+
+### Failed jobs and steps
+
+- **diagnose** — `cancelled`
+  - Step 3: **Collect recent failure details** — `cancelled`
+
+### Relevant log context
+
+No matching error lines were available from `gh run view --log-failed`.
+
+## Apply client version, AutoLogin, and Discord updates: Add client AutoLogin and Discord update notifications
+
+- Run: [29685714976](https://github.com/KSPOG/klite/actions/runs/29685714976)
+- Conclusion: `failure`
+- Event: `pull_request`
+- Commit: `4ee5565f8ccf86050b0d098751556a45a16bf34b`
+- Created: `2026-07-19T11:45:20Z`
+
+### Failed jobs and steps
+
+- **verify-feature** — `failure`
+  - Step 5: **Run marketplace tests with diagnostics** — `failure`
+
+### Relevant log context
+
+```text
+verify-feature	Run marketplace tests with diagnostics	﻿2026-07-19T11:45:39.1976384Z ##[group]Run set +e
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1976687Z ^[[36;1mset +e^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1977051Z ^[[36;1mnpm --prefix marketplace-site test 2>&1 | tee marketplace-test.log^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1977872Z ^[[36;1mstatus=${PIPESTATUS[0]}^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1978263Z ^[[36;1mif [ "$status" -ne 0 ]; then^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1978519Z ^[[36;1m  {^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1978751Z ^[[36;1m    echo '### Marketplace test failure'^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1979042Z ^[[36;1m    echo '```text'^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1979297Z ^[[36;1m    tail -n 240 marketplace-test.log^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1979569Z ^[[36;1m    echo '```'^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1979810Z ^[[36;1m  } > marketplace-test-comment.md^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1980177Z ^[[36;1m  gh pr comment 57 --body-file marketplace-test-comment.md^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1980531Z ^[[36;1m  exit "$status"^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:39.1980757Z ^[[36;1mfi^[[0m
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6778230Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6798032Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6828198Z # Subtest: API page links the downloadable public API source bundle
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6829246Z ok 7 - API page links the downloadable public API source bundle
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6858162Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6888189Z   duration_ms: 0.327343
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6896634Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6903616Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6904466Z # Subtest: Cloudflare serves API page files before dynamic API routes
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6906238Z ok 8 - Cloudflare serves API page files before dynamic API routes
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6907233Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6908076Z   duration_ms: 0.445994
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6908883Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6916608Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6917359Z # Subtest: public API source bundle follows the documented API surface
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6918573Z not ok 9 - public API source bundle follows the documented API surface
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6919395Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6919849Z   duration_ms: 5.54599
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6920342Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6921169Z   location: '/home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:14:1'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6922201Z   failureType: 'testCodeFailure'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6922780Z   error: |-
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6923478Z     The input did not match the regular expression /verify_reference_parity/. Input:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6924292Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6924757Z     '#!/usr/bin/env python3\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6925575Z       '"""Build the Java source bundle represented by the public KLite API website.\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6926432Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6927186Z       'The website API reference is generated from the direct Java source files in the\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6928589Z       'KLite client API, automation runtime, and web-walker packages. This script\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6969062Z       'def sha256(path: Path) -> str:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6969623Z       '    digest = hashlib.sha256()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6970188Z       '    with path.open("rb") as stream:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6970895Z       '        for chunk in iter(lambda: stream.read(1024 * 1024), b""):\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6971582Z       '            digest.update(chunk)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6972137Z       '    return digest.hexdigest()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6972691Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6973073Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6973701Z       'def add_bytes(archive: zipfile.ZipFile, name: str, data: bytes) -> None:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6974486Z       '    info = zipfile.ZipInfo(name)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6975067Z       '    info.date_time = (2026, 1, 1, 0, 0, 0)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6975702Z       '    info.compress_type = zipfile.ZIP_DEFLATED\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6976328Z       '    info.external_attr = 0o644 << 16\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6976902Z       '    archive.writestr(info, data)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6977736Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6978214Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6978774Z       'def documented_reference() -> dict:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6980157Z       '    source = REFERENCE_FILE.read_text("utf-8")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6981197Z       '    prefix = "export const API_REFERENCE = "\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6982342Z       '    if not source.startswith("// Generated by") or prefix not in source:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6983792Z       '        raise RuntimeError(f"Unsupported API reference format: {REFERENCE_FILE}")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6985203Z       '    payload = source.split(prefix, 1)[1].strip()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6985942Z       '    if not payload.endswith(";"):\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6986962Z       '        raise RuntimeError(f"Generated API reference is missing its terminator: {REFERENCE_FILE}")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6988422Z       '    return json.loads(payload[:-1])\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6989052Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6989487Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6990066Z       'def discover_public_types() -> list[PublicType]:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6990868Z       '    public_types: list[PublicType] = []\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6991522Z       '    for area, directory_name in AREAS:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6992212Z       '        directory = KLITE_ROOT / directory_name\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6992913Z       '        if not directory.is_dir():\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6993846Z       '            raise FileNotFoundError(f"Public API source directory does not exist: {directory}")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6994968Z       '        for source_path in sorted(directory.glob("*.java")):\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6995803Z       '            source = source_path.read_text("utf-8")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6996598Z       '            package_match = PACKAGE_PATTERN.search(source)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6997619Z       '            type_match = TYPE_PATTERN.search(source)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6998427Z       '            if not package_match or not type_match:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.6999436Z       '                continue\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7000022Z       '            public_types.append(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7000633Z       '                PublicType(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7001234Z       '                    area=area,\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7001893Z       '                    name=type_match.group(2),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7002598Z       '                    kind=type_match.group(1),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7003358Z       '                    package_name=package_match.group(1),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7004057Z       '                    source_path=source_path,\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7004706Z       '                )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7005213Z       '            )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7005717Z       '    return public_types\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7006274Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7006919Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7015453Z       'def select_documented_types(discovered: list[PublicType], reference: dict) -> list[PublicType]:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7016777Z       '    source_by_key = {item.reference_key: item for item in discovered}\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7017876Z       '    documented_keys = [\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7018895Z       '        (section["name"], item["packageName"], item["name"], item["kind"])\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7019754Z       '        for section in reference.get("sections", [])\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7020453Z       '        for item in section.get("types", [])\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7021022Z       '    ]\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7021636Z       '    missing = [key for key in documented_keys if key not in source_by_key]\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7022390Z       '    if missing:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7022872Z       '        raise RuntimeError(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7023550Z       '            "Documented API types have no matching Java source: "\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7024538Z       '            f"{missing}. Run `npm run api:generate` in marketplace-site when the API changes."\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7025400Z       '        )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7026048Z       '    selected = [source_by_key[key] for key in documented_keys]\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7027123Z       '    expected_count = int(reference.get("typeCount", -1))\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7028319Z       '    if expected_count != len(selected):\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7029021Z       '        raise RuntimeError(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7030055Z       '            f"API reference declares {expected_count} types but {len(selected)} source files were selected"\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7031060Z       '        )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7031673Z       '    return selected\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7032247Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7032677Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7033325Z       'def bundle_readme(version: str, commit: str, count: int) -> bytes:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7034176Z       '    return (\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7071483Z       '    with zipfile.ZipFile(output, "w") as archive:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7072118Z       '        add_bytes(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7072609Z       '            archive,\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7073208Z       '            f"{BUNDLE_ROOT}/README.md",\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7074001Z       '            bundle_readme(version, commit, len(public_types)),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7074762Z       '        )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7075289Z       '        add_bytes(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7075830Z       '            archive,\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7076531Z       '            f"{BUNDLE_ROOT}/api-sources-manifest.json",\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7077682Z       '            (json.dumps(manifest, indent=2) + "\\n").encode("utf-8"),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7078552Z       '        )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7079122Z       '        for item in public_types:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7079773Z       '            destination = (\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7080627Z       '                Path(BUNDLE_ROOT) / "src" / "main" / "java" / item.relative_java_path\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7081521Z       '            ).as_posix()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7082315Z       '            add_bytes(archive, destination, item.source_path.read_bytes())\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7083160Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7083732Z       '    with zipfile.ZipFile(output) as archive:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7084759Z       '        corrupt_entry = archive.testzip()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7085395Z       '        if corrupt_entry:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7086358Z       '            raise RuntimeError(f"Generated API source ZIP contains a corrupt entry: {corrupt_entry}")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7087619Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7088162Z       '    print(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7088921Z       '        f"Built {output} with {len(public_types)} documented Java types; "\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7121352Z       '        f"SHA-256 {sha256(output)}"\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7122225Z       '    )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7122640Z       '    return output\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7123041Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7123360Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7123690Z       'def main() -> int:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7124303Z       '    version = os.environ.get("KLITE_SDK_VERSION", "0.0.0-local").strip()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7124970Z       '    try:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7125383Z       '        build_source_bundle(version)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7126244Z       '    except Exception as exception:  # noqa: BLE001 - command-line build reports complete failures\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7127302Z       '        print(f"API source bundle build failed: {exception}", file=sys.stderr)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7128247Z       '        return 1\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7128651Z       '    return 0\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7129011Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7129309Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7129637Z       'if __name__ == "__main__":\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7130094Z       '    raise SystemExit(main())\n'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7130529Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7130829Z   code: 'ERR_ASSERTION'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7131227Z   name: 'AssertionError'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7131603Z   expected:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7131910Z   actual: |-
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7132241Z     #!/usr/bin/env python3
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7132847Z     """Build the Java source bundle represented by the public KLite API website.
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7133515Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7134318Z     The website API reference is generated from the direct Java source files in the
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7135229Z     KLite client API, automation runtime, and web-walker packages. This script
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7160962Z     def sha256(path: Path) -> str:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7161455Z         digest = hashlib.sha256()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7161931Z         with path.open("rb") as stream:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7162533Z             for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7163162Z                 digest.update(chunk)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7163612Z         return digest.hexdigest()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7164030Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7164303Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7164805Z     def add_bytes(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7165482Z         info = zipfile.ZipInfo(name)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7165965Z         info.date_time = (2026, 1, 1, 0, 0, 0)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7166682Z         info.compress_type = zipfile.ZIP_DEFLATED
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7167185Z         info.external_attr = 0o644 << 16
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7167844Z         archive.writestr(info, data)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7168276Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7168547Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7168878Z     def documented_reference() -> dict:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7169440Z         source = REFERENCE_FILE.read_text("utf-8")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7169974Z         prefix = "export const API_REFERENCE = "
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7170616Z         if not source.startswith("// Generated by") or prefix not in source:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7171446Z             raise RuntimeError(f"Unsupported API reference format: {REFERENCE_FILE}")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7172181Z         payload = source.split(prefix, 1)[1].strip()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7172700Z         if not payload.endswith(";"):
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7173476Z             raise RuntimeError(f"Generated API reference is missing its terminator: {REFERENCE_FILE}")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7174284Z         return json.loads(payload[:-1])
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7174690Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7174958Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7175322Z     def discover_public_types() -> list[PublicType]:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7175854Z         public_types: list[PublicType] = []
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7176333Z         for area, directory_name in AREAS:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7176822Z             directory = KLITE_ROOT / directory_name
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7177342Z             if not directory.is_dir():
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7178281Z                 raise FileNotFoundError(f"Public API source directory does not exist: {directory}")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7179137Z             for source_path in sorted(directory.glob("*.java")):
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7179705Z                 source = source_path.read_text("utf-8")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7180331Z                 package_match = PACKAGE_PATTERN.search(source)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7181215Z                 type_match = TYPE_PATTERN.search(source)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7181828Z                 if not package_match or not type_match:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7182299Z                     continue
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7182660Z                 public_types.append(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7183053Z                     PublicType(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7183425Z                         area=area,
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7183860Z                         name=type_match.group(2),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7184347Z                         kind=type_match.group(1),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7184886Z                         package_name=package_match.group(1),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7185414Z                         source_path=source_path,
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7185865Z                     )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7186193Z                 )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7186546Z         return public_types
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7186941Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7187234Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7188124Z     def select_documented_types(discovered: list[PublicType], reference: dict) -> list[PublicType]:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7189484Z         source_by_key = {item.reference_key: item for item in discovered}
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7190140Z         documented_keys = [
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7190700Z             (section["name"], item["packageName"], item["name"], item["kind"])
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7191408Z             for section in reference.get("sections", [])
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7191977Z             for item in section.get("types", [])
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7192459Z         ]
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7192963Z         missing = [key for key in documented_keys if key not in source_by_key]
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7193599Z         if missing:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7193932Z             raise RuntimeError(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7194452Z                 "Documented API types have no matching Java source: "
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7195278Z                 f"{missing}. Run `npm run api:generate` in marketplace-site when the API changes."
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7195982Z             )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7196444Z         selected = [source_by_key[key] for key in documented_keys]
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7197688Z         expected_count = int(reference.get("typeCount", -1))
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7198287Z         if expected_count != len(selected):
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7198779Z             raise RuntimeError(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7199533Z                 f"API reference declares {expected_count} types but {len(selected)} source files were selected"
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7200346Z             )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7200692Z         return selected
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7201071Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7201360Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7201845Z     def bundle_readme(version: str, commit: str, count: int) -> bytes:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7202469Z         return (
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7230492Z         with zipfile.ZipFile(output, "w") as archive:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7231035Z             add_bytes(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7231403Z                 archive,
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7231792Z                 f"{BUNDLE_ROOT}/README.md",
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7232380Z                 bundle_readme(version, commit, len(public_types)),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7232925Z             )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7233252Z             add_bytes(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7233632Z                 archive,
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7234113Z                 f"{BUNDLE_ROOT}/api-sources-manifest.json",
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7234789Z                 (json.dumps(manifest, indent=2) + "\n").encode("utf-8"),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7235378Z             )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7235743Z             for item in public_types:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7236214Z                 destination = (
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7236862Z                     Path(BUNDLE_ROOT) / "src" / "main" / "java" / item.relative_java_path
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7237827Z                 ).as_posix()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7238426Z                 add_bytes(archive, destination, item.source_path.read_bytes())
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7239064Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7239458Z         with zipfile.ZipFile(output) as archive:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7240021Z             corrupt_entry = archive.testzip()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7240517Z             if corrupt_entry:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7241287Z                 raise RuntimeError(f"Generated API source ZIP contains a corrupt entry: {corrupt_entry}")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7242089Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7242414Z         print(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7242950Z             f"Built {output} with {len(public_types)} documented Java types; "
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7243635Z             f"SHA-256 {sha256(output)}"
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7244084Z         )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7244395Z         return output
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7245012Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7245321Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7245652Z     def main() -> int:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7246252Z         version = os.environ.get("KLITE_SDK_VERSION", "0.0.0-local").strip()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7246895Z         try:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7247230Z             build_source_bundle(version)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7248308Z         except Exception as exception:  # noqa: BLE001 - command-line build reports complete failures
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7249331Z             print(f"API source bundle build failed: {exception}", file=sys.stderr)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7249964Z             return 1
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7250296Z         return 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7250602Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7250869Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7251169Z     if __name__ == "__main__":
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7251576Z         raise SystemExit(main())
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:40.7251958Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3078592Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3079157Z   duration_ms: 3.555292
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3080685Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3081273Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3082106Z # Subtest: requires a client login before serving paid plugin artifacts
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3083217Z ok 35 - requires a client login before serving paid plugin artifacts
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3084385Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3084966Z   duration_ms: 0.917047
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3085736Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3086215Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3146441Z 1..35
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3147217Z # tests 35
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3147798Z # suites 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3148106Z # pass 34
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3148756Z # fail 1
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3149062Z # cancelled 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3149668Z # skipped 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3150221Z # todo 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:41.3150712Z # duration_ms 902.776282
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:42.1232813Z https://github.com/KSPOG/klite/pull/57#issuecomment-5015585050
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:42.1266800Z ##[error]Process completed with exit code 1.
+```
+
+## CI: Add client AutoLogin and Discord update notifications
+
+- Run: [29685714971](https://github.com/KSPOG/klite/actions/runs/29685714971)
+- Conclusion: `failure`
+- Event: `pull_request`
+- Commit: `4ee5565f8ccf86050b0d098751556a45a16bf34b`
+- Created: `2026-07-19T11:45:20Z`
+
+### Failed jobs and steps
+
+- **build** — `failure`
+  - Step 6: **Build and Test** — `failure`
+
+### Relevant log context
+
+```text
+build	Build and Test	2026-07-19T11:46:04.5887822Z > Task :runelite-api:build
+build	Build and Test	2026-07-19T11:46:12.9918890Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/party/messages/PartyChatMessage.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:46:12.9920820Z
+build	Build and Test	2026-07-19T11:46:12.9946062Z @Value
+build	Build and Test	2026-07-19T11:46:12.9946532Z > Task :client:compileJava
+build	Build and Test	2026-07-19T11:46:12.9975852Z ^
+build	Build and Test	2026-07-19T11:46:12.9978188Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/PrivateMessageInput.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:46:12.9980624Z @Value
+build	Build and Test	2026-07-19T11:46:12.9981046Z ^
+build	Build and Test	2026-07-19T11:46:12.9983308Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/ChatboxInput.java:32: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:46:12.9985956Z @Value
+build	Build and Test	2026-07-19T11:46:12.9986351Z ^
+build	Build and Test	2026-07-19T11:46:12.9988666Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/devtools/ScriptInspector.java:100: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:46:12.9991147Z 	@Data
+build	Build and Test	2026-07-19T11:46:12.9991535Z 	^
+build	Build and Test	2026-07-19T11:46:20.2889023Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/agility/Courses.java:88: warning: non-varargs call of varargs method with inexact argument type for last parameter;
+build	Build and Test	2026-07-19T11:46:20.2908107Z 		this(totalXp, -1, null);
+build	Build and Test	2026-07-19T11:46:20.2926337Z 		                  ^
+build	Build and Test	2026-07-19T11:46:20.2946537Z   cast to WorldPoint for a varargs call
+build	Build and Test	2026-07-19T11:46:20.2976606Z   cast to WorldPoint[] for a non-varargs call and to suppress this warning
+build	Build and Test	2026-07-19T11:46:23.9977130Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java:154: error: cannot find symbol
+build	Build and Test	2026-07-19T11:46:24.0008872Z 			client.getUsername(), client.getPassword());
+build	Build and Test	2026-07-19T11:46:24.0035707Z 			                            ^
+build	Build and Test	2026-07-19T11:46:24.0065704Z   symbol:   method getPassword()
+build	Build and Test	2026-07-19T11:46:24.0095709Z   location: variable client of type Client
+build	Build and Test	2026-07-19T11:46:25.0913807Z Note: Some input files use or override a deprecated API.
+build	Build and Test	2026-07-19T11:46:25.0936128Z Note: Recompile with -Xlint:deprecation for details.
+build	Build and Test	2026-07-19T11:46:25.0939067Z Note: Some input files use unchecked or unsafe operations.
+build	Build and Test	2026-07-19T11:46:25.0940004Z Note: Recompile with -Xlint:unchecked for details.
+build	Build and Test	2026-07-19T11:46:25.0940732Z 1 error
+build	Build and Test	2026-07-19T11:46:25.0941224Z 5 warnings
+build	Build and Test	2026-07-19T11:46:25.3885855Z
+build	Build and Test	2026-07-19T11:46:25.3890241Z
+build	Build and Test	2026-07-19T11:46:25.3890891Z > Task :client:compileJava FAILED
+build	Build and Test	2026-07-19T11:46:25.3891835Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-19T11:46:25.3892898Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784461551470.json
+build	Build and Test	2026-07-19T11:46:25.3894116Z
+build	Build and Test	2026-07-19T11:46:25.3894656Z 55 actionable tasks: 23 executed, 32 from cache
+build	Build and Test	2026-07-19T11:46:25.3896828Z * What went wrong:
+build	Build and Test	2026-07-19T11:46:25.3897562Z Execution failed for task ':client:compileJava'.
+build	Build and Test	2026-07-19T11:46:25.3898591Z > Compilation failed; see the compiler error output for details.
+build	Build and Test	2026-07-19T11:46:25.3899747Z
+build	Build and Test	2026-07-19T11:46:25.3900086Z * Try:
+build	Build and Test	2026-07-19T11:46:25.3900718Z > Run with --info option to get more log output.
+build	Build and Test	2026-07-19T11:46:25.3901501Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-19T11:46:25.3902032Z
+build	Build and Test	2026-07-19T11:46:25.3902362Z BUILD FAILED in 42s
+build	Build and Test	2026-07-19T11:46:25.8593022Z ##[error]Process completed with exit code 1.
+```
+
+## CI: Allow the API reference scoped stylesheet
+
+- Run: [29685713911](https://github.com/KSPOG/klite/actions/runs/29685713911)
+- Conclusion: `failure`
+- Event: `push`
+- Commit: `4ee5565f8ccf86050b0d098751556a45a16bf34b`
+- Created: `2026-07-19T11:45:18Z`
+
+### Failed jobs and steps
+
+- **build** — `failure`
+  - Step 6: **Build and Test** — `failure`
+
+### Relevant log context
+
+```text
+build	Build and Test	2026-07-19T11:46:00.4429224Z > Task :runelite-api:build
+build	Build and Test	2026-07-19T11:46:10.3442450Z
+build	Build and Test	2026-07-19T11:46:10.3443454Z > Task :client:compileJava
+build	Build and Test	2026-07-19T11:46:10.3487947Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/PrivateMessageInput.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:46:10.3515433Z @Value
+build	Build and Test	2026-07-19T11:46:10.3522620Z ^
+build	Build and Test	2026-07-19T11:46:10.3524828Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/ChatboxInput.java:32: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:46:10.3527384Z @Value
+build	Build and Test	2026-07-19T11:46:10.3527774Z ^
+build	Build and Test	2026-07-19T11:46:10.3529917Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/party/messages/PartyChatMessage.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:46:10.3532177Z @Value
+build	Build and Test	2026-07-19T11:46:10.3532588Z ^
+build	Build and Test	2026-07-19T11:46:10.3534730Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/devtools/ScriptInspector.java:100: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:46:10.3539597Z 	@Data
+build	Build and Test	2026-07-19T11:46:10.3539998Z 	^
+build	Build and Test	2026-07-19T11:46:17.0429224Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/agility/Courses.java:88: warning: non-varargs call of varargs method with inexact argument type for last parameter;
+build	Build and Test	2026-07-19T11:46:17.0431611Z 		this(totalXp, -1, null);
+build	Build and Test	2026-07-19T11:46:17.0432645Z 		                  ^
+build	Build and Test	2026-07-19T11:46:17.0433436Z   cast to WorldPoint for a varargs call
+build	Build and Test	2026-07-19T11:46:17.0434418Z   cast to WorldPoint[] for a non-varargs call and to suppress this warning
+build	Build and Test	2026-07-19T11:46:21.2490083Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java:154: error: cannot find symbol
+build	Build and Test	2026-07-19T11:46:21.2515987Z 			client.getUsername(), client.getPassword());
+build	Build and Test	2026-07-19T11:46:21.2545535Z 			                            ^
+build	Build and Test	2026-07-19T11:46:21.2575602Z   symbol:   method getPassword()
+build	Build and Test	2026-07-19T11:46:21.2576517Z   location: variable client of type Client
+build	Build and Test	2026-07-19T11:46:22.2426703Z Note: Some input files use or override a deprecated API.
+build	Build and Test	2026-07-19T11:46:22.2458824Z Note: Recompile with -Xlint:deprecation for details.
+build	Build and Test	2026-07-19T11:46:22.2466258Z Note: Some input files use unchecked or unsafe operations.
+build	Build and Test	2026-07-19T11:46:22.2495823Z Note: Recompile with -Xlint:unchecked for details.
+build	Build and Test	2026-07-19T11:46:22.2545722Z 1 error
+build	Build and Test	2026-07-19T11:46:22.2565833Z 5 warnings
+build	Build and Test	2026-07-19T11:46:22.5417284Z
+build	Build and Test	2026-07-19T11:46:22.5418036Z > Task :client:compileJava FAILED
+build	Build and Test	2026-07-19T11:46:22.6427744Z
+build	Build and Test	2026-07-19T11:46:22.6428696Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784461548197.json
+build	Build and Test	2026-07-19T11:46:22.6445870Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-19T11:46:22.6455882Z 55 actionable tasks: 23 executed, 32 from cache
+build	Build and Test	2026-07-19T11:46:22.6475778Z
+build	Build and Test	2026-07-19T11:46:22.6506235Z * What went wrong:
+build	Build and Test	2026-07-19T11:46:22.6536162Z Execution failed for task ':client:compileJava'.
+build	Build and Test	2026-07-19T11:46:22.6565566Z > Compilation failed; see the compiler error output for details.
+build	Build and Test	2026-07-19T11:46:22.6571367Z
+build	Build and Test	2026-07-19T11:46:22.6571766Z * Try:
+build	Build and Test	2026-07-19T11:46:22.6572475Z > Run with --info option to get more log output.
+build	Build and Test	2026-07-19T11:46:22.6573776Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-19T11:46:22.6574375Z
+build	Build and Test	2026-07-19T11:46:22.6574763Z BUILD FAILED in 42s
+build	Build and Test	2026-07-19T11:46:23.0881974Z ##[error]Process completed with exit code 1.
+```
+
+## Apply client version, AutoLogin, and Discord updates: Add client AutoLogin and Discord update notifications
+
+- Run: [29685704265](https://github.com/KSPOG/klite/actions/runs/29685704265)
+- Conclusion: `failure`
+- Event: `pull_request`
+- Commit: `0365c281d15705e1355d098f320d6b8f904f4144`
+- Created: `2026-07-19T11:45:02Z`
+
+### Failed jobs and steps
+
+- **verify-feature** — `failure`
+  - Step 5: **Run marketplace tests with diagnostics** — `failure`
+
+### Relevant log context
+
+```text
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5609424Z # Subtest: Cloudflare serves API page files before dynamic API routes
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5610890Z ok 8 - Cloudflare serves API page files before dynamic API routes
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5611670Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5612230Z   duration_ms: 0.383172
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5612662Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5613187Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5613831Z # Subtest: public API source bundle follows the documented API surface
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5615049Z not ok 9 - public API source bundle follows the documented API surface
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5615677Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5616068Z   duration_ms: 3.893283
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5616488Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5617135Z   location: '/home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:14:1'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5618115Z   failureType: 'testCodeFailure'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5618627Z   error: |-
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5619258Z     The input did not match the regular expression /verify_reference_parity/. Input:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5619918Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5620317Z     '#!/usr/bin/env python3\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5620995Z       '"""Build the Java source bundle represented by the public KLite API website.\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5621686Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5622287Z       'The website API reference is generated from the direct Java source files in the\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5623376Z       'KLite client API, automation runtime, and web-walker packages. This script\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5650149Z       'def sha256(path: Path) -> str:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5650471Z       '    digest = hashlib.sha256()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5650716Z       '    with path.open("rb") as stream:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5651008Z       '        for chunk in iter(lambda: stream.read(1024 * 1024), b""):\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5651378Z       '            digest.update(chunk)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5651612Z       '    return digest.hexdigest()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5651854Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5652060Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5652330Z       'def add_bytes(archive: zipfile.ZipFile, name: str, data: bytes) -> None:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5652724Z       '    info = zipfile.ZipInfo(name)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5652977Z       '    info.date_time = (2026, 1, 1, 0, 0, 0)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5653244Z       '    info.compress_type = zipfile.ZIP_DEFLATED\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5653566Z       '    info.external_attr = 0o644 << 16\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5653807Z       '    archive.writestr(info, data)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5654175Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5654680Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5654997Z       'def documented_reference() -> dict:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5655398Z       '    source = REFERENCE_FILE.read_text("utf-8")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5655767Z       '    prefix = "export const API_REFERENCE = "\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5656234Z       '    if not source.startswith("// Generated by") or prefix not in source:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5656877Z       '        raise RuntimeError(f"Unsupported API reference format: {REFERENCE_FILE}")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5657509Z       '    payload = source.split(prefix, 1)[1].strip()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5657945Z       '    if not payload.endswith(";"):\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5658460Z       '        raise RuntimeError(f"Generated API reference is missing its terminator: {REFERENCE_FILE}")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5659033Z       '    return json.loads(payload[:-1])\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5659365Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5659584Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5659860Z       'def discover_public_types() -> list[PublicType]:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5660253Z       '    public_types: list[PublicType] = []\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5660604Z       '    for area, directory_name in AREAS:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5661005Z       '        directory = KLITE_ROOT / directory_name\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5661512Z       '        if not directory.is_dir():\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5662155Z       '            raise FileNotFoundError(f"Public API source directory does not exist: {directory}")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5662803Z       '        for source_path in sorted(directory.glob("*.java")):\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5663320Z       '            source = source_path.read_text("utf-8")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5663758Z       '            package_match = PACKAGE_PATTERN.search(source)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5664329Z       '            type_match = TYPE_PATTERN.search(source)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5664797Z       '            if not package_match or not type_match:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5665444Z       '                continue\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5665816Z       '            public_types.append(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5666200Z       '                PublicType(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5666561Z       '                    area=area,\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5666935Z       '                    name=type_match.group(2),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5667348Z       '                    kind=type_match.group(1),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5667774Z       '                    package_name=package_match.group(1),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5668217Z       '                    source_path=source_path,\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5668581Z       '                )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5668879Z       '            )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5669168Z       '    return public_types\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5669472Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5669713Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5670241Z       'def select_documented_types(discovered: list[PublicType], reference: dict) -> list[PublicType]:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5671020Z       '    source_by_key = {item.reference_key: item for item in discovered}\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5671517Z       '    documented_keys = [\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5671978Z       '        (section["name"], item["packageName"], item["name"], item["kind"])\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5672479Z       '        for section in reference.get("sections", [])\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5672895Z       '        for item in section.get("types", [])\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5673218Z       '    ]\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5673593Z       '    missing = [key for key in documented_keys if key not in source_by_key]\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5674203Z       '    if missing:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5674523Z       '        raise RuntimeError(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5674971Z       '            "Documented API types have no matching Java source: "\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5675638Z       '            f"{missing}. Run `npm run api:generate` in marketplace-site when the API changes."\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5676201Z       '        )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5676724Z       '    selected = [source_by_key[key] for key in documented_keys]\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5677332Z       '    expected_count = int(reference.get("typeCount", -1))\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5677792Z       '    if expected_count != len(selected):\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5678154Z       '        raise RuntimeError(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5678719Z       '            f"API reference declares {expected_count} types but {len(selected)} source files were selected"\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5679121Z       '        )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5679301Z       '    return selected\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5679494Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5679645Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5679885Z       'def bundle_readme(version: str, commit: str, count: int) -> bytes:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5680220Z       '    return (\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5693673Z       '    with zipfile.ZipFile(output, "w") as archive:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5693927Z       '        add_bytes(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5694969Z       '            archive,\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5695308Z       '            f"{BUNDLE_ROOT}/README.md",\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5695787Z       '            bundle_readme(version, commit, len(public_types)),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5696220Z       '        )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5696490Z       '        add_bytes(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5696783Z       '            archive,\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5697168Z       '            f"{BUNDLE_ROOT}/api-sources-manifest.json",\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5697677Z       '            (json.dumps(manifest, indent=2) + "\\n").encode("utf-8"),\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5698105Z       '        )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5698387Z       '        for item in public_types:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5698737Z       '            destination = (\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5699202Z       '                Path(BUNDLE_ROOT) / "src" / "main" / "java" / item.relative_java_path\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5699688Z       '            ).as_posix()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5700135Z       '            add_bytes(archive, destination, item.source_path.read_bytes())\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5700584Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5700887Z       '    with zipfile.ZipFile(output) as archive:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5701475Z       '        corrupt_entry = archive.testzip()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5701824Z       '        if corrupt_entry:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5702402Z       '            raise RuntimeError(f"Generated API source ZIP contains a corrupt entry: {corrupt_entry}")\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5702997Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5728727Z       '    print(\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5729214Z       '        f"Built {output} with {len(public_types)} documented Java types; "\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5729740Z       '        f"SHA-256 {sha256(output)}"\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5730084Z       '    )\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5730348Z       '    return output\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5730621Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5730868Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5731119Z       'def main() -> int:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5731575Z       '    version = os.environ.get("KLITE_SDK_VERSION", "0.0.0-local").strip()\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5732062Z       '    try:\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5732346Z       '        build_source_bundle(version)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5732988Z       '    except Exception as exception:  # noqa: BLE001 - command-line build reports complete failures\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5733724Z       '        print(f"API source bundle build failed: {exception}", file=sys.stderr)\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5735535Z       '        return 1\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5735827Z       '    return 0\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5736086Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5736310Z       '\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5736552Z       'if __name__ == "__main__":\n' +
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5736883Z       '    raise SystemExit(main())\n'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5737203Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5737415Z   code: 'ERR_ASSERTION'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5737689Z   name: 'AssertionError'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5737947Z   expected:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5738166Z   actual: |-
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5738412Z     #!/usr/bin/env python3
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5738861Z     """Build the Java source bundle represented by the public KLite API website.
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5739553Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5739944Z     The website API reference is generated from the direct Java source files in the
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5740588Z     KLite client API, automation runtime, and web-walker packages. This script
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5758314Z     def sha256(path: Path) -> str:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5758672Z         digest = hashlib.sha256()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5759191Z         with path.open("rb") as stream:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5759768Z             for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5760339Z                 digest.update(chunk)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5760700Z         return digest.hexdigest()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5761013Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5761241Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5761552Z     def add_bytes(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5762058Z         info = zipfile.ZipInfo(name)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5762819Z         info.date_time = (2026, 1, 1, 0, 0, 0)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5763147Z         info.compress_type = zipfile.ZIP_DEFLATED
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5763453Z         info.external_attr = 0o644 << 16
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5763839Z         archive.writestr(info, data)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5764260Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5764491Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5764658Z     def documented_reference() -> dict:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5764956Z         source = REFERENCE_FILE.read_text("utf-8")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5765251Z         prefix = "export const API_REFERENCE = "
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5765566Z         if not source.startswith("// Generated by") or prefix not in source:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5766060Z             raise RuntimeError(f"Unsupported API reference format: {REFERENCE_FILE}")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5766416Z         payload = source.split(prefix, 1)[1].strip()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5766754Z         if not payload.endswith(";"):
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5767105Z             raise RuntimeError(f"Generated API reference is missing its terminator: {REFERENCE_FILE}")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5767559Z         return json.loads(payload[:-1])
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5767770Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5767915Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5768145Z     def discover_public_types() -> list[PublicType]:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5768441Z         public_types: list[PublicType] = []
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5768678Z         for area, directory_name in AREAS:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5768955Z             directory = KLITE_ROOT / directory_name
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5769235Z             if not directory.is_dir():
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5769577Z                 raise FileNotFoundError(f"Public API source directory does not exist: {directory}")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5770175Z             for source_path in sorted(directory.glob("*.java")):
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5770600Z                 source = source_path.read_text("utf-8")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5771002Z                 package_match = PACKAGE_PATTERN.search(source)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5771625Z                 type_match = TYPE_PATTERN.search(source)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5772097Z                 if not package_match or not type_match:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5772486Z                     continue
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5772775Z                 public_types.append(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5773124Z                     PublicType(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5773423Z                         area=area,
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5773749Z                         name=type_match.group(2),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5774353Z                         kind=type_match.group(1),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5774720Z                         package_name=package_match.group(1),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5775076Z                         source_path=source_path,
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5775383Z                     )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5775613Z                 )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5775855Z         return public_types
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5776120Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5776325Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5776803Z     def select_documented_types(discovered: list[PublicType], reference: dict) -> list[PublicType]:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5777495Z         source_by_key = {item.reference_key: item for item in discovered}
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5777931Z         documented_keys = [
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5778319Z             (section["name"], item["packageName"], item["name"], item["kind"])
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5778775Z             for section in reference.get("sections", [])
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5779158Z             for item in section.get("types", [])
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5779489Z         ]
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5779842Z         missing = [key for key in documented_keys if key not in source_by_key]
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5780269Z         if missing:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5780530Z             raise RuntimeError(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5780898Z                 "Documented API types have no matching Java source: "
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5781481Z                 f"{missing}. Run `npm run api:generate` in marketplace-site when the API changes."
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5781983Z             )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5782335Z         selected = [source_by_key[key] for key in documented_keys]
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5783027Z         expected_count = int(reference.get("typeCount", -1))
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5783450Z         if expected_count != len(selected):
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5783795Z             raise RuntimeError(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5784549Z                 f"API reference declares {expected_count} types but {len(selected)} source files were selected"
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5785129Z             )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5785368Z         return selected
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5785649Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5785871Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5786222Z     def bundle_readme(version: str, commit: str, count: int) -> bytes:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5786661Z         return (
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5805707Z         with zipfile.ZipFile(output, "w") as archive:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5806084Z             add_bytes(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5806349Z                 archive,
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5806651Z                 f"{BUNDLE_ROOT}/README.md",
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5807065Z                 bundle_readme(version, commit, len(public_types)),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5807466Z             )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5807704Z             add_bytes(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5807959Z                 archive,
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5808299Z                 f"{BUNDLE_ROOT}/api-sources-manifest.json",
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5808772Z                 (json.dumps(manifest, indent=2) + "\n").encode("utf-8"),
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5809193Z             )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5809456Z             for item in public_types:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5809791Z                 destination = (
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5810230Z                     Path(BUNDLE_ROOT) / "src" / "main" / "java" / item.relative_java_path
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5810715Z                 ).as_posix()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5811126Z                 add_bytes(archive, destination, item.source_path.read_bytes())
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5811577Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5811847Z         with zipfile.ZipFile(output) as archive:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5812241Z             corrupt_entry = archive.testzip()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5812598Z             if corrupt_entry:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5813145Z                 raise RuntimeError(f"Generated API source ZIP contains a corrupt entry: {corrupt_entry}")
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5813705Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5813926Z         print(
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5814405Z             f"Built {output} with {len(public_types)} documented Java types; "
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5814883Z             f"SHA-256 {sha256(output)}"
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5815197Z         )
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5815422Z         return output
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5815819Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5816026Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5816247Z     def main() -> int:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5816663Z         version = os.environ.get("KLITE_SDK_VERSION", "0.0.0-local").strip()
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5817108Z         try:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5817370Z             build_source_bundle(version)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5817935Z         except Exception as exception:  # noqa: BLE001 - command-line build reports complete failures
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5818640Z             print(f"API source bundle build failed: {exception}", file=sys.stderr)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5819113Z             return 1
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5819375Z         return 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5819605Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5819812Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5820039Z     if __name__ == "__main__":
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5820351Z         raise SystemExit(main())
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.5820641Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6207297Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6207597Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6385159Z # Subtest: normalizes Discord bot role and channel settings
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6395721Z ok 19 - normalizes Discord bot role and channel settings
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6434598Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6474696Z   duration_ms: 1.157528
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6495872Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6524796Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6554852Z # Subtest: shows the dashboard only when the linked member currently has Dev
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6575706Z ok 20 - shows the dashboard only when the linked member currently has Dev
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6579271Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6580301Z   duration_ms: 24.903135
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6600819Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6602260Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6742411Z # Subtest: public pages serve the generated design system and scoped credit styles
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6775500Z not ok 21 - public pages serve the generated design system and scoped credit styles
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6781451Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6781871Z   duration_ms: 49.05629
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6782303Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6782927Z   location: '/home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:13:1'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6783652Z   failureType: 'testCodeFailure'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6784244Z   error: |-
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6784627Z     Expected values to be strictly equal:
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6785062Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6785393Z     2 !== 1
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6785743Z
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6786503Z   code: 'ERR_ASSERTION'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6786917Z   name: 'AssertionError'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6787331Z   expected: 1
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6787698Z   actual: 2
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6788075Z   operator: 'strictEqual'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6788471Z   stack: |-
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6789095Z     TestContext.<anonymous> (file:///home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:39:12)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6789913Z     async Test.run (node:internal/test_runner/test:1054:7)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:22.6790583Z     async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1407627Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1407797Z   duration_ms: 2.420922
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1407977Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1408158Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1408505Z # Subtest: requires a client login before serving paid plugin artifacts
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1408915Z ok 35 - requires a client login before serving paid plugin artifacts
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1409283Z   ---
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1409461Z   duration_ms: 0.696294
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1409639Z   type: 'test'
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1409814Z   ...
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1472338Z 1..35
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1472748Z # tests 35
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1473140Z # suites 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1473525Z # pass 33
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1474157Z # fail 2
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1474603Z # cancelled 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1475047Z # skipped 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1475286Z # todo 0
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.1475512Z # duration_ms 724.727697
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.9907831Z https://github.com/KSPOG/klite/pull/57#issuecomment-5015584193
+verify-feature	Run marketplace tests with diagnostics	2026-07-19T11:45:23.9939683Z ##[error]Process completed with exit code 1.
+```
+
+## CI: Add client AutoLogin and Discord update notifications
+
+- Run: [29685704187](https://github.com/KSPOG/klite/actions/runs/29685704187)
+- Conclusion: `failure`
+- Event: `pull_request`
+- Commit: `0365c281d15705e1355d098f320d6b8f904f4144`
+- Created: `2026-07-19T11:45:02Z`
+
+### Failed jobs and steps
+
+- **build** — `failure`
+  - Step 6: **Build and Test** — `failure`
+
+### Relevant log context
+
+```text
+build	Build and Test	2026-07-19T11:45:37.0015232Z > Task :runelite-api:build
+build	Build and Test	2026-07-19T11:45:47.4014469Z
+build	Build and Test	2026-07-19T11:45:47.4026217Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/party/messages/PartyChatMessage.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:45:47.4029231Z > Task :client:compileJava
+build	Build and Test	2026-07-19T11:45:47.4029955Z @Value
+build	Build and Test	2026-07-19T11:45:47.4030372Z ^
+build	Build and Test	2026-07-19T11:45:47.4032651Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/PrivateMessageInput.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:45:47.4035381Z @Value
+build	Build and Test	2026-07-19T11:45:47.4035765Z ^
+build	Build and Test	2026-07-19T11:45:47.4037970Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/ChatboxInput.java:32: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:45:47.4040369Z @Value
+build	Build and Test	2026-07-19T11:45:47.4040759Z ^
+build	Build and Test	2026-07-19T11:45:47.4043157Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/devtools/ScriptInspector.java:100: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:45:47.4045901Z 	@Data
+build	Build and Test	2026-07-19T11:45:47.4046266Z 	^
+build	Build and Test	2026-07-19T11:45:54.3046323Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/agility/Courses.java:88: warning: non-varargs call of varargs method with inexact argument type for last parameter;
+build	Build and Test	2026-07-19T11:45:54.3067364Z 		this(totalXp, -1, null);
+build	Build and Test	2026-07-19T11:45:54.3068785Z 		                  ^
+build	Build and Test	2026-07-19T11:45:54.3069307Z   cast to WorldPoint for a varargs call
+build	Build and Test	2026-07-19T11:45:54.3070103Z   cast to WorldPoint[] for a non-varargs call and to suppress this warning
+build	Build and Test	2026-07-19T11:45:57.7004525Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java:154: error: cannot find symbol
+build	Build and Test	2026-07-19T11:45:57.7006800Z 			client.getUsername(), client.getPassword());
+build	Build and Test	2026-07-19T11:45:57.7007872Z 			                            ^
+build	Build and Test	2026-07-19T11:45:57.7008775Z   symbol:   method getPassword()
+build	Build and Test	2026-07-19T11:45:57.7009632Z   location: variable client of type Client
+build	Build and Test	2026-07-19T11:45:58.7015465Z Note: Some input files use or override a deprecated API.
+build	Build and Test	2026-07-19T11:45:58.7055398Z Note: Recompile with -Xlint:deprecation for details.
+build	Build and Test	2026-07-19T11:45:58.7114981Z Note: Some input files use unchecked or unsafe operations.
+build	Build and Test	2026-07-19T11:45:58.7144814Z Note: Recompile with -Xlint:unchecked for details.
+build	Build and Test	2026-07-19T11:45:58.7146259Z 1 error
+build	Build and Test	2026-07-19T11:45:58.7174589Z 5 warnings
+build	Build and Test	2026-07-19T11:45:59.0000050Z
+build	Build and Test	2026-07-19T11:45:59.0002185Z > Task :client:compileJava FAILED
+build	Build and Test	2026-07-19T11:45:59.1002099Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784461524731.json
+build	Build and Test	2026-07-19T11:45:59.1007625Z
+build	Build and Test	2026-07-19T11:45:59.1011803Z 55 actionable tasks: 23 executed, 32 from cache
+build	Build and Test	2026-07-19T11:45:59.1018583Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-19T11:45:59.1035040Z
+build	Build and Test	2026-07-19T11:45:59.1036054Z * What went wrong:
+build	Build and Test	2026-07-19T11:45:59.1036935Z Execution failed for task ':client:compileJava'.
+build	Build and Test	2026-07-19T11:45:59.1038058Z > Compilation failed; see the compiler error output for details.
+build	Build and Test	2026-07-19T11:45:59.1038832Z
+build	Build and Test	2026-07-19T11:45:59.1039213Z * Try:
+build	Build and Test	2026-07-19T11:45:59.1039912Z > Run with --info option to get more log output.
+build	Build and Test	2026-07-19T11:45:59.1040832Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-19T11:45:59.1041457Z
+build	Build and Test	2026-07-19T11:45:59.1041830Z BUILD FAILED in 42s
+build	Build and Test	2026-07-19T11:45:59.5445278Z ##[error]Process completed with exit code 1.
+```
+
+## CI: Run public API bundle tests as ES modules
+
+- Run: [29685702263](https://github.com/KSPOG/klite/actions/runs/29685702263)
+- Conclusion: `failure`
+- Event: `push`
+- Commit: `0365c281d15705e1355d098f320d6b8f904f4144`
+- Created: `2026-07-19T11:44:59Z`
+
+### Failed jobs and steps
+
+- **build** — `failure`
+  - Step 6: **Build and Test** — `failure`
+
+### Relevant log context
+
+```text
+build	Build and Test	2026-07-19T11:45:30.5255345Z > Task :runelite-api:build
+build	Build and Test	2026-07-19T11:45:37.6147652Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/party/messages/PartyChatMessage.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:45:37.6149886Z
+build	Build and Test	2026-07-19T11:45:37.6175398Z @Value
+build	Build and Test	2026-07-19T11:45:37.6176041Z ^
+build	Build and Test	2026-07-19T11:45:37.6176728Z > Task :client:compileJava
+build	Build and Test	2026-07-19T11:45:37.6236878Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/PrivateMessageInput.java:29: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:45:37.6265181Z @Value
+build	Build and Test	2026-07-19T11:45:37.6266576Z ^
+build	Build and Test	2026-07-19T11:45:37.6268744Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/events/ChatboxInput.java:32: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:45:37.6270870Z @Value
+build	Build and Test	2026-07-19T11:45:37.6271398Z ^
+build	Build and Test	2026-07-19T11:45:37.6305039Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/devtools/ScriptInspector.java:100: warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+build	Build and Test	2026-07-19T11:45:37.6306924Z 	@Data
+build	Build and Test	2026-07-19T11:45:37.6307339Z 	^
+build	Build and Test	2026-07-19T11:45:44.0117761Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/agility/Courses.java:88: warning: non-varargs call of varargs method with inexact argument type for last parameter;
+build	Build and Test	2026-07-19T11:45:44.0133175Z 		this(totalXp, -1, null);
+build	Build and Test	2026-07-19T11:45:44.0134985Z 		                  ^
+build	Build and Test	2026-07-19T11:45:44.0135709Z   cast to WorldPoint for a varargs call
+build	Build and Test	2026-07-19T11:45:44.0136551Z   cast to WorldPoint[] for a non-varargs call and to suppress this warning
+build	Build and Test	2026-07-19T11:45:46.9111171Z /home/runner/work/klite/klite/runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java:154: error: cannot find symbol
+build	Build and Test	2026-07-19T11:45:46.9113388Z 			client.getUsername(), client.getPassword());
+build	Build and Test	2026-07-19T11:45:46.9114309Z 			                            ^
+build	Build and Test	2026-07-19T11:45:46.9115621Z   symbol:   method getPassword()
+build	Build and Test	2026-07-19T11:45:46.9116518Z   location: variable client of type Client
+build	Build and Test	2026-07-19T11:45:47.4110678Z Note: Some input files use or override a deprecated API.
+build	Build and Test	2026-07-19T11:45:47.4132970Z Note: Recompile with -Xlint:deprecation for details.
+build	Build and Test	2026-07-19T11:45:47.4134312Z Note: Some input files use unchecked or unsafe operations.
+build	Build and Test	2026-07-19T11:45:47.4135598Z Note: Recompile with -Xlint:unchecked for details.
+build	Build and Test	2026-07-19T11:45:47.4136401Z 1 error
+build	Build and Test	2026-07-19T11:45:47.4136956Z 5 warnings
+build	Build and Test	2026-07-19T11:45:47.8115165Z
+build	Build and Test	2026-07-19T11:45:47.8115252Z
+build	Build and Test	2026-07-19T11:45:47.8116151Z FAILURE: Build failed with an exception.
+build	Build and Test	2026-07-19T11:45:47.8116864Z
+build	Build and Test	2026-07-19T11:45:47.8117111Z * What went wrong:
+build	Build and Test	2026-07-19T11:45:47.8117695Z Execution failed for task ':client:compileJava'.
+build	Build and Test	2026-07-19T11:45:47.8118491Z > Compilation failed; see the compiler error output for details.
+build	Build and Test	2026-07-19T11:45:47.8118935Z
+build	Build and Test	2026-07-19T11:45:47.8119100Z * Try:
+build	Build and Test	2026-07-19T11:45:47.8119846Z > Run with --info option to get more log output.
+build	Build and Test	2026-07-19T11:45:47.8120277Z > Run with --scan to get full insights.
+build	Build and Test	2026-07-19T11:45:47.8120596Z
+build	Build and Test	2026-07-19T11:45:47.8120762Z BUILD FAILED in 31s
+build	Build and Test	2026-07-19T11:45:47.8145775Z > Task :client:compileJava FAILED
+build	Build and Test	2026-07-19T11:45:47.8156412Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1784461519754.json
+build	Build and Test	2026-07-19T11:45:47.8185807Z 55 actionable tasks: 23 executed, 32 from cache
+build	Build and Test	2026-07-19T11:45:48.2138420Z ##[error]Process completed with exit code 1.
+```
 
 ## Diagnose failed workflow runs: Diagnose failed workflow runs
 
@@ -322,610 +1299,5 @@ No failed job metadata was returned.
 ```text
 
 failed to get run log: log not found
-```
-
-## Apply client version, AutoLogin, and Discord updates: Add client AutoLogin and Discord update notifications
-
-- Run: [29685581937](https://github.com/KSPOG/klite/actions/runs/29685581937)
-- Conclusion: `failure`
-- Event: `pull_request`
-- Commit: `3e6178ec65f39c0340c5903ff7c770a5197afaff`
-- Created: `2026-07-19T11:41:06Z`
-
-### Failed jobs and steps
-
-- **apply-and-verify** — `failure`
-  - Step 7: **Run marketplace tests** — `failure`
-
-### Relevant log context
-
-```text
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4743270Z ok 6 - API browser exposes working expand, collapse, and reset controls
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4744249Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4744619Z   duration_ms: 1.538749
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4745025Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4745390Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4745869Z # Subtest: API page links the downloadable public API source bundle
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4746558Z ok 7 - API page links the downloadable public API source bundle
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4747095Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4747449Z   duration_ms: 0.241811
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4747863Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4748239Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4748735Z # Subtest: Cloudflare serves API page files before dynamic API routes
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4749466Z ok 8 - Cloudflare serves API page files before dynamic API routes
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4750032Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4750528Z   duration_ms: 0.306558
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4750928Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4751291Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4751887Z # file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4760578Z # const fs = require("node:fs");
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4761385Z #            ^
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4802826Z # ReferenceError: require is not defined in ES module scope, you can use import instead
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4805002Z # This file is being treated as an ES module because it has a '.js' file extension and '/home/runner/work/klite/klite/marketplace-site/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4807476Z #     at file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:12
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4808490Z #     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4809516Z #     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4810795Z #     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4811323Z # Node.js v22.23.1
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4811576Z # Subtest: test/api-source-bundle.test.js
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4811942Z not ok 3 - test/api-source-bundle.test.js
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4812243Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4812447Z   duration_ms: 35.947661
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4812842Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4813311Z   location: '/home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:1'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4813846Z   failureType: 'testCodeFailure'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4814126Z   exitCode: 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4814333Z   signal: ~
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4814614Z   error: 'test failed'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4814881Z   code: 'ERR_TEST_FAILURE'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4815151Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4815460Z # Subtest: publishes only client-valid marketplace tags
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4815937Z ok 10 - publishes only client-valid marketplace tags
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4816317Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4816550Z   duration_ms: 5.033492
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4816816Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.4817064Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5355846Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5356235Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5565128Z # Subtest: normalizes Discord bot role and channel settings
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5566562Z ok 18 - normalizes Discord bot role and channel settings
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5567318Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5567765Z   duration_ms: 1.708614
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5568237Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5568653Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5571122Z # Subtest: shows the dashboard only when the linked member currently has Dev
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5574870Z ok 19 - shows the dashboard only when the linked member currently has Dev
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5575594Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5576026Z   duration_ms: 27.801307
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5576464Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5576853Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5795282Z # Subtest: public pages serve the generated design system and scoped credit styles
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5820799Z not ok 20 - public pages serve the generated design system and scoped credit styles
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5850540Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5850926Z   duration_ms: 51.314946
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5851304Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5851948Z   location: '/home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:13:1'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5852613Z   failureType: 'testCodeFailure'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5853037Z   error: |-
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5853375Z     Expected values to be strictly equal:
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5853810Z
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5854067Z     2 !== 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5854372Z
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5854635Z   code: 'ERR_ASSERTION'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5854988Z   name: 'AssertionError'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5855300Z   expected: 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5855621Z   actual: 2
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5855931Z   operator: 'strictEqual'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5856282Z   stack: |-
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5857053Z     TestContext.<anonymous> (file:///home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:39:12)
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5858035Z     async Test.run (node:internal/test_runner/test:1054:7)
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:26.5859094Z     async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0652667Z ok 33 - streams free plugin artifacts from private object storage
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0653158Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0653397Z   duration_ms: 3.436215
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0653681Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0654273Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0654684Z # Subtest: requires a client login before serving paid plugin artifacts
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0655299Z ok 34 - requires a client login before serving paid plugin artifacts
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0655747Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0655981Z   duration_ms: 0.672495
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0656268Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0656507Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0716855Z 1..34
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0717241Z # tests 34
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0717550Z # suites 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0717881Z # pass 32
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0718129Z # fail 2
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0718576Z # cancelled 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0718907Z # skipped 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0719199Z # todo 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0719524Z # duration_ms 698.205385
-apply-and-verify	Run marketplace tests	2026-07-19T11:41:27.0891123Z ##[error]Process completed with exit code 1.
-```
-
-## Apply client version, AutoLogin, and Discord updates: Add client AutoLogin and Discord update notifications
-
-- Run: [29685505598](https://github.com/KSPOG/klite/actions/runs/29685505598)
-- Conclusion: `failure`
-- Event: `pull_request`
-- Commit: `a4eeeb5fe0d6f42ff10407dcd0b502b50c0c778d`
-- Created: `2026-07-19T11:38:39Z`
-
-### Failed jobs and steps
-
-- **apply-and-verify** — `failure`
-  - Step 5: **Commit generated feature changes** — `failure`
-
-### Relevant log context
-
-```text
-apply-and-verify	Commit generated feature changes	﻿2026-07-19T11:39:01.4749537Z ##[group]Run git config user.name "github-actions[bot]"
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4749984Z ^[[36;1mgit config user.name "github-actions[bot]"^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4750458Z ^[[36;1mgit config user.email "41898282+github-actions[bot]@users.noreply.github.com"^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4750896Z ^[[36;1mgit add -A^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4751245Z ^[[36;1mgit commit -m "Add client AutoLogin and Discord update notifications"^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4751869Z ^[[36;1mif ! git push origin HEAD:feature/client-version-autologin-discord-updates 2>push-error.log; then^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4752372Z ^[[36;1m  {^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4752606Z ^[[36;1m    echo '### Generated source push failed'^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4752901Z ^[[36;1m    echo '```text'^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4753147Z ^[[36;1m    cat push-error.log^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4753391Z ^[[36;1m    echo '```'^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4753617Z ^[[36;1m  } > push-comment.md^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4753926Z ^[[36;1m  gh pr comment 57 --body-file push-comment.md^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4754263Z ^[[36;1m  exit 1^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4754457Z ^[[36;1mfi^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4819115Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4819470Z env:
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4819784Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.31-11/x64
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4820316Z   JAVA_HOME_11_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.31-11/x64
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4823137Z   GH_TOKEN: ***
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.4823348Z ##[endgroup]
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.6301031Z [feature/client-version-autologin-discord-updates 062919db3] Add client AutoLogin and Discord update notifications
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.6302254Z  17 files changed, 758 insertions(+), 30 deletions(-)
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.6302991Z  create mode 100644 marketplace-site/migrations/0008_client_updates.sql
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.6303794Z  create mode 100644 marketplace-site/test/client-updates.test.js
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.6304591Z  create mode 100644 marketplace-site/worker/client-updates.js
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.6305390Z  create mode 100644 runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.6306308Z  create mode 100644 runelite-client/src/test/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginServiceTest.java
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:01.6307549Z  create mode 100644 runelite-client/src/test/java/net/runelite/client/plugins/klite/marketplace/KLitePluginPanelVersionTest.java
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:03.7267314Z https://github.com/KSPOG/klite/pull/57#issuecomment-5015566043
-apply-and-verify	Commit generated feature changes	2026-07-19T11:39:03.7282816Z ##[error]Process completed with exit code 1.
-```
-
-## Apply client version, AutoLogin, and Discord updates: Add client AutoLogin and Discord update notifications
-
-- Run: [29685470699](https://github.com/KSPOG/klite/actions/runs/29685470699)
-- Conclusion: `failure`
-- Event: `pull_request`
-- Commit: `cc4ae973e9717c6eaea0ced3038d38c9436f1a47`
-- Created: `2026-07-19T11:37:33Z`
-
-### Failed jobs and steps
-
-- **apply-and-verify** — `failure`
-  - Step 5: **Commit generated feature changes** — `failure`
-
-### Relevant log context
-
-```text
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9692020Z ^[[36;1mgit config user.name "github-actions[bot]"^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9692491Z ^[[36;1mgit config user.email "41898282+github-actions[bot]@users.noreply.github.com"^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9692940Z ^[[36;1mgit add -A^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9693296Z ^[[36;1mgit commit -m "Add client AutoLogin and Discord update notifications"^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9693832Z ^[[36;1mgit push origin HEAD:feature/client-version-autologin-discord-updates^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9755050Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9755438Z env:
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9755760Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.31-11/x64
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9756295Z   JAVA_HOME_11_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.31-11/x64
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:48.9756882Z ##[endgroup]
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.1959291Z [feature/client-version-autologin-discord-updates f0a9da445] Add client AutoLogin and Discord update notifications
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.1960482Z  17 files changed, 758 insertions(+), 30 deletions(-)
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.1961239Z  create mode 100644 marketplace-site/migrations/0008_client_updates.sql
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.1962032Z  create mode 100644 marketplace-site/test/client-updates.test.js
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.1962619Z  create mode 100644 marketplace-site/worker/client-updates.js
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.1963710Z  create mode 100644 runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.1965672Z  create mode 100644 runelite-client/src/test/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginServiceTest.java
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.1966650Z  create mode 100644 runelite-client/src/test/java/net/runelite/client/plugins/klite/marketplace/KLitePluginPanelVersionTest.java
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.8650312Z To https://github.com/KSPOG/klite
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.8652613Z  ! [remote rejected]     HEAD -> feature/client-version-autologin-discord-updates (refusing to allow a GitHub App to create or update workflow `.github/workflows/build-windows-client.yml` without `workflows` permission)
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.8654944Z error: failed to push some refs to 'https://github.com/KSPOG/klite'
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:49.8677239Z ##[error]Process completed with exit code 1.
-```
-
-## Apply client version, AutoLogin, and Discord updates: Persist generated changes before verification
-
-- Run: [29685469542](https://github.com/KSPOG/klite/actions/runs/29685469542)
-- Conclusion: `failure`
-- Event: `push`
-- Commit: `cc4ae973e9717c6eaea0ced3038d38c9436f1a47`
-- Created: `2026-07-19T11:37:30Z`
-
-### Failed jobs and steps
-
-- **apply-and-verify** — `failure`
-  - Step 5: **Commit generated feature changes** — `failure`
-
-### Relevant log context
-
-```text
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7481170Z ^[[36;1mgit config user.name "github-actions[bot]"^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7481668Z ^[[36;1mgit config user.email "41898282+github-actions[bot]@users.noreply.github.com"^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7482114Z ^[[36;1mgit add -A^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7482452Z ^[[36;1mgit commit -m "Add client AutoLogin and Discord update notifications"^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7482971Z ^[[36;1mgit push origin HEAD:feature/client-version-autologin-discord-updates^[[0m
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7543233Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7543594Z env:
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7543912Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.31-11/x64
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7544426Z   JAVA_HOME_11_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.31-11/x64
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.7544808Z ##[endgroup]
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.9322251Z [feature/client-version-autologin-discord-updates 6473f5262] Add client AutoLogin and Discord update notifications
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.9323519Z  17 files changed, 758 insertions(+), 30 deletions(-)
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.9324255Z  create mode 100644 marketplace-site/migrations/0008_client_updates.sql
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.9325102Z  create mode 100644 marketplace-site/test/client-updates.test.js
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.9325575Z  create mode 100644 marketplace-site/worker/client-updates.js
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.9326213Z  create mode 100644 runelite-client/src/main/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginService.java
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.9327050Z  create mode 100644 runelite-client/src/test/java/net/runelite/client/plugins/klite/login/KLiteAutoLoginServiceTest.java
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:51.9327912Z  create mode 100644 runelite-client/src/test/java/net/runelite/client/plugins/klite/marketplace/KLitePluginPanelVersionTest.java
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:52.7135434Z To https://github.com/KSPOG/klite
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:52.7136577Z  ! [remote rejected]     HEAD -> feature/client-version-autologin-discord-updates (refusing to allow a GitHub App to create or update workflow `.github/workflows/build-windows-client.yml` without `workflows` permission)
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:52.7137982Z error: failed to push some refs to 'https://github.com/KSPOG/klite'
-apply-and-verify	Commit generated feature changes	2026-07-19T11:37:52.7153332Z ##[error]Process completed with exit code 1.
-```
-
-## Apply client version, AutoLogin, and Discord updates: Add client AutoLogin and Discord update notifications
-
-- Run: [29685423370](https://github.com/KSPOG/klite/actions/runs/29685423370)
-- Conclusion: `failure`
-- Event: `pull_request`
-- Commit: `4bdf0a61264c8e09cad253f034b94bc4b321d1df`
-- Created: `2026-07-19T11:35:58Z`
-
-### Failed jobs and steps
-
-- **apply-and-verify** — `failure`
-  - Step 6: **Run marketplace tests** — `failure`
-
-### Relevant log context
-
-```text
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7210477Z ok 6 - API browser exposes working expand, collapse, and reset controls
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7211705Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7213188Z   duration_ms: 1.595695
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7213859Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7214475Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7215218Z # Subtest: API page links the downloadable public API source bundle
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7216335Z ok 7 - API page links the downloadable public API source bundle
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7217237Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7292715Z   duration_ms: 0.342561
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7321732Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7334674Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7359142Z # Subtest: Cloudflare serves API page files before dynamic API routes
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7401948Z ok 8 - Cloudflare serves API page files before dynamic API routes
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7403261Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7434186Z   duration_ms: 0.430035
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7465979Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7481504Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7502109Z # file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7517134Z # const fs = require("node:fs");
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7532567Z #            ^
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7533555Z # ReferenceError: require is not defined in ES module scope, you can use import instead
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7535838Z # This file is being treated as an ES module because it has a '.js' file extension and '/home/runner/work/klite/klite/marketplace-site/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7538654Z #     at file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:12
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7539807Z #     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7540855Z #     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7544667Z #     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7545624Z # Node.js v22.23.1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7546190Z # Subtest: test/api-source-bundle.test.js
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7546877Z not ok 3 - test/api-source-bundle.test.js
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7547464Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7547937Z   duration_ms: 47.05357
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7548477Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7549326Z   location: '/home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:1'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7550382Z   failureType: 'testCodeFailure'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7551346Z   exitCode: 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7551959Z   signal: ~
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7552442Z   error: 'test failed'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7552971Z   code: 'ERR_TEST_FAILURE'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7553491Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7554061Z # Subtest: publishes only client-valid marketplace tags
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7555277Z ok 10 - publishes only client-valid marketplace tags
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7556052Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7556538Z   duration_ms: 5.819738
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7557054Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7557512Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7692120Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7692561Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7841629Z # Subtest: normalizes Discord bot role and channel settings
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7843309Z ok 18 - normalizes Discord bot role and channel settings
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7844158Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7844762Z   duration_ms: 2.102583
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7845426Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7846010Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7846866Z # Subtest: shows the dashboard only when the linked member currently has Dev
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7849737Z ok 19 - shows the dashboard only when the linked member currently has Dev
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7855971Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7856674Z   duration_ms: 50.950231
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7857414Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.7857941Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8658430Z # Subtest: public pages serve the generated design system and scoped credit styles
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8698016Z not ok 20 - public pages serve the generated design system and scoped credit styles
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8699027Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8699528Z   duration_ms: 61.550662
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8700182Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8701372Z   location: '/home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:13:1'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8702398Z   failureType: 'testCodeFailure'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8703024Z   error: |-
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8703557Z     Expected values to be strictly equal:
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8704569Z
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8705078Z     2 !== 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8705599Z
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8706126Z   code: 'ERR_ASSERTION'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8706703Z   name: 'AssertionError'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8707296Z   expected: 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8707840Z   actual: 2
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8708391Z   operator: 'strictEqual'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8708960Z   stack: |-
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8710231Z     TestContext.<anonymous> (file:///home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:39:12)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8711826Z     async Test.run (node:internal/test_runner/test:1054:7)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:14.8712847Z     async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.3989320Z ok 33 - streams free plugin artifacts from private object storage
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.3989963Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.3990333Z   duration_ms: 3.488967
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.3990757Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.3991298Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.3991866Z # Subtest: requires a client login before serving paid plugin artifacts
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.3992717Z ok 34 - requires a client login before serving paid plugin artifacts
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.3993325Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.3993688Z   duration_ms: 0.854298
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4005941Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4006289Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4106013Z 1..34
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4106434Z # tests 34
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4106728Z # suites 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4107057Z # pass 32
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4107679Z # fail 2
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4108349Z # cancelled 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4109046Z # skipped 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4109697Z # todo 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4110389Z # duration_ms 872.514676
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:15.4362077Z ##[error]Process completed with exit code 1.
-```
-
-## Apply client version, AutoLogin, and Discord updates: Run feature patch workflow for same-repository PRs
-
-- Run: [29685418101](https://github.com/KSPOG/klite/actions/runs/29685418101)
-- Conclusion: `failure`
-- Event: `push`
-- Commit: `4bdf0a61264c8e09cad253f034b94bc4b321d1df`
-- Created: `2026-07-19T11:35:46Z`
-
-### Failed jobs and steps
-
-- **apply-and-verify** — `failure`
-  - Step 6: **Run marketplace tests** — `failure`
-
-### Relevant log context
-
-```text
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.8999303Z ok 6 - API browser exposes working expand, collapse, and reset controls
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9029022Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9059142Z   duration_ms: 1.671036
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9072829Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9098899Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9099486Z # Subtest: API page links the downloadable public API source bundle
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9100314Z ok 7 - API page links the downloadable public API source bundle
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9100974Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9129129Z   duration_ms: 0.218729
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9129604Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9129961Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9130571Z # Subtest: Cloudflare serves API page files before dynamic API routes
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9131460Z ok 8 - Cloudflare serves API page files before dynamic API routes
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9132096Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9132429Z   duration_ms: 0.316492
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9132819Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9133156Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9133780Z # file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9134601Z # const fs = require("node:fs");
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9135030Z #            ^
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9135658Z # ReferenceError: require is not defined in ES module scope, you can use import instead
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9137686Z # This file is being treated as an ES module because it has a '.js' file extension and '/home/runner/work/klite/klite/marketplace-site/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9140653Z #     at file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:12
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9141718Z #     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9142633Z #     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9143688Z #     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9144458Z # Node.js v22.23.1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9144867Z # Subtest: test/api-source-bundle.test.js
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9145419Z not ok 3 - test/api-source-bundle.test.js
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9145922Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9146260Z   duration_ms: 46.984492
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9146657Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9147375Z   location: '/home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:1'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9148251Z   failureType: 'testCodeFailure'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9149020Z   exitCode: 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9149430Z   signal: ~
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9149762Z   error: 'test failed'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9150152Z   code: 'ERR_TEST_FAILURE'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9150884Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9151317Z # Subtest: publishes only client-valid marketplace tags
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9151996Z ok 10 - publishes only client-valid marketplace tags
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9152551Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9152875Z   duration_ms: 4.902359
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9153257Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9153593Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9204120Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9204451Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9229096Z # Subtest: normalizes Discord bot role and channel settings
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9259047Z ok 18 - normalizes Discord bot role and channel settings
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9277715Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9318930Z   duration_ms: 1.595103
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9366796Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9367155Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9367649Z # Subtest: shows the dashboard only when the linked member currently has Dev
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9368723Z ok 19 - shows the dashboard only when the linked member currently has Dev
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9408695Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9409497Z   duration_ms: 54.885024
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9410061Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:04.9410543Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0019626Z # Subtest: public pages serve the generated design system and scoped credit styles
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0021081Z not ok 20 - public pages serve the generated design system and scoped credit styles
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0022008Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0022500Z   duration_ms: 58.066931
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0023039Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0023886Z   location: '/home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:13:1'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0024849Z   failureType: 'testCodeFailure'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0025813Z   error: |-
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0026352Z     Expected values to be strictly equal:
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0027080Z
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0027527Z     2 !== 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0027975Z
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0028768Z   code: 'ERR_ASSERTION'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0029357Z   name: 'AssertionError'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0029886Z   expected: 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0030366Z   actual: 2
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0030848Z   operator: 'strictEqual'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0031381Z   stack: |-
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0032483Z     TestContext.<anonymous> (file:///home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:39:12)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0033886Z     async Test.run (node:internal/test_runner/test:1054:7)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.0034950Z     async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5392999Z ok 33 - streams free plugin artifacts from private object storage
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5393809Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5394342Z   duration_ms: 3.345307
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5394919Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5395447Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5396189Z # Subtest: requires a client login before serving paid plugin artifacts
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5397232Z ok 34 - requires a client login before serving paid plugin artifacts
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5398026Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5398785Z   duration_ms: 0.861581
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5399363Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5399878Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5480194Z 1..34
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5480813Z # tests 34
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5489458Z # suites 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5489785Z # pass 32
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5490072Z # fail 2
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5490365Z # cancelled 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5490681Z # skipped 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5490995Z # todo 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5491291Z # duration_ms 876.825551
-apply-and-verify	Run marketplace tests	2026-07-19T11:36:05.5700207Z ##[error]Process completed with exit code 1.
-```
-
-## Apply client version, AutoLogin, and Discord updates: Add feature application and verification workflow
-
-- Run: [29685371866](https://github.com/KSPOG/klite/actions/runs/29685371866)
-- Conclusion: `failure`
-- Event: `push`
-- Commit: `3d2dff000d38b71a183eb603c02b73bf469a4ed5`
-- Created: `2026-07-19T11:34:15Z`
-
-### Failed jobs and steps
-
-- **apply-and-verify** — `failure`
-  - Step 6: **Run marketplace tests** — `failure`
-
-### Relevant log context
-
-```text
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4270389Z ok 6 - API browser exposes working expand, collapse, and reset controls
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4271033Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4271505Z   duration_ms: 1.877557
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4271977Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4272480Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4273026Z # Subtest: API page links the downloadable public API source bundle
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4273733Z ok 7 - API page links the downloadable public API source bundle
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4274377Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4274813Z   duration_ms: 0.22002
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4275400Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4275834Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4276380Z # Subtest: Cloudflare serves API page files before dynamic API routes
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4277191Z ok 8 - Cloudflare serves API page files before dynamic API routes
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4277794Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4278317Z   duration_ms: 0.300006
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4278790Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4279347Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4320143Z # file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4329801Z # const fs = require("node:fs");
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4330496Z #            ^
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4331199Z # ReferenceError: require is not defined in ES module scope, you can use import instead
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4332982Z # This file is being treated as an ES module because it has a '.js' file extension and '/home/runner/work/klite/klite/marketplace-site/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4335324Z #     at file:///home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:12
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4338381Z #     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4339661Z #     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4342740Z #     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4343961Z # Node.js v22.23.1
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4344667Z # Subtest: test/api-source-bundle.test.js
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4345301Z not ok 3 - test/api-source-bundle.test.js
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4345919Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4346362Z   duration_ms: 40.365716
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4346849Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4347671Z   location: '/home/runner/work/klite/klite/marketplace-site/test/api-source-bundle.test.js:1:1'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4348534Z   failureType: 'testCodeFailure'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4349354Z   exitCode: 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4349833Z   signal: ~
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4350239Z   error: 'test failed'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4351243Z   code: 'ERR_TEST_FAILURE'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4351966Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4381271Z # Subtest: publishes only client-valid marketplace tags
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4400038Z ok 10 - publishes only client-valid marketplace tags
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4419654Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4449647Z   duration_ms: 4.821119
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4459758Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4482230Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4958749Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.4958992Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5361261Z # Subtest: normalizes Discord bot role and channel settings
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5362364Z ok 18 - normalizes Discord bot role and channel settings
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5362996Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5363365Z   duration_ms: 1.871607
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5363764Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5364208Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5364768Z # Subtest: shows the dashboard only when the linked member currently has Dev
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5365554Z ok 19 - shows the dashboard only when the linked member currently has Dev
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5366134Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5366472Z   duration_ms: 31.343925
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5366953Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5367314Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5720528Z # Subtest: public pages serve the generated design system and scoped credit styles
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5745593Z not ok 20 - public pages serve the generated design system and scoped credit styles
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5769869Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5799887Z   duration_ms: 48.604466
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5800438Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5801273Z   location: '/home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:13:1'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5802026Z   failureType: 'testCodeFailure'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5802838Z   error: |-
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5803310Z     Expected values to be strictly equal:
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5803770Z
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5804156Z     2 !== 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5804558Z
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5804931Z   code: 'ERR_ASSERTION'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5805412Z   name: 'AssertionError'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5805811Z   expected: 1
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5806178Z   actual: 2
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5806548Z   operator: 'strictEqual'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5806951Z   stack: |-
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5807587Z     TestContext.<anonymous> (file:///home/runner/work/klite/klite/marketplace-site/test/home-styles.test.js:39:12)
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5808389Z     async Test.run (node:internal/test_runner/test:1054:7)
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:34.5809254Z     async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0739463Z ok 33 - streams free plugin artifacts from private object storage
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0740103Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0740462Z   duration_ms: 2.813096
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0740743Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0740970Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0741274Z # Subtest: requires a client login before serving paid plugin artifacts
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0741649Z ok 34 - requires a client login before serving paid plugin artifacts
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0741929Z   ---
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0742135Z   duration_ms: 0.782713
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0742388Z   type: 'test'
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0742643Z   ...
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0787540Z 1..34
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0787876Z # tests 34
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0788301Z # suites 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0789172Z # pass 32
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0789595Z # fail 2
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0820555Z # cancelled 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0833004Z # skipped 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0833313Z # todo 0
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0833569Z # duration_ms 756.024348
-apply-and-verify	Run marketplace tests	2026-07-19T11:34:35.0949980Z ##[error]Process completed with exit code 1.
 ```
 
