@@ -19,9 +19,9 @@ test("installation payload matches the dashboard renderer contract", () => {
     "missing",
     "inviteUrl",
     "guildId",
-    "interactionEndpoint",
-    "passwordResetRedirect"
+    "interactionEndpoint"
   ]) {
     assert.ok(Object.hasOwn(result, key), `missing install payload field ${key}`);
   }
+  assert.equal(Object.hasOwn(result, "passwordResetRedirect"), false);
 });
