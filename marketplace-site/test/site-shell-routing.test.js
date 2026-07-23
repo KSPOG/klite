@@ -46,3 +46,11 @@ test("Discord channel inventory is generated from the dashboard channel selector
   assert.match(shell, /discord-channel-count/);
   assert.match(shell, /Configured for:/);
 });
+
+test("developer resources expose the plugin submission dashboard", async () => {
+  const shell = await readFile(path.join(siteDirectory, "public/site-shell.js"), "utf8");
+
+  assert.match(shell, /href="#developer"/);
+  assert.match(shell, /Plugin submission dashboard/);
+  assert.match(shell, /Upload raw Java classes for approval/);
+});
