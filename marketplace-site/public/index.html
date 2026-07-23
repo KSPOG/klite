@@ -198,7 +198,7 @@
       <div>
         <p class="eyebrow">Plugin developer</p>
         <h2 id="developer-title">Developer dashboard</h2>
-        <p>Upload the compiled plugin JAR with its source and review details. Files remain private until the submission is approved and published.</p>
+        <p>Upload the raw Java plugin classes with their source and review details. Source remains in the private submission repository until a reviewer approves its promotion pull request.</p>
       </div>
       <form id="submission-form" class="submission-form" enctype="multipart/form-data">
         <label class="form-field"><span>Plugin ID</span><input id="submission-plugin-id" type="text" pattern="[a-z0-9][a-z0-9-]{2,63}" maxlength="64" placeholder="my-plugin" required></label>
@@ -206,17 +206,17 @@
         <label class="form-field"><span>Version</span><input id="submission-version" type="text" maxlength="64" placeholder="1.0.0" required></label>
         <label class="form-field submission-wide"><span>HTTPS source URL</span><input id="submission-source-url" type="url" maxlength="500" placeholder="https://source.example/owner/plugin" required></label>
         <label class="form-field submission-wide plugin-upload-field">
-          <span>Compiled plugin JAR</span>
-          <input id="submission-artifact" name="artifact" type="file" accept=".jar,application/java-archive,application/zip" required>
-          <small id="submission-artifact-help">Maximum 20 MiB. The JAR is stored privately and is available only to you and marketplace reviewers.</small>
+          <span>Raw Java plugin classes</span>
+          <input id="submission-sources" name="sources" type="file" accept=".java,text/plain,text/x-java-source" multiple required>
+          <small id="submission-sources-help">Select all .java classes. Maximum 100 files, 1 MiB per file, and 20 MiB total.</small>
         </label>
         <label class="form-field submission-wide"><span>Review description</span><textarea id="submission-description" minlength="30" maxlength="2000" rows="5" required></textarea></label>
         <div class="submission-security submission-wide">
-          <strong>Private review upload</strong>
-          <span>KLite verifies the JAR header, size, and SHA-256 before creating the review entry.</span>
+          <strong>Private source review</strong>
+          <span>KLite validates package paths, identifies the plugin entrypoint, and records a deterministic SHA-256 before committing the classes to the private repository.</span>
         </div>
         <p id="submission-error" class="form-error submission-wide" role="alert"></p>
-        <button id="submission-submit" class="button button-primary" type="submit">Upload and submit for review</button>
+        <button id="submission-submit" class="button button-primary" type="submit">Upload source for review</button>
       </form>
       <div><h3>Your submissions</h3><div id="submission-list" class="submission-list"></div></div>
     </section>
