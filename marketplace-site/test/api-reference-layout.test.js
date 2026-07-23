@@ -60,5 +60,6 @@ test("Cloudflare serves API page files before dynamic API routes", () => {
   assert.match(worker, /"\/api\/controls\.js"/);
   assert.match(worker, /url\.pathname === "\/api"/);
   assert.match(worker, /target\.pathname = "\/api\/"/);
-  assert.match(worker, /return env\.ASSETS\.fetch\(request\)/);
+  assert.match(worker, /const response = await env\.ASSETS\.fetch\(request\)/);
+  assert.match(worker, /injectScripts\(response, \[WEBSITE_CONTROL_SCRIPT\]\)/);
 });

@@ -29,6 +29,7 @@
       const payload = await api("/api/credits/admin");
       renderPrices(payload.prices || []);
       renderTransactions(payload.transactions || []);
+      renderUsers(payload.users || []);
       status.textContent = `${payload.transactions?.length || 0} recent transaction${payload.transactions?.length === 1 ? "" : "s"}.`;
     } catch (error) {
       status.textContent = error.status === 403
@@ -78,6 +79,32 @@
     if (!node.childElementCount) node.textContent = "No credit transactions yet.";
   }
 
+  function renderUsers(users) {
+    const select = panel.querySelector("#credit-adjust-user");
+    const selected = select.value;
+    select.replaceChildren();
+    for (const user of users) {
+      const option = document.createElement("option");
+      option.value = user.id;
+      option.textContent =
+        `${user.username} (${user.email}) — ${creditsText(user.balance)}`;
+      option.dataset.balance = String(user.balance);
+      select.append(option);
+    }
+    if (selected && users.some((user) => user.id === selected)) select.value = selected;
+    select.disabled = users.length === 0;
+    updateSelectedBalance();
+  }
+
+  function updateSelectedBalance() {
+    const select = panel.querySelector("#credit-adjust-user");
+    const output = panel.querySelector("#credit-adjust-balance");
+    const selected = select.selectedOptions[0];
+    output.textContent = selected
+      ? `Current balance: ${creditsText(selected.dataset.balance)}`
+      : "No marketplace users found.";
+  }
+
   async function install() {
     if (panel || installing) return;
     const owner = document.querySelector("#owner-admin-dashboard");
@@ -109,6 +136,15 @@
     form.className = "credit-price-form";
     form.innerHTML = "<label><span>Plugin ID</span><input id=\"credit-price-plugin\" pattern=\"[a-z0-9][a-z0-9-]{2,63}\" required></label><label><span>Price in credits</span><input id=\"credit-price-amount\" type=\"number\" min=\"1\" step=\"1\" required></label><label class=\"credit-active-field\"><input id=\"credit-price-active\" type=\"checkbox\" checked><span>Available for purchase</span></label><button class=\"button button-primary\" type=\"submit\">Save price</button>";
 
+    const adjustmentForm = document.createElement("form");
+    adjustmentForm.id = "credit-adjustment-form";
+    adjustmentForm.className = "credit-price-form credit-adjustment-form";
+    adjustmentForm.innerHTML = "<label><span>User</span><select id=\"credit-adjust-user\" required></select></label><label><span>Credit change</span><input id=\"credit-adjust-delta\" type=\"number\" min=\"-10000000\" max=\"10000000\" step=\"1\" placeholder=\"500 or -500\" required></label><label><span>Audit reason</span><input id=\"credit-adjust-reason\" minlength=\"10\" maxlength=\"240\" placeholder=\"Reason for this balance adjustment\" required></label><button class=\"button button-primary\" type=\"submit\">Apply adjustment</button>";
+    const balance = document.createElement("p");
+    balance.id = "credit-adjust-balance";
+    balance.className = "account-note";
+    adjustmentForm.append(balance);
+
     const status = document.createElement("p");
     status.id = "credit-admin-status";
     status.className = "account-note";
@@ -127,8 +163,42 @@
     transactionsNode.id = "credit-admin-transactions";
     transactionsColumn.append(transactionsTitle, transactionsNode);
     columns.append(pricesColumn, transactionsColumn);
-    panel.append(heading, form, status, columns);
+    const adjustmentTitle = document.createElement("h4");
+    adjustmentTitle.textContent = "Adjust a user’s credits";
+    panel.append(heading, adjustmentTitle, adjustmentForm, form, status, columns);
     owner.append(panel);
+
+    adjustmentForm.querySelector("#credit-adjust-user")
+      .addEventListener("change", updateSelectedBalance);
+    adjustmentForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submit = adjustmentForm.querySelector("button[type='submit']");
+      const userId = adjustmentForm.querySelector("#credit-adjust-user").value;
+      const delta = Number(adjustmentForm.querySelector("#credit-adjust-delta").value);
+      const reason = adjustmentForm.querySelector("#credit-adjust-reason").value.trim();
+      if (!window.confirm(
+        `Apply ${delta > 0 ? "+" : ""}${delta.toLocaleString("en-US")} credits to the selected user?`
+      )) return;
+      status.textContent = "Applying audited credit adjustment…";
+      status.classList.remove("is-error");
+      submit.disabled = true;
+      try {
+        const result = await api(
+          `/api/credits/admin/users/${encodeURIComponent(userId)}/adjustments`,
+          { method: "POST", body: JSON.stringify({ delta, reason }) }
+        );
+        adjustmentForm.querySelector("#credit-adjust-delta").value = "";
+        adjustmentForm.querySelector("#credit-adjust-reason").value = "";
+        status.textContent =
+          `Credit adjustment applied. New balance: ${creditsText(result.user.balance)}.`;
+        await load();
+      } catch (error) {
+        status.classList.add("is-error");
+        status.textContent = error.message;
+      } finally {
+        submit.disabled = false;
+      }
+    });
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();

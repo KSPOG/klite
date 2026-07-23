@@ -2,6 +2,7 @@ import { API_REFERENCE } from "./api-reference.generated.js";
 import {
   syncPluginAnnouncements
 } from "./announcements.js";
+import { handlePluginSubmissions } from "./plugin-submissions.js";
 import {
   setClientUpdateNotificationRole
 } from "./client-updates.js";
@@ -84,18 +85,21 @@ async function route(request, env, url) {
   if (artifactMatch && request.method === "GET") {
     return pluginArtifact(request, env, artifactMatch[1]);
   }
-  if (url.pathname === "/api/developer/submissions" && request.method === "GET") {
-    return developerSubmissions(request, env);
-  }
-  if (url.pathname === "/api/developer/submissions" && request.method === "POST") {
-    return createPluginSubmission(request, env);
-  }
-  if (url.pathname === "/api/review/submissions" && request.method === "GET") {
-    return reviewSubmissions(request, env);
-  }
-  const reviewMatch = url.pathname.match(/^\/api\/review\/submissions\/([a-f0-9-]+)\/decision$/);
-  if (reviewMatch && request.method === "POST") {
-    return reviewPluginSubmission(request, env, reviewMatch[1]);
+  const pluginSubmissionResponse = await handlePluginSubmissions(request, env, url, {
+    apiError,
+    isConstraintError,
+    json,
+    normalizePluginId,
+    normalizeSourceUrl,
+    normalizeText,
+    normalizeVersion,
+    nowSeconds,
+    readJson,
+    requireCapability,
+    requireWebsiteRole
+  });
+  if (pluginSubmissionResponse) {
+    return pluginSubmissionResponse;
   }
   return apiError(404, "not_found", "API endpoint not found.");
 }
@@ -596,101 +600,6 @@ async function linkDiscordAccount(env, userId, discord, pluginDevRole = false, r
   return true;
 }
 
-async function developerSubmissions(request, env) {
-  const session = await requireCapability(request, env, "plugin_dev");
-  if (!session) {
-    return apiError(403, "plugin_developer_required",
-      "A verified website and Discord Plugin Dev role is required.");
-  }
-  const result = await env.DB.prepare(
-    `SELECT id, plugin_id, name, version, source_url, description, status,
-      review_notes, submitted_at, updated_at, reviewed_at
-     FROM plugin_submissions WHERE user_id = ? ORDER BY updated_at DESC`
-  ).bind(session.user_id).all();
-  return json({ submissions: (result.results || []).map(submissionPayload) });
-}
-
-async function createPluginSubmission(request, env) {
-  const session = await requireCapability(request, env, "plugin_dev");
-  if (!session) {
-    return apiError(403, "plugin_developer_required",
-      "A verified website and Discord Plugin Dev role is required.");
-  }
-  const body = await readJson(request);
-  const pluginId = normalizePluginId(body?.pluginId);
-  const name = normalizeText(body?.name, 3, 80);
-  const version = normalizeVersion(body?.version);
-  const sourceUrl = normalizeSourceUrl(body?.sourceUrl);
-  const description = normalizeText(body?.description, 30, 2000);
-  if (!pluginId || !name || !version || !sourceUrl || !description) {
-    return apiError(400, "invalid_submission",
-      "Enter a valid plugin ID, name, semantic version, HTTPS source URL, and description.");
-  }
-  const now = nowSeconds();
-  const id = crypto.randomUUID();
-  try {
-    await env.DB.prepare(
-      `INSERT INTO plugin_submissions
-        (id, user_id, plugin_id, name, version, source_url, description, submitted_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, session.user_id, pluginId, name, version, sourceUrl,
-      description, now, now).run();
-  } catch (error) {
-    if (isConstraintError(error)) {
-      return apiError(409, "submission_exists",
-        "This plugin version has already been submitted.");
-    }
-    throw error;
-  }
-  const row = await env.DB.prepare(
-    `SELECT id, plugin_id, name, version, source_url, description, status,
-      review_notes, submitted_at, updated_at, reviewed_at
-     FROM plugin_submissions WHERE id = ?`
-  ).bind(id).first();
-  return json({ submission: submissionPayload(row) }, 201);
-}
-
-async function reviewSubmissions(request, env) {
-  const session = await requireWebsiteRole(request, env, "marketplace_reviewer");
-  if (!session) {
-    return apiError(403, "reviewer_required", "Marketplace reviewer access is required.");
-  }
-  const result = await env.DB.prepare(
-    `SELECT plugin_submissions.id, plugin_id, name, version, source_url, description,
-      status, review_notes, submitted_at, plugin_submissions.updated_at, reviewed_at,
-      users.username AS submitter
-     FROM plugin_submissions JOIN users ON users.id = plugin_submissions.user_id
-     WHERE status IN ('pending', 'changes_requested')
-     ORDER BY plugin_submissions.updated_at ASC LIMIT 100`
-  ).all();
-  return json({ submissions: (result.results || []).map(submissionPayload) });
-}
-
-async function reviewPluginSubmission(request, env, submissionId) {
-  const session = await requireWebsiteRole(request, env, "marketplace_reviewer");
-  if (!session) {
-    return apiError(403, "reviewer_required", "Marketplace reviewer access is required.");
-  }
-  const body = await readJson(request);
-  const decision = body?.decision;
-  const notes = typeof body?.notes === "string" ? body.notes.trim() : "";
-  if (!["approved", "rejected", "changes_requested"].includes(decision)
-      || notes.length > 2000 || (decision !== "approved" && notes.length < 10)) {
-    return apiError(400, "invalid_review",
-      "Choose a valid decision and provide at least 10 characters of notes when not approving.");
-  }
-  const result = await env.DB.prepare(
-    `UPDATE plugin_submissions
-     SET status = ?, review_notes = ?, reviewed_by = ?, reviewed_at = ?, updated_at = ?
-     WHERE id = ? AND status IN ('pending', 'changes_requested')`
-  ).bind(decision, notes || null, session.user_id, nowSeconds(), nowSeconds(), submissionId).run();
-  if (!result.meta?.changes) {
-    return apiError(409, "submission_not_reviewable",
-      "The submission was already reviewed or does not exist.");
-  }
-  return json({ ok: true, status: decision });
-}
-
 async function requireCapability(request, env, capability) {
   const session = await requireSession(request, env);
   if (!session) {
@@ -709,23 +618,6 @@ async function requireWebsiteRole(request, env, role) {
     "SELECT 1 AS allowed FROM user_roles WHERE user_id = ? AND role = ?"
   ).bind(session.user_id, role).first();
   return match?.allowed ? session : null;
-}
-
-function submissionPayload(row) {
-  return {
-    id: row.id,
-    pluginId: row.plugin_id,
-    name: row.name,
-    version: row.version,
-    sourceUrl: row.source_url,
-    description: row.description,
-    status: row.status,
-    reviewNotes: row.review_notes,
-    submitter: row.submitter,
-    submittedAt: row.submitted_at,
-    updatedAt: row.updated_at,
-    reviewedAt: row.reviewed_at
-  };
 }
 
 export function normalizePluginId(value) {

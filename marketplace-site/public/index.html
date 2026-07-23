@@ -198,16 +198,25 @@
       <div>
         <p class="eyebrow">Plugin developer</p>
         <h2 id="developer-title">Developer dashboard</h2>
-        <p>Submit source code for review. Approval is required before a plugin can enter the marketplace.</p>
+        <p>Upload the compiled plugin JAR with its source and review details. Files remain private until the submission is approved and published.</p>
       </div>
-      <form id="submission-form" class="submission-form">
+      <form id="submission-form" class="submission-form" enctype="multipart/form-data">
         <label class="form-field"><span>Plugin ID</span><input id="submission-plugin-id" type="text" pattern="[a-z0-9][a-z0-9-]{2,63}" maxlength="64" placeholder="my-plugin" required></label>
         <label class="form-field"><span>Display name</span><input id="submission-name" type="text" minlength="3" maxlength="80" required></label>
         <label class="form-field"><span>Version</span><input id="submission-version" type="text" maxlength="64" placeholder="1.0.0" required></label>
         <label class="form-field submission-wide"><span>HTTPS source URL</span><input id="submission-source-url" type="url" maxlength="500" placeholder="https://source.example/owner/plugin" required></label>
+        <label class="form-field submission-wide plugin-upload-field">
+          <span>Compiled plugin JAR</span>
+          <input id="submission-artifact" name="artifact" type="file" accept=".jar,application/java-archive,application/zip" required>
+          <small id="submission-artifact-help">Maximum 20 MiB. The JAR is stored privately and is available only to you and marketplace reviewers.</small>
+        </label>
         <label class="form-field submission-wide"><span>Review description</span><textarea id="submission-description" minlength="30" maxlength="2000" rows="5" required></textarea></label>
+        <div class="submission-security submission-wide">
+          <strong>Private review upload</strong>
+          <span>KLite verifies the JAR header, size, and SHA-256 before creating the review entry.</span>
+        </div>
         <p id="submission-error" class="form-error submission-wide" role="alert"></p>
-        <button class="button button-primary" type="submit">Submit for review</button>
+        <button id="submission-submit" class="button button-primary" type="submit">Upload and submit for review</button>
       </form>
       <div><h3>Your submissions</h3><div id="submission-list" class="submission-list"></div></div>
     </section>
@@ -336,6 +345,8 @@
   <script src="/homepage-status.js?v=release-20260718-1" defer></script>
   <script src="/account-routes.js?v=1" defer></script>
   <script src="/credits.js?v=release-20260718-2" defer></script>
-  <script src="/credits-admin.js?v=1" defer></script>
+  <script src="/credits-admin.js?v=release-20260723-1" defer></script>
+  <script src="/website-control-fixes.js?v=release-20260723-1" defer></script>
+  <script src="/discord-dashboard-actions.js?v=release-20260723-1" defer></script>
 </body>
 </html>

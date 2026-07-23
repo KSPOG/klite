@@ -338,3 +338,25 @@ button.credit-admin-row {
     align-items: flex-start;
   }
 }
+
+
+.credit-adjustment-form {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(93, 204, 255, 0.16);
+}
+
+.credit-price-form select {
+  width: 100%;
+  min-height: 42px;
+  color: var(--text, #eaf6ff);
+  background: rgba(2, 9, 15, 0.92);
+  border: 1px solid rgba(93, 204, 255, 0.3);
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+
+#credit-adjust-balance {
+  grid-column: 1 / -1;
+  margin: 0;
+}

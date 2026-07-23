@@ -33,6 +33,7 @@ const frontendScripts = [
 const routeSources = [
   "worker/index.js",
   "worker/entry.js",
+  "worker/plugin-submissions.js",
   "worker/credits.js",
   "worker/discord-auth.js",
   "worker/discord-dashboard-actions.js",

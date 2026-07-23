@@ -30,11 +30,14 @@ const authPassword = document.querySelector("#auth-password");
 const orderFilter = document.querySelector("#order-filter");
 const developerDashboard = document.querySelector("#developer-dashboard");
 const submissionForm = document.querySelector("#submission-form");
+const submissionSubmit = document.querySelector("#submission-submit");
 const submissionPluginId = document.querySelector("#submission-plugin-id");
 const submissionName = document.querySelector("#submission-name");
 const submissionVersion = document.querySelector("#submission-version");
 const submissionSourceUrl = document.querySelector("#submission-source-url");
 const submissionDescription = document.querySelector("#submission-description");
+const submissionArtifact = document.querySelector("#submission-artifact");
+const submissionArtifactHelp = document.querySelector("#submission-artifact-help");
 const submissionError = document.querySelector("#submission-error");
 const submissionList = document.querySelector("#submission-list");
 const reviewDashboard = document.querySelector("#review-dashboard");
@@ -240,11 +243,12 @@ searchInput.addEventListener("input", renderPlugins);
 categoryFilter.addEventListener("change", renderPlugins);
 
 async function api(path, options = {}) {
+  const formUpload = options.body instanceof FormData;
   const response = await fetch(path, {
     credentials: "same-origin",
     ...options,
     headers: {
-      ...(options.body ? { "content-type": "application/json" } : {}),
+      ...(options.body && !formUpload ? { "content-type": "application/json" } : {}),
       ...options.headers
     }
   });
@@ -606,6 +610,30 @@ function createSubmissionCard(submission, reviewMode = false) {
   const description = document.createElement("p");
   description.textContent = submission.description;
   card.append(title, metadata, source, description);
+
+  const artifact = document.createElement("div");
+  artifact.className = "submission-artifact";
+  if (submission.artifact) {
+    const fileDetails = document.createElement("div");
+    const fileName = document.createElement("strong");
+    fileName.textContent = submission.artifact.filename;
+    const fileMeta = document.createElement("span");
+    fileMeta.textContent = `${formatFileSize(submission.artifact.size)} · SHA-256 `
+      + submission.artifact.sha256.slice(0, 16) + "…";
+    fileDetails.append(fileName, fileMeta);
+
+    const download = document.createElement("a");
+    const scope = reviewMode ? "review" : "developer";
+    download.href = `/api/${scope}/submissions/${submission.id}/artifact`;
+    download.className = "button button-secondary";
+    download.download = submission.artifact.filename;
+    download.textContent = reviewMode ? "Download JAR for review" : "Download uploaded JAR";
+    artifact.append(fileDetails, download);
+  } else {
+    artifact.classList.add("submission-artifact-missing");
+    artifact.textContent = "No compiled JAR is attached. This submission cannot be approved.";
+  }
+  card.append(artifact);
   if (submission.reviewNotes) {
     const notes = document.createElement("p");
     notes.className = "review-notes";
@@ -629,6 +657,10 @@ function createSubmissionCard(submission, reviewMode = false) {
       button.type = "button";
       button.className = `button ${className}`;
       button.textContent = label;
+      if (decision === "approved" && !submission.artifact) {
+        button.disabled = true;
+        button.title = "A compiled plugin JAR is required before approval.";
+      }
       button.addEventListener("click", async () => {
         actions.querySelectorAll("button").forEach((item) => { item.disabled = true; });
         try {
@@ -684,27 +716,54 @@ async function loadReviewSubmissions() {
 submissionForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   submissionError.textContent = "";
-  const submit = submissionForm.querySelector("button[type='submit']");
+  const submit = submissionSubmit;
+  const artifact = submissionArtifact.files[0];
+  if (!artifact) {
+    submissionError.textContent = "Choose the compiled plugin JAR to submit.";
+    return;
+  }
+  if (!artifact.name.toLowerCase().endsWith(".jar") || artifact.size > 20 * 1024 * 1024) {
+    submissionError.textContent = "Choose a .jar file that is 20 MiB or smaller.";
+    return;
+  }
+
+  const body = new FormData();
+  body.set("pluginId", submissionPluginId.value);
+  body.set("name", submissionName.value);
+  body.set("version", submissionVersion.value);
+  body.set("sourceUrl", submissionSourceUrl.value);
+  body.set("description", submissionDescription.value);
+  body.set("artifact", artifact, artifact.name);
+
   submit.disabled = true;
+  submit.textContent = "Uploading securely…";
   try {
-    await api("/api/developer/submissions", {
-      method: "POST",
-      body: JSON.stringify({
-        pluginId: submissionPluginId.value,
-        name: submissionName.value,
-        version: submissionVersion.value,
-        sourceUrl: submissionSourceUrl.value,
-        description: submissionDescription.value
-      })
-    });
+    await api("/api/developer/submissions", { method: "POST", body });
     submissionForm.reset();
+    submissionArtifactHelp.textContent =
+      "Maximum 20 MiB. The JAR is stored privately and is available only to you and marketplace reviewers.";
     await loadDeveloperSubmissions();
   } catch (error) {
     submissionError.textContent = error.message;
   } finally {
     submit.disabled = false;
+    submit.textContent = "Upload and submit for review";
   }
 });
+
+submissionArtifact.addEventListener("change", () => {
+  const artifact = submissionArtifact.files[0];
+  submissionArtifactHelp.textContent = artifact
+    ? `${artifact.name} · ${formatFileSize(artifact.size)} selected`
+    : "Maximum 20 MiB. The JAR is stored privately and is available only to you and marketplace reviewers.";
+});
+
+function formatFileSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return "Unknown size";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MiB`;
+}
 
 apiReferenceSearch.addEventListener("input", renderApiReference);
 

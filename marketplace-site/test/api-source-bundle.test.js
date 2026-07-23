@@ -27,5 +27,5 @@ test("the rolling SDK release publishes and verifies the source ZIP", () => {
   assert.match(workflow, /Publish KLite Plugin SDK/);
   assert.match(workflow, /gh release upload plugin-sdk "\$SOURCE_ZIP" --clobber/);
   assert.match(workflow, /gh release download plugin-sdk/);
-  assert.match(workflow, /cmp \\\n\s+dist\/plugin-sdk\/KLite-Public-API-Sources\.zip/);
+  assert.match(workflow, /cmp \\\r?\n\s+dist\/plugin-sdk\/KLite-Public-API-Sources\.zip/);
 });
