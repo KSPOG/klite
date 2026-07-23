@@ -2,7 +2,7 @@ import { API_REFERENCE } from "./api-reference.generated.js";
 import {
   syncPluginAnnouncements
 } from "./announcements.js";
-import { handlePluginSubmissions } from "./plugin-submissions.js";
+import { handlePluginSourceSubmissions } from "./plugin-source-submissions.js";
 import {
   setClientUpdateNotificationRole
 } from "./client-updates.js";
@@ -14,6 +14,9 @@ import {
   notifyDiscordAccountLinked,
   updateDiscordBotSettings
 } from "./discord-dashboard.js";
+import {
+  refreshPluginDeveloperRoleSafely
+} from "./discord-role-verification.js";
 const encoder = new TextEncoder();
 const PASSWORD_ITERATIONS = 600_000;
 const WEB_SESSION_SECONDS = 7 * 24 * 60 * 60;
@@ -85,7 +88,7 @@ async function route(request, env, url) {
   if (artifactMatch && request.method === "GET") {
     return pluginArtifact(request, env, artifactMatch[1]);
   }
-  const pluginSubmissionResponse = await handlePluginSubmissions(request, env, url, {
+  const pluginSubmissionResponse = await handlePluginSourceSubmissions(request, env, url, {
     apiError,
     isConstraintError,
     json,
@@ -191,6 +194,7 @@ async function account(request, env) {
   if (!session) {
     return apiError(401, "authentication_required", "Sign in to continue.");
   }
+  await refreshPluginDeveloperRoleSafely(env, session.user_id);
   return json({
     account: await accountPayload(env, session.user_id),
     entitlements: await entitlements(env, session.user_id)
@@ -604,6 +608,9 @@ async function requireCapability(request, env, capability) {
   const session = await requireSession(request, env);
   if (!session) {
     return null;
+  }
+  if (capability === "plugin_dev") {
+    await refreshPluginDeveloperRoleSafely(env, session.user_id);
   }
   const account = await accountPayload(env, session.user_id);
   return account?.capabilities.includes(capability) ? session : null;

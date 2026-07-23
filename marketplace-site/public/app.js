@@ -36,8 +36,8 @@ const submissionName = document.querySelector("#submission-name");
 const submissionVersion = document.querySelector("#submission-version");
 const submissionSourceUrl = document.querySelector("#submission-source-url");
 const submissionDescription = document.querySelector("#submission-description");
-const submissionArtifact = document.querySelector("#submission-artifact");
-const submissionArtifactHelp = document.querySelector("#submission-artifact-help");
+const submissionSources = document.querySelector("#submission-sources");
+const submissionSourcesHelp = document.querySelector("#submission-sources-help");
 const submissionError = document.querySelector("#submission-error");
 const submissionList = document.querySelector("#submission-list");
 const reviewDashboard = document.querySelector("#review-dashboard");
@@ -616,7 +616,9 @@ function createSubmissionCard(submission, reviewMode = false) {
   if (submission.artifact) {
     const fileDetails = document.createElement("div");
     const fileName = document.createElement("strong");
-    fileName.textContent = submission.artifact.filename;
+    fileName.textContent = `${submission.artifact.fileCount} Java source file${
+      submission.artifact.fileCount === 1 ? "" : "s"
+    }`;
     const fileMeta = document.createElement("span");
     fileMeta.textContent = `${formatFileSize(submission.artifact.size)} · SHA-256 `
       + submission.artifact.sha256.slice(0, 16) + "…";
@@ -624,14 +626,23 @@ function createSubmissionCard(submission, reviewMode = false) {
 
     const download = document.createElement("a");
     const scope = reviewMode ? "review" : "developer";
-    download.href = `/api/${scope}/submissions/${submission.id}/artifact`;
+    download.href = `/api/${scope}/submissions/${submission.id}/source`;
     download.className = "button button-secondary";
-    download.download = submission.artifact.filename;
-    download.textContent = reviewMode ? "Download JAR for review" : "Download uploaded JAR";
+    download.download = `${submission.pluginId}-${submission.version}-source-manifest.json`;
+    download.textContent = "Download source manifest";
     artifact.append(fileDetails, download);
+    if (reviewMode && submission.artifact.reviewUrl) {
+      const reviewSource = document.createElement("a");
+      reviewSource.href = submission.artifact.reviewUrl;
+      reviewSource.target = "_blank";
+      reviewSource.rel = "noopener noreferrer";
+      reviewSource.className = "button button-primary";
+      reviewSource.textContent = "Review raw source on GitHub";
+      artifact.append(reviewSource);
+    }
   } else {
     artifact.classList.add("submission-artifact-missing");
-    artifact.textContent = "No compiled JAR is attached. This submission cannot be approved.";
+    artifact.textContent = "No raw Java source is attached. This submission cannot be approved.";
   }
   card.append(artifact);
   if (submission.reviewNotes) {
@@ -659,7 +670,7 @@ function createSubmissionCard(submission, reviewMode = false) {
       button.textContent = label;
       if (decision === "approved" && !submission.artifact) {
         button.disabled = true;
-        button.title = "A compiled plugin JAR is required before approval.";
+        button.title = "Raw Java source is required before approval.";
       }
       button.addEventListener("click", async () => {
         actions.querySelectorAll("button").forEach((item) => { item.disabled = true; });
@@ -717,13 +728,18 @@ submissionForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   submissionError.textContent = "";
   const submit = submissionSubmit;
-  const artifact = submissionArtifact.files[0];
-  if (!artifact) {
-    submissionError.textContent = "Choose the compiled plugin JAR to submit.";
+  const sources = Array.from(submissionSources.files || []);
+  if (!sources.length) {
+    submissionError.textContent = "Choose the raw Java plugin classes to submit.";
     return;
   }
-  if (!artifact.name.toLowerCase().endsWith(".jar") || artifact.size > 20 * 1024 * 1024) {
-    submissionError.textContent = "Choose a .jar file that is 20 MiB or smaller.";
+  const totalSize = sources.reduce((total, source) => total + source.size, 0);
+  if (sources.length > 100
+      || sources.some((source) =>
+        !source.name.toLowerCase().endsWith(".java") || source.size > 1024 * 1024)
+      || totalSize > 20 * 1024 * 1024) {
+    submissionError.textContent =
+      "Choose up to 100 .java files, at most 1 MiB each and 20 MiB total.";
     return;
   }
 
@@ -733,29 +749,34 @@ submissionForm.addEventListener("submit", async (event) => {
   body.set("version", submissionVersion.value);
   body.set("sourceUrl", submissionSourceUrl.value);
   body.set("description", submissionDescription.value);
-  body.set("artifact", artifact, artifact.name);
+  for (const source of sources) {
+    body.append("sources", source, source.name);
+  }
 
   submit.disabled = true;
-  submit.textContent = "Uploading securely…";
+  submit.textContent = "Staging source securely…";
   try {
     await api("/api/developer/submissions", { method: "POST", body });
     submissionForm.reset();
-    submissionArtifactHelp.textContent =
-      "Maximum 20 MiB. The JAR is stored privately and is available only to you and marketplace reviewers.";
+    submissionSourcesHelp.textContent =
+      "Select all .java classes. Maximum 100 files, 1 MiB per file, and 20 MiB total.";
     await loadDeveloperSubmissions();
   } catch (error) {
     submissionError.textContent = error.message;
   } finally {
     submit.disabled = false;
-    submit.textContent = "Upload and submit for review";
+    submit.textContent = "Upload source for review";
   }
 });
 
-submissionArtifact.addEventListener("change", () => {
-  const artifact = submissionArtifact.files[0];
-  submissionArtifactHelp.textContent = artifact
-    ? `${artifact.name} · ${formatFileSize(artifact.size)} selected`
-    : "Maximum 20 MiB. The JAR is stored privately and is available only to you and marketplace reviewers.";
+submissionSources.addEventListener("change", () => {
+  const sources = Array.from(submissionSources.files || []);
+  const totalSize = sources.reduce((total, source) => total + source.size, 0);
+  submissionSourcesHelp.textContent = sources.length
+    ? `${sources.length} Java file${sources.length === 1 ? "" : "s"} · ${
+      formatFileSize(totalSize)
+    } selected`
+    : "Select all .java classes. Maximum 100 files, 1 MiB per file, and 20 MiB total.";
 });
 
 function formatFileSize(bytes) {
