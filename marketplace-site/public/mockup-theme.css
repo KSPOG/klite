@@ -711,3 +711,89 @@ html body .secondary-site-header [hidden],
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* Secure developer plugin upload and review artifacts. */
+.plugin-upload-field {
+  position: relative;
+  padding: 18px;
+  border: 1px dashed rgba(17, 217, 255, .42);
+  border-radius: 10px;
+  background: linear-gradient(120deg, rgba(17, 217, 255, .07), rgba(255, 109, 31, .035));
+}
+.plugin-upload-field input[type="file"] {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid rgba(142, 177, 195, .24);
+  border-radius: 8px;
+  color: var(--mock-text);
+  background: rgba(2, 8, 13, .8);
+}
+.plugin-upload-field input[type="file"]::file-selector-button {
+  margin-right: 14px;
+  padding: 9px 13px;
+  border: 1px solid rgba(17, 217, 255, .42);
+  border-radius: 6px;
+  color: #dff9ff;
+  background: rgba(17, 217, 255, .11);
+  cursor: pointer;
+}
+.plugin-upload-field small {
+  color: var(--mock-muted);
+  line-height: 1.5;
+}
+.submission-security {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  padding: 13px 15px;
+  border-left: 3px solid var(--mock-cyan);
+  color: var(--mock-muted);
+  background: rgba(17, 217, 255, .055);
+}
+.submission-security strong {
+  color: var(--mock-cyan);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.submission-artifact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 15px;
+  padding: 14px;
+  border: 1px solid rgba(17, 217, 255, .24);
+  border-radius: 8px;
+  background: rgba(17, 217, 255, .045);
+}
+.submission-artifact > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.submission-artifact strong {
+  overflow: hidden;
+  color: var(--mock-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.submission-artifact span {
+  color: var(--mock-muted);
+  font-size: .78rem;
+}
+.submission-artifact .button {
+  flex: 0 0 auto;
+  text-decoration: none;
+}
+.submission-artifact-missing {
+  border-color: rgba(255, 109, 31, .35);
+  color: var(--mock-orange);
+  background: rgba(255, 109, 31, .06);
+}
+@media (max-width: 700px) {
+  .submission-artifact {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

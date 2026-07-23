@@ -42,6 +42,12 @@ export async function handleCredits(request, env, url = new URL(request.url)) {
   if (request.method === "GET" && url.pathname === "/api/credits/admin") {
     return adminCreditDashboard(env, user);
   }
+  const adjustmentMatch = url.pathname.match(
+    /^\/api\/credits\/admin\/users\/([a-f0-9-]+)\/adjustments$/i
+  );
+  if (adjustmentMatch && request.method === "POST") {
+    return adjustUserCredits(request, env, user, adjustmentMatch[1]);
+  }
   const priceMatch = url.pathname.match(/^\/api\/credits\/admin\/prices\/([a-z0-9][a-z0-9-]{2,63})$/);
   if (priceMatch && request.method === "PUT") {
     return updatePluginPrice(request, env, user, priceMatch[1]);
@@ -292,9 +298,9 @@ async function purchasePlugin(request, env, user) {
 
 async function adminCreditDashboard(env, user) {
   if (!isSiteOwner(user, env)) {
-    return apiError(403, "site_owner_required", "Only the KLite site owner can manage credit prices.");
+    return apiError(403, "site_owner_required", "Only the KLite site owner can manage credits.");
   }
-  const [prices, transactions] = await Promise.all([
+  const [prices, transactions, users] = await Promise.all([
     env.DB.prepare(
       `SELECT plugin_id, price_credits, active, updated_at
        FROM plugin_credit_prices ORDER BY plugin_id`
@@ -305,11 +311,101 @@ async function adminCreditDashboard(env, user) {
         credit_transactions.created_at
        FROM credit_transactions JOIN users ON users.id = credit_transactions.user_id
        ORDER BY credit_transactions.created_at DESC LIMIT 100`
+    ).all(),
+    env.DB.prepare(
+      `SELECT users.id, users.username, users.email,
+        COALESCE(SUM(credit_transactions.delta), 0) AS balance
+       FROM users
+       LEFT JOIN credit_transactions ON credit_transactions.user_id = users.id
+       GROUP BY users.id, users.username, users.email
+       ORDER BY lower(users.username), lower(users.email)
+       LIMIT 250`
     ).all()
   ]);
   return json({
     prices: (prices.results || []).map(pricePayload),
-    transactions: (transactions.results || []).map(transactionPayload)
+    transactions: (transactions.results || []).map(transactionPayload),
+    users: (users.results || []).map((row) => ({
+      id: row.id,
+      username: row.username,
+      email: row.email,
+      balance: Number(row.balance || 0)
+    }))
+  });
+}
+
+export async function adjustUserCredits(request, env, owner, userId) {
+  if (!isSiteOwner(owner, env)) {
+    return apiError(403, "site_owner_required", "Only the KLite site owner can adjust user credits.");
+  }
+  const target = await env.DB.prepare(
+    "SELECT id, username, email FROM users WHERE id = ?"
+  ).bind(userId).first();
+  if (!target) return apiError(404, "user_not_found", "The marketplace account was not found.");
+
+  const body = await readJson(request);
+  const delta = Number(body?.delta);
+  const reason = typeof body?.reason === "string"
+    ? body.reason.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim()
+    : "";
+  if (!Number.isSafeInteger(delta) || delta === 0 || Math.abs(delta) > 10_000_000) {
+    return apiError(
+      400,
+      "invalid_credit_adjustment",
+      "Enter a non-zero whole-number adjustment between -10,000,000 and 10,000,000."
+    );
+  }
+  if (reason.length < 10 || reason.length > 240) {
+    return apiError(
+      400,
+      "invalid_adjustment_reason",
+      "Enter an audit reason between 10 and 240 characters."
+    );
+  }
+
+  const balance = await creditBalance(env, userId);
+  if (balance + delta < 0) {
+    return apiError(
+      409,
+      "negative_credit_balance",
+      `This adjustment would reduce the balance below zero. Current balance: ${balance.toLocaleString("en-US")} credits.`
+    );
+  }
+
+  const transactionId = crypto.randomUUID();
+  const result = await env.DB.prepare(
+    `INSERT INTO credit_transactions
+      (id, user_id, delta, kind, description, provider, provider_reference, created_at)
+     SELECT ?, ?, ?, 'adjustment', ?, 'klite_admin', ?, ?
+     WHERE (SELECT COALESCE(SUM(delta), 0) FROM credit_transactions WHERE user_id = ?) + ? >= 0`
+  ).bind(
+    transactionId,
+    userId,
+    delta,
+    reason,
+    `${owner.id}:${transactionId}`,
+    nowSeconds(),
+    userId,
+    delta
+  ).run();
+  if (!result.meta?.changes) {
+    return apiError(
+      409,
+      "credit_balance_changed",
+      "The balance changed while the adjustment was being applied. Refresh and try again."
+    );
+  }
+  return json({
+    user: {
+      ...target,
+      balance: await creditBalance(env, userId)
+    },
+    transaction: {
+      id: transactionId,
+      delta,
+      kind: "adjustment",
+      description: reason
+    }
   });
 }
 

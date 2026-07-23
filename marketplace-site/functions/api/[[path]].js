@@ -9,6 +9,12 @@ import { handlePagesAuth } from "../../worker/pages-auth.js";
 import { handlePasswordReset } from "../../worker/pages-password-reset.js";
 import { handleControlPlane } from "../../worker/pages-control-plane.js";
 import { handlePublicArtifact } from "../../worker/pages-public-artifacts.js";
+import { handleDiscordDashboardActions } from "../../worker/discord-dashboard-actions.js";
+import {
+  handleWebsiteControls,
+  loadWebsiteDashboard,
+  updateWebsiteDashboardSettings
+} from "../../worker/website-controls.js";
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -116,6 +122,34 @@ export async function onRequest(context) {
     const authResponse = await handlePagesAuth(request, env, requestUrl);
     if (authResponse) return authResponse;
 
+    const loadCoreAccount = () => marketplaceWorker.fetch(
+      internalRequest(request, "/api/account", "GET"), env
+    );
+    const loadCoreDashboard = () => marketplaceWorker.fetch(
+      internalRequest(request, "/api/discord-bot/dashboard", "GET"), env
+    );
+    const updateCoreSettings = (body) => marketplaceWorker.fetch(
+      internalRequest(request, "/api/discord-bot/settings", "PUT", body), env
+    );
+    const websiteControlResponse = await handleWebsiteControls(request, env, requestUrl, {
+      loadAccount: loadCoreAccount,
+      loadDashboard: loadCoreDashboard
+    });
+    if (websiteControlResponse) return websiteControlResponse;
+
+    const dashboardActionResponse = await handleDiscordDashboardActions(request, env, requestUrl, {
+      loadDashboard: () => loadWebsiteDashboard(request, env, loadCoreDashboard),
+      updateSettings: (body) => updateWebsiteDashboardSettings(
+        request, env, body, updateCoreSettings
+      )
+    });
+    if (dashboardActionResponse) return dashboardActionResponse;
+
+    if (requestUrl.pathname.startsWith("/api/developer/submissions")
+        || requestUrl.pathname.startsWith("/api/review/submissions")) {
+      return marketplaceWorker.fetch(request, env);
+    }
+
     const controlPlaneResponse = await handleControlPlane(request, env, requestUrl);
     if (controlPlaneResponse) return controlPlaneResponse;
 
@@ -142,4 +176,23 @@ export async function onRequest(context) {
       "The marketplace Pages Function failed. Check the Cloudflare Pages Function logs for the underlying exception."
     );
   }
+}
+
+
+function internalRequest(source, pathname, method, body) {
+  const target = new URL(source.url);
+  target.pathname = pathname;
+  target.search = "";
+  const headers = new Headers();
+  for (const name of ["cookie", "authorization"]) {
+    const value = source.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  headers.set("accept", "application/json");
+  if (body !== undefined) headers.set("content-type", "application/json");
+  return new Request(target, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
 }

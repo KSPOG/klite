@@ -18,7 +18,7 @@ Every interactive control must have all of the following:
 
 - Added the missing owner account and role-management routes.
 - Added the missing Discord Dev-role creation route.
-- Kept website authentication Discord-only and blocked legacy password login,
+- Kept Discord-only authentication for the website and blocked legacy password login,
   registration, and reset endpoints at the Worker entry point.
 - Removed the legacy password and recovery dialogs from the rendered website.
 - Added the missing dashboard installation payload expected by the browser renderer.
