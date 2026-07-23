@@ -38,6 +38,9 @@ function ownerEnvironment() {
             if (query.includes("FROM sessions")) {
               return { user_id: USER_ID, kind: "web", expires_at: 9_999_999_999 };
             }
+            if (query.includes("FROM users WHERE users.id")) {
+              return { id: USER_ID, username: "KSP", owner_role: 0 };
+            }
             if (query.includes("role = 'site_owner'")) return { allowed: 1 };
             if (query.includes("FROM users WHERE id")) {
               return { id: USER_ID, username: "KSP", email: "owner@example.com" };

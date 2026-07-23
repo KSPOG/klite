@@ -521,10 +521,25 @@ export function installPayload(env, installed) {
 async function requireSiteOwner(request, env) {
   const session = await sessionForRequest(request, env);
   if (!session) return null;
-  const role = await env.DB.prepare(
-    "SELECT 1 AS allowed FROM user_roles WHERE user_id = ? AND role = 'site_owner'"
+  const account = await env.DB.prepare(
+    `SELECT users.id, users.username,
+      EXISTS(
+        SELECT 1 FROM user_roles
+        WHERE user_roles.user_id = users.id AND user_roles.role = 'site_owner'
+      ) AS owner_role
+     FROM users WHERE users.id = ?`
   ).bind(session.user_id).first();
-  return role?.allowed ? session : null;
+  if (!account) return null;
+  const configuredId = typeof env.SITE_OWNER_USER_ID === "string"
+    ? env.SITE_OWNER_USER_ID.trim() : "";
+  const configuredUsername = typeof env.SITE_OWNER_USERNAME === "string"
+      && env.SITE_OWNER_USERNAME.trim()
+    ? env.SITE_OWNER_USERNAME.trim()
+    : "KSP";
+  const allowed = account.owner_role === 1
+    || (configuredId && account.id === configuredId)
+    || String(account.username || "").toLowerCase() === configuredUsername.toLowerCase();
+  return allowed ? { ...session, username: account.username } : null;
 }
 
 async function sessionForRequest(request, env) {
