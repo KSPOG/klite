@@ -90,11 +90,23 @@ public interface KLiteConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "lockWindowDuringAutomation",
+		name = "Lock window during automation",
+		description = "Prevent client resizing while an automation task is running so live widget positions remain stable",
+		section = automationSection,
+		position = 1
+	)
+	default boolean lockWindowDuringAutomation()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "showWebWalkerPath",
 		name = "Show web-walker path",
 		description = "Render the active integrated Shortest Path route in the game scene and minimap",
 		section = automationSection,
-		position = 1
+		position = 2
 	)
 	default boolean showWebWalkerPath()
 	{

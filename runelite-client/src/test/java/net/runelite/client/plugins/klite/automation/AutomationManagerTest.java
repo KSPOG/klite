@@ -16,6 +16,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import net.runelite.client.plugins.klite.api.KLiteClientApi;
+import net.runelite.client.config.ConfigManager;
+import net.runelite.client.plugins.klite.KLiteConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,12 +26,17 @@ public class AutomationManagerTest
 {
 	private ScheduledExecutorService executor;
 	private AutomationManager manager;
+	private AutomationWindowLock windowLock;
 
 	@Before
 	public void setUp()
 	{
 		executor = Executors.newSingleThreadScheduledExecutor();
-		manager = new AutomationManager(mock(KLiteClientApi.class), executor);
+		KLiteConfig config = mock(KLiteConfig.class);
+		windowLock = new AutomationWindowLock(
+			mock(ConfigManager.class), config);
+		manager = new AutomationManager(
+			mock(KLiteClientApi.class), windowLock, executor);
 	}
 
 	@After

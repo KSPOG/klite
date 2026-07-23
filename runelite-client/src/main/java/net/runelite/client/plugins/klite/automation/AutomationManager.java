@@ -30,6 +30,7 @@ public class AutomationManager
 
 	private final Object lock = new Object();
 	private final KLiteClientApi clientApi;
+	private final AutomationWindowLock windowLock;
 	private final ScheduledExecutorService executor;
 
 	private AutomationState state = AutomationState.DISABLED;
@@ -45,15 +46,17 @@ public class AutomationManager
 	private int consecutiveTimeouts;
 
 	@Inject
-	AutomationManager(KLiteClientApi clientApi)
+	AutomationManager(KLiteClientApi clientApi, AutomationWindowLock windowLock)
 	{
-		this(clientApi, Executors.newSingleThreadScheduledExecutor(
+		this(clientApi, windowLock, Executors.newSingleThreadScheduledExecutor(
 			new ThreadFactoryBuilder().setDaemon(true).setNameFormat("klite-automation-%d").build()));
 	}
 
-	AutomationManager(KLiteClientApi clientApi, ScheduledExecutorService executor)
+	AutomationManager(KLiteClientApi clientApi, AutomationWindowLock windowLock,
+		ScheduledExecutorService executor)
 	{
 		this.clientApi = clientApi;
+		this.windowLock = windowLock;
 		this.executor = executor;
 	}
 
@@ -107,6 +110,7 @@ public class AutomationManager
 			state = AutomationState.RUNNING;
 		}
 
+		windowLock.acquire();
 		executor.execute(() -> initialize(task, context, interval));
 		return true;
 	}
@@ -280,6 +284,10 @@ public class AutomationManager
 		catch (Exception exception)
 		{
 			log.warn("KLite automation task {} failed during shutdown", task.name(), exception);
+		}
+		finally
+		{
+			windowLock.release();
 		}
 	}
 }
