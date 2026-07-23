@@ -56,6 +56,10 @@ export async function handleCredits(request, env, url = new URL(request.url)) {
 }
 
 async function createCreditCheckout(request, env, user) {
+  if (!livePaymentsEnabled(env)) {
+    return apiError(503, "credit_checkout_live_mode_required",
+      "Credit checkout is unavailable until live payment processing is configured.");
+  }
   const missing = [
     "LEMON_SQUEEZY_API_KEY",
     "LEMON_SQUEEZY_STORE_ID",
@@ -87,6 +91,7 @@ async function createCreditCheckout(request, env, user) {
     data: {
       type: "checkouts",
       attributes: {
+        test_mode: false,
         custom_price: pack.usdCents,
         product_options: {
           name: `KLite ${pack.credits.toLocaleString("en-US")} Credits`,
@@ -136,7 +141,8 @@ async function createCreditCheckout(request, env, user) {
     body: JSON.stringify(checkoutPayload)
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload?.data?.attributes?.url) {
+  if (!response.ok || !payload?.data?.attributes?.url
+      || payload.data.attributes.test_mode !== false) {
     await env.DB.prepare(
       "UPDATE credit_checkout_orders SET status = 'failed', updated_at = ? WHERE id = ?"
     ).bind(nowSeconds(), orderId).run();
@@ -154,6 +160,10 @@ async function createCreditCheckout(request, env, user) {
 }
 
 async function handleLemonSqueezyWebhook(request, env) {
+  if (!livePaymentsEnabled(env)) {
+    return apiError(503, "credit_webhook_live_mode_required",
+      "Live credit payment verification is not configured.");
+  }
   if (!env.LEMON_SQUEEZY_WEBHOOK_SECRET) {
     return apiError(503, "credit_webhook_not_configured", "Credit payment verification is not configured.");
   }
@@ -175,6 +185,12 @@ async function handleLemonSqueezyWebhook(request, env) {
     return json({ ok: true, ignored: true });
   }
 
+  const attributes = payload?.data?.attributes || {};
+  if (attributes.test_mode !== false) {
+    return apiError(409, "test_mode_payment_rejected",
+      "Test-mode payments cannot grant KLite credits.");
+  }
+
   const custom = payload?.meta?.custom_data || {};
   const orderId = String(custom.klite_order_id || "");
   const userId = String(custom.klite_user_id || "");
@@ -192,7 +208,6 @@ async function handleLemonSqueezyWebhook(request, env) {
     return apiError(404, "credit_order_not_found", "The credit order could not be matched.");
   }
 
-  const attributes = payload?.data?.attributes || {};
   const currency = String(attributes.currency || "").toUpperCase();
   const subtotal = Number(attributes.subtotal_usd ?? attributes.subtotal);
   if (currency !== "USD" || !Number.isInteger(subtotal) || subtotal !== Number(order.usd_cents)) {
@@ -599,4 +614,8 @@ function json(body, status = 200) {
       "x-content-type-options": "nosniff"
     }
   });
+}
+
+export function livePaymentsEnabled(env) {
+  return String(env?.LEMON_SQUEEZY_LIVE_MODE || "").trim().toLowerCase() === "true";
 }
