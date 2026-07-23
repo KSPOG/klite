@@ -332,6 +332,11 @@ function createResourcesMenu() {
       <span class="klite-resource-icon" aria-hidden="true">&lt;/&gt;</span>
       <span><strong>Plugin development guide</strong><small>Complete Copper &amp; Tin example</small></span>
       <span class="klite-resource-arrow" aria-hidden="true">›</span>
+    </a>
+    <a role="menuitem" href="#developer">
+      <span class="klite-resource-icon" aria-hidden="true">&#8679;</span>
+      <span><strong>Plugin submission dashboard</strong><small>Upload raw Java classes for approval</small></span>
+      <span class="klite-resource-arrow" aria-hidden="true">&rsaquo;</span>
     </a>`;
 
   const positionMenu = () => {
@@ -390,6 +395,10 @@ function createResourcesMenu() {
       event.preventDefault();
       closeMenu({ restoreFocus: true });
     }
+  });
+
+  menu.addEventListener("click", (event) => {
+    if (event.target.closest("a")) closeMenu();
   });
 
   document.addEventListener("click", (event) => {
