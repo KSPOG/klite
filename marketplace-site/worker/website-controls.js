@@ -77,9 +77,14 @@ async function decorateAccountResponse(response, env) {
   const accountId = payload.account?.id;
   if (!accountId) return responseWithJson(response, payload);
   const owner = await env.DB.prepare(
-    "SELECT 1 AS allowed FROM user_roles WHERE user_id = ? AND role = 'site_owner'"
+    `SELECT users.id, users.username,
+      EXISTS(
+        SELECT 1 FROM user_roles
+        WHERE user_roles.user_id = users.id AND user_roles.role = 'site_owner'
+      ) AS owner_role
+     FROM users WHERE users.id = ?`
   ).bind(accountId).first();
-  if (owner?.allowed) {
+  if (isConfiguredOwnerAccount(owner, env)) {
     payload.account.roles = [...new Set([...(payload.account.roles || []), "site_owner"])];
     payload.account.capabilities = [
       ...new Set([...(payload.account.capabilities || []), "site_owner"])
@@ -110,7 +115,11 @@ async function listManagedUsers(request, env, url) {
         email: row.email,
         username: row.username,
         roles,
-        owner: roles.includes("site_owner")
+        owner: isConfiguredOwnerAccount({
+          id: row.id,
+          username: row.username,
+          owner_role: roles.includes("site_owner") ? 1 : 0
+        }, env)
       };
     })
   });
@@ -530,16 +539,22 @@ async function requireSiteOwner(request, env) {
      FROM users WHERE users.id = ?`
   ).bind(session.user_id).first();
   if (!account) return null;
+  return isConfiguredOwnerAccount(account, env)
+    ? { ...session, username: account.username }
+    : null;
+}
+
+function isConfiguredOwnerAccount(account, env) {
+  if (!account) return false;
   const configuredId = typeof env.SITE_OWNER_USER_ID === "string"
     ? env.SITE_OWNER_USER_ID.trim() : "";
   const configuredUsername = typeof env.SITE_OWNER_USERNAME === "string"
       && env.SITE_OWNER_USERNAME.trim()
     ? env.SITE_OWNER_USERNAME.trim()
     : "KSP";
-  const allowed = account.owner_role === 1
-    || (configuredId && account.id === configuredId)
+  return account.owner_role === 1
+    || Boolean(configuredId && account.id === configuredId)
     || String(account.username || "").toLowerCase() === configuredUsername.toLowerCase();
-  return allowed ? { ...session, username: account.username } : null;
 }
 
 async function sessionForRequest(request, env) {
