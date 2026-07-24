@@ -44,6 +44,7 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicProgressBarUI;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.KLiteDisguiseState;
 import net.runelite.client.ui.laf.RuneLiteLAF;
 import net.runelite.client.util.ImageUtil;
 
@@ -67,19 +68,37 @@ public class SplashScreen extends JFrame implements ActionListener
 
 	private SplashScreen()
 	{
-		setTitle("KLite Launcher");
+		boolean disguiseMode = KLiteDisguiseState.isEnabled();
+		setTitle(disguiseMode ? "RuneLite Launcher" : "KLite Launcher");
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setUndecorated(true);
-		setIconImages(Arrays.asList(ClientUI.ICON_128, ClientUI.ICON_16));
+		if (disguiseMode)
+		{
+			BufferedImage icon128 = ImageUtil.loadImageResource(SplashScreen.class, "runelite_128.png");
+			BufferedImage icon16 = ImageUtil.loadImageResource(SplashScreen.class, "runelite_16.png");
+			setIconImages(Arrays.asList(icon128, icon16));
+		}
+		else
+		{
+			setIconImages(Arrays.asList(ClientUI.ICON_128, ClientUI.ICON_16));
+		}
 		setLayout(null);
 		Container pane = getContentPane();
 		pane.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		Font font = new Font(Font.DIALOG, Font.PLAIN, 12);
 
-		BufferedImage sourceLogo = ImageUtil.loadImageResource(SplashScreen.class, "klite_icon.png");
-		BufferedImage logo = ImageUtil.resizeImage(sourceLogo, WIDTH, WIDTH, true);
+		BufferedImage logo;
+		if (disguiseMode)
+		{
+			logo = ImageUtil.loadImageResource(SplashScreen.class, "runelite_splash.png");
+		}
+		else
+		{
+			BufferedImage sourceLogo = ImageUtil.loadImageResource(SplashScreen.class, "klite_icon.png");
+			logo = ImageUtil.resizeImage(sourceLogo, WIDTH, WIDTH, true);
+		}
 		JLabel logoLabel = new JLabel(new ImageIcon(logo));
 		pane.add(logoLabel);
 		logoLabel.setBounds(0, 0, WIDTH, WIDTH);
