@@ -14,30 +14,37 @@ import net.runelite.client.config.ConfigSection;
 public interface KLiteConfig extends Config
 {
 	@ConfigSection(
+		name = "Branding",
+		description = "Controls how the desktop client identifies itself.",
+		position = 0
+	)
+	String brandingSection = "branding";
+
+	@ConfigSection(
 		name = "Updates",
 		description = "KLite desktop client update settings.",
-		position = 0
+		position = 1
 	)
 	String updatesSection = "updates";
 
 	@ConfigSection(
 		name = "Login",
 		description = "KLite login and reconnect behaviour.",
-		position = 1
+		position = 2
 	)
 	String loginSection = "login";
 
 	@ConfigSection(
 		name = "Automation",
 		description = "Global controls for KLite automation modules.",
-		position = 2
+		position = 3
 	)
 	String automationSection = "automation";
 
 	@ConfigSection(
 		name = "Plugin development",
 		description = "Load locally built development plugins without the KLite client source code.",
-		position = 3
+		position = 4
 	)
 	String developmentSection = "development";
 
@@ -48,6 +55,18 @@ public interface KLiteConfig extends Config
 		position = 0
 	)
 	default boolean showStatusOverlay()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "disguiseMode",
+		name = "Disguise mode",
+		description = "Show RuneLite as the client name and use the RuneLite application icons instead of KLite branding",
+		section = brandingSection,
+		position = 0
+	)
+	default boolean disguiseMode()
 	{
 		return false;
 	}
