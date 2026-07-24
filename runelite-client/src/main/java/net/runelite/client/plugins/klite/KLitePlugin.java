@@ -63,6 +63,9 @@ public class KLitePlugin extends Plugin
 	private KLiteConfig config;
 
 	@Inject
+	private KLiteDisguiseService disguiseService;
+
+	@Inject
 	private AutomationManager automationManager;
 
 	@Inject
@@ -124,7 +127,11 @@ public class KLitePlugin extends Plugin
 			return;
 		}
 
-		if ("autoLogin".equals(event.getKey()))
+		if ("disguiseMode".equals(event.getKey()))
+		{
+			disguiseService.setEnabled(config.disguiseMode());
+		}
+		else if ("autoLogin".equals(event.getKey()))
 		{
 			autoLoginService.setEnabled(config.autoLogin());
 		}
@@ -149,6 +156,7 @@ public class KLitePlugin extends Plugin
 	public void onGameStateChanged(GameStateChanged event)
 	{
 		autoLoginService.onGameStateChanged(event.getGameState());
+		disguiseService.refresh();
 	}
 
 	@Subscribe
@@ -187,6 +195,7 @@ public class KLitePlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
+		disguiseService.start(config.disguiseMode());
 		overlayManager.add(overlay);
 		overlayManager.add(shortestPathOverlay);
 		autoLoginService.start(config.autoLogin());
@@ -227,6 +236,7 @@ public class KLitePlugin extends Plugin
 			startupUpdateTimer.stop();
 			startupUpdateTimer = null;
 		}
+		disguiseService.stop();
 		developmentPluginManager.stop();
 		marketplacePersistenceService.shutdown();
 		updateService.cancel();
