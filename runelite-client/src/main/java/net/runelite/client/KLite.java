@@ -24,6 +24,7 @@ import net.runelite.client.launcher.KLiteLauncher;
 public final class KLite
 {
 	private static final String SPLASH_ICON_RESOURCE = "klite_splash_icon.b64";
+	private static final String RUNELITE_ICON_RESOURCE = "ui/runelite_128.png";
 
 	private KLite()
 	{
@@ -42,8 +43,9 @@ public final class KLite
 	}
 
 	/**
-	 * Applies the supplied KLite splash crest before RuneLite creates its first
-	 * window. The packaged KLite.exe contains the same image as a multi-size ICO.
+	 * Applies the selected client icon before RuneLite creates its first window.
+	 * The packaged KLite.exe contains the KLite image as a multi-size ICO, while
+	 * disguise mode replaces Java's runtime taskbar image with RuneLite's icon.
 	 */
 	private static void applyWindowsTaskbarIcon()
 	{
@@ -58,7 +60,9 @@ public final class KLite
 			{
 				return;
 			}
-			BufferedImage icon = loadSplashIcon();
+			BufferedImage icon = KLiteDisguiseState.isEnabled()
+				? loadRuneLiteIcon()
+				: loadSplashIcon();
 			if (icon != null)
 			{
 				taskbar.setIconImage(icon);
@@ -67,6 +71,14 @@ public final class KLite
 		catch (IOException | RuntimeException ignored)
 		{
 			// Failure to apply branding must never prevent the client from starting.
+		}
+	}
+
+	private static BufferedImage loadRuneLiteIcon() throws IOException
+	{
+		try (InputStream input = KLite.class.getResourceAsStream(RUNELITE_ICON_RESOURCE))
+		{
+			return input == null ? null : ImageIO.read(input);
 		}
 	}
 

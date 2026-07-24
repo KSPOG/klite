@@ -26,6 +26,32 @@ public class KLiteBrandingTest
 	}
 
 	@Test
+	public void runeLiteBrandResourcesAreAvailable()
+	{
+		BufferedImage icon128 = ImageUtil.loadImageResource(ClientUI.class, "runelite_128.png");
+		BufferedImage icon16 = ImageUtil.loadImageResource(ClientUI.class, "runelite_16.png");
+		BufferedImage splash = ImageUtil.loadImageResource(ClientUI.class, "runelite_splash.png");
+
+		assertNotNull(icon128);
+		assertNotNull(icon16);
+		assertNotNull(splash);
+		assertEquals(128, icon128.getWidth());
+		assertEquals(16, icon16.getWidth());
+		assertEquals(200, splash.getWidth());
+	}
+
+	@Test
+	public void disguiseTitlePreservesSafeModeAndDisplayName()
+	{
+		assertEquals(
+			"RuneLite (safe mode) - Example Player",
+			KLiteDisguiseService.buildWindowTitle(
+				"KLite (safe mode) - Example Player",
+				KLiteDisguiseService.RUNELITE_TITLE,
+				true));
+	}
+
+	@Test
 	public void marketplaceBrandResourceIsAvailable()
 	{
 		BufferedImage image = ImageUtil.loadImageResource(
